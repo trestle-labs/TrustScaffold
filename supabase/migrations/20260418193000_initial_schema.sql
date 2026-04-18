@@ -78,11 +78,11 @@ $$;
 
 create trigger organizations_set_updated_at
 before update on organizations
-for each row execute procedure public.set_updated_at();
+for each row execute function public.set_updated_at();
 
 create trigger generated_docs_set_updated_at
 before update on generated_docs
-for each row execute procedure public.set_updated_at();
+for each row execute function public.set_updated_at();
 
 -- Enable RLS on all tables
 alter table organizations enable row level security;
