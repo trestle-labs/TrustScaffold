@@ -30,7 +30,7 @@ create table templates (
 create table generated_docs (
   id uuid primary key default uuid_generate_v4(),
   organization_id uuid references organizations(id) on delete cascade,
-  template_id uuid references templates(id) on delete set null,
+  template_id uuid references templates(id) on delete restrict,
   title text not null,
   content_markdown text not null,
   version integer default 1,
@@ -44,7 +44,7 @@ create table generated_docs (
 create table audit_logs (
   id uuid primary key default uuid_generate_v4(),
   organization_id uuid references organizations(id) on delete cascade,
-  user_id uuid references auth.users(id) on delete set null,
+  user_id uuid references auth.users(id) on delete restrict,
   action text not null,
   entity_type text,
   entity_id uuid,
