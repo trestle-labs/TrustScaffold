@@ -43,7 +43,7 @@ create table generated_docs (
 
 create table audit_logs (
   id uuid primary key default uuid_generate_v4(),
-  organization_id uuid references organizations(id) on delete cascade,
+  organization_id uuid references organizations(id) on delete restrict,
   user_id uuid references auth.users(id) on delete restrict,
   action text not null,
   entity_type text,
