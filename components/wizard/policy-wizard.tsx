@@ -201,6 +201,24 @@ function GenerateStep({
         <Sparkles className="mr-2 h-4 w-4" />
         {isGenerating ? `Compiling ${templates.length} documents…` : `Generate ${templates.length} policy documents`}
       </Button>
+
+      <div className="rounded-2xl border border-border bg-white p-4 space-y-3 text-sm">
+        <p className="font-semibold text-foreground">After generation</p>
+        <div className="grid gap-3 sm:grid-cols-3 text-xs text-muted-foreground">
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">① Review drafts</p>
+            <p>Navigate to Generated Docs to review each policy. Admins can approve documents to lock them for export.</p>
+          </div>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">② Configure export (optional)</p>
+            <p>Go to <strong>Settings → Save Integration</strong> to connect a GitHub repo or Azure DevOps project. Needs a PAT with repo write access.</p>
+          </div>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">③ Evidence collection (optional)</p>
+            <p>Create an Evidence API key in <strong>Settings</strong> and point your Steampipe, Prowler, or CloudQuery pipeline at <code className="rounded bg-secondary px-1">/api/v1/evidence/ingest</code>.</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -63,11 +63,33 @@ export default async function SettingsPage({
         </CardContent>
       </Card>
 
+      {/* ─── Evidence & Export Architecture ─────────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle>How evidence and documents are stored</CardTitle>
+          <CardDescription>Understanding the data flow before configuring integrations.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 text-sm sm:grid-cols-3">
+          <div className="rounded-2xl bg-secondary/50 p-4 space-y-1">
+            <p className="font-semibold text-foreground">① Evidence ingestion</p>
+            <p className="text-muted-foreground">CI/CD pipelines post scan results to <code className="rounded bg-secondary px-1 text-xs">/api/v1/evidence/ingest</code> using an Evidence API key. Results are stored in the database and Supabase Storage bucket — always local, no external dependency.</p>
+          </div>
+          <div className="rounded-2xl bg-secondary/50 p-4 space-y-1">
+            <p className="font-semibold text-foreground">② Policy generation</p>
+            <p className="text-muted-foreground">The wizard compiles Handlebars templates into Markdown drafts stored in <code className="rounded bg-secondary px-1 text-xs">generated_docs</code>. Drafts are local until an admin approves them.</p>
+          </div>
+          <div className="rounded-2xl bg-secondary/50 p-4 space-y-1">
+            <p className="font-semibold text-foreground">③ GitOps export (optional)</p>
+            <p className="text-muted-foreground">Approved docs can be pushed to GitHub or Azure DevOps as a PR. Configure a PAT-based integration below. Webhooks enable merge detection and audit snapshots triggered by git tags.</p>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <CardHeader>
             <CardTitle>Configured Integrations</CardTitle>
-            <CardDescription>Tokens are stored encrypted at the application layer and are never rendered back to the client.</CardDescription>
+            <CardDescription>Tokens are stored encrypted (AES-256-GCM) at the application layer and are never rendered back to the client.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {!integrations?.length ? (
@@ -88,6 +110,22 @@ export default async function SettingsPage({
                   <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
                     Token configured: {integration.encrypted_token ? 'yes' : 'no'} · Updated {new Date(integration.updated_at).toLocaleString()}
                   </p>
+
+                  {/* Webhook setup instructions — shown once a secret is generated */}
+                  {integration.provider === 'github' && integration.webhook_secret ? (
+                    <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-3 space-y-1.5 text-xs">
+                      <p className="font-semibold text-amber-800">Webhook not yet configured in GitHub</p>
+                      <p className="text-amber-700">Go to your GitHub repo → Settings → Webhooks → Add webhook:</p>
+                      <ul className="space-y-0.5 text-amber-700 pl-3 list-disc">
+                        <li>Payload URL: <code className="rounded bg-amber-100 px-1">https://your-domain/api/webhooks/github</code></li>
+                        <li>Content type: <code className="rounded bg-amber-100 px-1">application/json</code></li>
+                        <li>Secret: use the value from &ldquo;Generate webhook secret&rdquo; above</li>
+                        <li>Events: <strong>Pull requests</strong> + <strong>Create</strong> (for audit tags)</li>
+                      </ul>
+                      <p className="text-amber-600">For local dev, use a tunnel: <code className="rounded bg-amber-100 px-1">npx ngrok http 3000</code></p>
+                    </div>
+                  ) : null}
+
                   {isAdmin ? (
                     <div className="mt-4 flex flex-wrap gap-2">
                       <form action={deleteIntegrationTokenAction}>
@@ -151,6 +189,12 @@ export default async function SettingsPage({
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground" htmlFor="token">PAT / access token</label>
                   <Input id="token" name="token" type="password" placeholder="Paste a new token to set or rotate it" />
+                  <div className="rounded-xl bg-secondary/60 p-3 space-y-2 text-xs text-muted-foreground">
+                    <p className="font-semibold text-foreground">How to create a token</p>
+                    <p><strong>GitHub:</strong> Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token. Required scope: <code className="rounded bg-secondary px-1">repo</code> (or fine-grained: Contents read/write + Pull requests read/write).</p>
+                    <p><strong>Azure DevOps:</strong> dev.azure.com → User Settings (top-right) → Personal access tokens → New token. Required scope: <strong>Code — Read &amp; Write</strong>. Set organization to your ADO org.</p>
+                    <p>Tokens are encrypted with AES-256-GCM before storage and never returned to the browser.</p>
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Saving with a new token rotates the existing credential. Leaving the token blank keeps the current encrypted token unchanged.

@@ -136,6 +136,34 @@ npm run build 2>&1 | grep -E '(Compiled|error|Error|warn|✓|✗|Route)' | grep 
 [[ -d ".next" ]] || fail "Build failed — .next/ directory not created."
 ok "Build passed"
 
+# ── 9. Optional integrations guidance ────────────────────────────────────────
+step "Optional integrations (configure after first login)"
+cat <<'GUIDE'
+  Evidence storage    — always local (Supabase DB + Storage bucket). No setup needed.
+
+  GitOps export       — push approved policies to GitHub or Azure DevOps as a PR.
+    Configure in:       Settings → Save Integration (admin only)
+
+    GitHub PAT:         github.com/settings/tokens
+                        Scope required: repo  (or fine-grained: Contents + Pull requests)
+
+    Azure DevOps PAT:   dev.azure.com → User Settings → Personal access tokens
+                        Scope required: Code — Read & Write
+
+  Webhook (optional)  — enables merge detection and git-tag audit snapshots.
+    After saving a GitHub integration, click "Generate webhook secret" in Settings.
+    Add the webhook in GitHub → repo Settings → Webhooks:
+      Payload URL:  https://<your-domain>/api/webhooks/github
+      Content type: application/json
+      Events:       Pull requests + Create
+
+  Evidence ingestion  — CI/CD pipelines submit scan results via API key.
+    Create an Evidence API key in Settings after org setup.
+    POST to:  /api/v1/evidence/ingest
+    Supports: Steampipe, Prowler, CloudQuery, custom payloads
+
+GUIDE
+
 # ── Done ──────────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
