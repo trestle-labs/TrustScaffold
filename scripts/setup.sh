@@ -106,9 +106,13 @@ if echo "$BUCKET_RESPONSE" | grep -q '"name"'; then
   ok "Storage bucket 'evidence' created"
 elif echo "$BUCKET_RESPONSE" | grep -qi "already exists"; then
   ok "Storage bucket 'evidence' already exists"
+elif echo "$BUCKET_RESPONSE" | grep -qi "name resolution failed\|storage.*disabled\|not found"; then
+  warn "Storage service not running — [storage] enabled = false in config.toml."
+  warn "Run: npx supabase stop && npx supabase start, then re-run this script."
+  warn "Evidence ingestion (test plan §6) will be unavailable until fixed."
 else
   warn "Storage bucket creation returned: $BUCKET_RESPONSE"
-  warn "Evidence ingestion (test plan §6) will be unavailable — wizard flow unaffected."
+  warn "Evidence ingestion (test plan §6) may be unavailable."
 fi
 
 # ── 7. Verify template seed ───────────────────────────────────────────────────
