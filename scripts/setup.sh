@@ -43,26 +43,54 @@ ok "Supabase stack started"
 # ── 5. Parse supabase status → .env.local ─────────────────────────────────────
 step "Generating .env.local from supabase status"
 
-STATUS=$($SUPA_CMD status 2>/dev/null)
+PROJECT_URL=""; ANON_KEY=""; SERVICE_KEY=""
 
-extract() {
-  # $1 = label to search for, e.g. "Project URL" or "Publishable"
-  echo "$STATUS" | grep -i "$1" | head -1 | sed 's/.*│[[:space:]]*//' | sed 's/[[:space:]]*│.*//' | tr -d '[:space:]'
-}
+# Strategy 1: --output env (Supabase CLI v2 native, most reliable)
+if ENV_OUT=$($SUPA_CMD status --output env 2>/dev/null) && [[ -n "$ENV_OUT" ]]; then
+  PROJECT_URL=$(echo "$ENV_OUT" | grep -i 'API_URL\|SUPABASE_URL\|PROJECT_URL'  | head -1 | cut -d= -f2- | tr -d '[:space:]"')
+  ANON_KEY=$(echo    "$ENV_OUT" | grep -i 'ANON_KEY'                            | head -1 | cut -d= -f2- | tr -d '[:space:]"')
+  SERVICE_KEY=$(echo "$ENV_OUT" | grep -i 'SERVICE_ROLE_KEY\|SERVICE_KEY'       | head -1 | cut -d= -f2- | tr -d '[:space:]"')
+fi
 
-PROJECT_URL=$(extract "Project URL")
-ANON_KEY=$(extract "Publishable")
-SERVICE_KEY=$(extract "Secret")
+# Strategy 2: grep patterns against the human-readable table (strips box chars)
+if [[ -z "$PROJECT_URL" || -z "$ANON_KEY" || -z "$SERVICE_KEY" ]]; then
+  STATUS=$($SUPA_CMD status 2>/dev/null)
+  [[ -z "$PROJECT_URL" ]] && PROJECT_URL=$(echo "$STATUS" | grep -i "Project URL\|api_url" | grep -oE 'https?://[^[:space:]]+' | head -1)
+  [[ -z "$ANON_KEY" ]]    && ANON_KEY=$(echo    "$STATUS" | grep -i "Publishable\|anon_key" | grep -oE 'sb_publishable_[A-Za-z0-9_-]+' | head -1)
+  [[ -z "$SERVICE_KEY" ]] && SERVICE_KEY=$(echo "$STATUS" | grep -i "Secret\|service_role"  | grep -oE 'sb_secret_[A-Za-z0-9_-]+'      | head -1)
+fi
 
-[[ -n "$PROJECT_URL" ]] || fail "Could not parse Project URL from supabase status output."
-[[ -n "$ANON_KEY" ]]    || fail "Could not parse Publishable key from supabase status output."
-[[ -n "$SERVICE_KEY" ]] || fail "Could not parse Secret key from supabase status output."
+# Strategy 3: well-known local dev defaults (always correct for stock config)
+[[ -z "$PROJECT_URL" ]] && { warn "Falling back to default local Supabase URL"; PROJECT_URL="http://127.0.0.1:54321"; }
+[[ -z "$ANON_KEY" ]]    && fail "Could not determine anon key. Run: npx supabase status"
+[[ -z "$SERVICE_KEY" ]] && fail "Could not determine service role key. Run: npx supabase status"
 
-# Write .env.local — printf ensures Unix line endings, no quotes, no backslashes
-printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nNEXT_PUBLIC_SUPABASE_ANON_KEY=%s\nSUPABASE_SERVICE_ROLE_KEY=%s\n' \
-  "$PROJECT_URL" "$ANON_KEY" "$SERVICE_KEY" > .env.local
+# Compare against any existing .env.local and warn on drift
+if [[ -f .env.local ]]; then
+  EXISTING_URL=$(grep -i 'NEXT_PUBLIC_SUPABASE_URL'     .env.local | cut -d= -f2- | tr -d '[:space:]"' || true)
+  EXISTING_ANON=$(grep -i 'NEXT_PUBLIC_SUPABASE_ANON_KEY' .env.local | cut -d= -f2- | tr -d '[:space:]"' || true)
+  EXISTING_SVC=$(grep -i 'SUPABASE_SERVICE_ROLE_KEY'    .env.local | cut -d= -f2- | tr -d '[:space:]"' || true)
 
-ok ".env.local written:"
+  DRIFT=0
+  [[ "$EXISTING_URL"  != "$PROJECT_URL" ]] && { warn "URL mismatch:  existing=$EXISTING_URL  new=$PROJECT_URL";   DRIFT=1; }
+  [[ "$EXISTING_ANON" != "$ANON_KEY" ]]    && { warn "Anon key mismatch — keys have rotated or env is stale";     DRIFT=1; }
+  [[ "$EXISTING_SVC"  != "$SERVICE_KEY" ]] && { warn "Service key mismatch — keys have rotated or env is stale";  DRIFT=1; }
+
+  if [[ "$DRIFT" -eq 0 ]]; then
+    ok ".env.local already correct — no changes needed"
+  else
+    warn "Overwriting .env.local with values from running Supabase instance"
+    printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nNEXT_PUBLIC_SUPABASE_ANON_KEY=%s\nSUPABASE_SERVICE_ROLE_KEY=%s\n' \
+      "$PROJECT_URL" "$ANON_KEY" "$SERVICE_KEY" > .env.local
+    ok ".env.local updated"
+  fi
+else
+  # Write fresh — printf ensures Unix line endings, no quotes, no backslashes
+  printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nNEXT_PUBLIC_SUPABASE_ANON_KEY=%s\nSUPABASE_SERVICE_ROLE_KEY=%s\n' \
+    "$PROJECT_URL" "$ANON_KEY" "$SERVICE_KEY" > .env.local
+  ok ".env.local created"
+fi
+
 echo "  NEXT_PUBLIC_SUPABASE_URL=$PROJECT_URL"
 echo "  NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
 echo "  SUPABASE_SERVICE_ROLE_KEY=${SERVICE_KEY:0:12}…"
