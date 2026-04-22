@@ -152,25 +152,11 @@ enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
 site_url = "http://localhost:3000"
-# A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-# Covers ports 3000-3009 so setup.sh can pick any free port and auth still works.
+# Wildcard patterns — GoTrue glob-matches these, so any local port works without
+# hardcoding. setup.sh detects the first free port and writes PORT= to .env.local.
 additional_redirect_urls = [
-  "http://localhost:3000",
-  "http://localhost:3001",
-  "http://localhost:3002",
-  "http://localhost:3003",
-  "http://localhost:3004",
-  "http://localhost:3005",
-  "http://localhost:3006",
-  "http://localhost:3007",
-  "http://localhost:3008",
-  "http://localhost:3009",
-  "http://127.0.0.1:3000",
-  "http://127.0.0.1:3001",
-  "http://127.0.0.1:3002",
-  "http://127.0.0.1:3003",
-  "http://127.0.0.1:3004",
-  "http://127.0.0.1:3005",
+  "http://localhost:*",
+  "http://127.0.0.1:*",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
