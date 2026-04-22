@@ -59,9 +59,12 @@ function ReadinessRing({ score }: { score: number }) {
   );
 }
 
-function DomainCard({ domain, onNavigate }: { domain: DomainScore; onNavigate: () => void }) {
+function DomainCard({ domain, onNavigate, isFirstTimer }: { domain: DomainScore; onNavigate: () => void; isFirstTimer: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const hasGaps = domain.gaps.length > 0;
+  const gapLabel = isFirstTimer ? 'not yet implemented' : 'gap';
+  const gapsLabel = isFirstTimer ? 'not yet implemented' : 'gaps';
+  const ctaLabel = isFirstTimer ? 'Start in Security Assessment' : 'Fix in Security Assessment';
 
   return (
     <div className="rounded-2xl border border-border bg-white p-4 space-y-3">
@@ -96,7 +99,7 @@ function DomainCard({ domain, onNavigate }: { domain: DomainScore; onNavigate: (
           >
             <span className="flex items-center gap-1.5">
               <AlertTriangle className="h-3 w-3 text-amber-500" />
-              {domain.gaps.length} gap{domain.gaps.length !== 1 ? 's' : ''} — click to expand
+              {domain.gaps.length} {domain.gaps.length !== 1 ? gapsLabel : gapLabel} — click to expand
             </span>
             {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </button>
@@ -104,13 +107,16 @@ function DomainCard({ domain, onNavigate }: { domain: DomainScore; onNavigate: (
           {expanded && (
             <div className="space-y-2">
               {domain.gaps.map((gap, i) => (
-                <div key={i} className="rounded-xl bg-secondary/60 p-3 space-y-1">
-                  <p className="text-xs font-medium text-red-600">{gap}</p>
+                <div key={i} className={cn('rounded-xl p-3 space-y-1', isFirstTimer ? 'bg-blue-50 border border-blue-100' : 'bg-secondary/60')}>
+                  <p className={cn('text-xs font-medium', isFirstTimer ? 'text-blue-700' : 'text-red-600')}>{gap}</p>
                   <p className="text-xs text-muted-foreground">{domain.recommendations[i]}</p>
+                  {isFirstTimer && (
+                    <p className="text-[10px] text-blue-500 font-medium">Getting started — this practice doesn&apos;t need to be perfect on day one.</p>
+                  )}
                 </div>
               ))}
               <Button type="button" variant="outline" size="sm" className="w-full text-xs" onClick={onNavigate}>
-                Fix in Security Assessment
+                {ctaLabel}
                 <ArrowRight className="ml-1.5 h-3 w-3" />
               </Button>
             </div>
@@ -127,6 +133,7 @@ function DomainCard({ domain, onNavigate }: { domain: DomainScore; onNavigate: (
 }
 
 export function GapAnalysisCard({ summary, onNavigateToAssessment }: GapAnalysisCardProps) {
+  const { isFirstTimer } = summary;
   const topGaps = summary.domains
     .flatMap((d) => d.gaps.map((g, i) => ({ domain: d.label, gap: g, rec: d.recommendations[i], score: d.score })))
     .sort((a, b) => a.score - b.score)
@@ -154,14 +161,25 @@ export function GapAnalysisCard({ summary, onNavigateToAssessment }: GapAnalysis
           </div>
         </div>
 
+        {/* First-timer context banner */}
+        {isFirstTimer && (
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 space-y-1">
+            <p className="font-semibold">This looks like your first compliance exercise.</p>
+            <p className="text-xs text-blue-700">
+              Items shown as &ldquo;not yet implemented&rdquo; below are normal starting points — not failures.
+              The wizard will generate policies to establish each practice. Focus on the top priority actions first.
+            </p>
+          </div>
+        )}
+
         {/* Top priority actions */}
         {topGaps.length > 0 && (
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-foreground">Top priority actions</p>
+            <p className="text-sm font-semibold text-foreground">{isFirstTimer ? 'Where to start' : 'Top priority actions'}</p>
             <div className="space-y-2">
               {topGaps.map((item, i) => (
-                <div key={i} className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-400 text-[10px] font-bold text-white">{i + 1}</span>
+                <div key={i} className={cn('flex gap-3 rounded-xl border p-3', isFirstTimer ? 'border-blue-200 bg-blue-50' : 'border-amber-200 bg-amber-50')}>
+                  <span className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white', isFirstTimer ? 'bg-blue-400' : 'bg-amber-400')}>{i + 1}</span>
                   <div className="min-w-0 space-y-0.5">
                     <p className="text-xs font-medium text-foreground">{item.gap}</p>
                     <p className="text-xs text-muted-foreground line-clamp-2">{item.rec}</p>
@@ -178,7 +196,7 @@ export function GapAnalysisCard({ summary, onNavigateToAssessment }: GapAnalysis
           <p className="text-sm font-semibold text-foreground">Domain breakdown</p>
           <div className="grid gap-3 md:grid-cols-2">
             {summary.domains.map((domain) => (
-              <DomainCard key={domain.key} domain={domain} onNavigate={onNavigateToAssessment} />
+              <DomainCard key={domain.key} domain={domain} onNavigate={onNavigateToAssessment} isFirstTimer={isFirstTimer} />
             ))}
           </div>
         </div>

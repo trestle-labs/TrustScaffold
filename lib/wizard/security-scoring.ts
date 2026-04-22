@@ -29,6 +29,7 @@ export interface AssessmentSummary {
   overallTotal: number;
   completedDomains: number;   // domains where readiness !== 'not-started'
   totalDomains: number;
+  isFirstTimer: boolean;      // true when complianceMaturity === 'first-time'
 }
 
 // ─── Scoring Logic ───────────────────────────────────────────────────────────
@@ -169,6 +170,7 @@ export function computeAssessmentSummary(data: WizardData): AssessmentSummary {
     overallTotal,
     completedDomains,
     totalDomains: domainKeys.length,
+    isFirstTimer: data.company.complianceMaturity === 'first-time',
   };
 }
 

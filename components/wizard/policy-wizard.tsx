@@ -42,6 +42,8 @@ import {
   assuranceReportTypeOptions,
   controlInclusionOptions,
   acknowledgementCadenceOptions,
+  orgAgeOptions,
+  complianceMaturityOptions,
   orgChartMaintenanceOptions,
   boardMeetingFrequencyOptions,
   internalAuditFrequencyOptions,
@@ -61,7 +63,7 @@ import { computeAssessmentSummary, computeStepCompletions } from '@/lib/wizard/s
 
 const stepFields: FieldPath<WizardData>[][] = [
   // Step 0: Welcome
-  ['company.name', 'company.website', 'company.primaryContactName', 'company.primaryContactEmail', 'company.industry'],
+  ['company.name', 'company.website', 'company.primaryContactName', 'company.primaryContactEmail', 'company.industry', 'company.orgAge', 'company.complianceMaturity'],
   // Step 1: Governance
   ['governance.acknowledgementCadence', 'governance.boardMeetingFrequency', 'governance.orgChartMaintenance', 'governance.internalAuditFrequency', 'training.securityAwarenessTrainingTool', 'training.trainingCadence'],
   // Step 2: System Scope
@@ -488,6 +490,56 @@ export function PolicyWizard() {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="company.orgAge"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>How long has your organization been operating?</FormLabel>
+                          <FormControl>
+                            <select {...field} className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                              {orgAgeOptions.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
+                            </select>
+                          </FormControl>
+                          <FormDescription>Used in the System Description and evidence timeline recommendations.</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="company.complianceMaturity"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>What best describes your compliance experience?</FormLabel>
+                          <FormControl>
+                            <RadioGroup value={field.value} onValueChange={field.onChange} className="mt-2 grid gap-3 md:grid-cols-3">
+                              {complianceMaturityOptions.map((opt) => (
+                                <label
+                                  key={opt.value}
+                                  className={cn(
+                                    'flex cursor-pointer flex-col gap-1.5 rounded-2xl border p-4 transition-colors',
+                                    field.value === opt.value
+                                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                      : 'border-border bg-white hover:bg-secondary/40'
+                                  )}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <RadioGroupItem value={opt.value} id={`maturity-${opt.value}`} />
+                                    <span className="text-sm font-medium text-foreground">{opt.label}</span>
+                                  </div>
+                                  <p className="pl-6 text-xs text-muted-foreground">{opt.description}</p>
+                                </label>
+                              ))}
+                            </RadioGroup>
+                          </FormControl>
+                          <FormDescription>
+                            This calibrates guidance throughout the wizard — first-time organizations see &quot;getting started&quot; recommendations instead of remediation language.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </StepShell>
               ) : null}
@@ -498,6 +550,16 @@ export function PolicyWizard() {
                   description="Capture the organizational controls that auditors evaluate for CC1 (Control Environment), CC4 (Monitoring), and CC1.4 (Competence). These questions determine which governance documents and evidence the checklist will generate."
                 >
                   <div className="space-y-6">
+                    {form.watch('company.complianceMaturity') === 'first-time' && (
+                      <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm space-y-1">
+                        <p className="font-semibold text-blue-900">First-time compliance guidance</p>
+                        <p className="text-xs text-blue-700">
+                          Answer each question based on what your organization <strong>currently does</strong> — not what you plan to do.
+                          If you haven&apos;t established a practice yet, select &ldquo;Not yet&rdquo; where available or leave the checkbox unchecked.
+                          The wizard will generate the policies needed to establish each practice from scratch.
+                        </p>
+                      </div>
+                    )}
                     <div className="space-y-3 rounded-2xl bg-secondary/50 p-4">
                       <p className="text-sm font-medium text-foreground">Integrity & ethical values (CC1.1)</p>
                       <FormField control={form.control} name="governance.hasEmployeeHandbook" render={({ field }) => (
@@ -520,7 +582,19 @@ export function PolicyWizard() {
                               {acknowledgementCadenceOptions.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                             </select>
                           </FormControl>
-                          <FormDescription>How often employees re-acknowledge the code of conduct and security policies.</FormDescription>
+                          <FormDescription>
+                            How often employees sign or digitally confirm they have read and agree to the code of conduct and security policies.
+                            {field.value === 'not-yet' && (
+                              <span className="mt-1 block rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-blue-700">
+                                <strong>Getting started:</strong> The most common starting point is &quot;At hire + annual renewal&quot;. This means every new employee signs at onboarding, and all employees re-sign once a year. Most SOC 2 auditors consider annual renewal sufficient for Type II. You can use a simple DocuSign, Google Form, or HR system acknowledgement — it doesn&apos;t need to be a formal tool.
+                              </span>
+                            )}
+                            {field.value === 'hire-only' && (
+                              <span className="mt-1 block rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-amber-700">
+                                <strong>Auditor note:</strong> At-hire-only acknowledgement is the minimum. SOC 2 auditors generally prefer annual renewals to evidence ongoing awareness. Consider upgrading to annual if you plan a Type II audit.
+                              </span>
+                            )}
+                          </FormDescription>
                         </FormItem>
                       )} />
                       <FormField control={form.control} name="governance.hasDisciplinaryProcedures" render={({ field }) => (
@@ -644,6 +718,13 @@ export function PolicyWizard() {
                               {trainingCadenceOptions.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                             </select>
                           </FormControl>
+                          {field.value === 'not-yet' && (
+                            <FormDescription>
+                              <span className="block rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-blue-700">
+                                <strong>Getting started:</strong> Security awareness training doesn&apos;t require a paid platform to start. A recorded lunch-and-learn, a written guide, or a short video counts. The key requirement is that completion is <em>tracked</em> and employees sign off. Free options include Google Forms with a quiz at the end, or a simple spreadsheet log.
+                              </span>
+                            </FormDescription>
+                          )}
                         </FormItem>
                       )} />
                       <FormField control={form.control} name="training.hasPhishingSimulation" render={({ field }) => (

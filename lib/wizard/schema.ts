@@ -3,6 +3,8 @@ import { z } from 'zod';
 export const subserviceReviewCadenceSchema = z.enum(['annual', 'semi-annual', 'quarterly']);
 export const assuranceReportTypeSchema = z.enum(['soc2-type2', 'soc2-type1', 'soc1', 'iso27001', 'pentest-letter', 'other', 'none']);
 export const controlInclusionSchema = z.enum(['inclusive', 'carve-out']);
+export const orgAgeSchema = z.enum(['<1', '1-3', '3-10', '10+']);
+export const complianceMaturitySchema = z.enum(['first-time', 'some-experience', 'established']);
 
 const subserviceSchema = z.object({
   name: z.string().trim().min(1, 'Vendor name is required'),
@@ -20,11 +22,11 @@ export const cloudProviderSchema = z.enum(['aws', 'azure', 'gcp']);
 export const idpProviderSchema = z.enum(['Entra ID', 'Okta', 'Google Workspace', 'JumpCloud', 'Other']);
 export const vcsProviderSchema = z.enum(['GitHub', 'Azure DevOps', 'GitLab', 'Bitbucket', 'Other']);
 export const hrisProviderSchema = z.enum(['Rippling', 'BambooHR', 'Workday', 'Gusto', 'Other']);
-export const acknowledgementCadenceSchema = z.enum(['hire-only', 'hire-and-annual', 'hire-and-quarterly']);
+export const acknowledgementCadenceSchema = z.enum(['not-yet', 'hire-only', 'hire-and-annual', 'hire-and-quarterly']);
 export const orgChartMaintenanceSchema = z.enum(['hris-auto', 'manual-quarterly', 'manual-annual', 'ad-hoc']);
 export const boardMeetingFrequencySchema = z.enum(['monthly', 'quarterly', 'semi-annual', 'annual', 'n-a']);
 export const internalAuditFrequencySchema = z.enum(['annual', 'semi-annual', 'quarterly', 'n-a']);
-export const trainingCadenceSchema = z.enum(['onboarding-only', 'onboarding-and-annual', 'onboarding-and-quarterly']);
+export const trainingCadenceSchema = z.enum(['not-yet', 'onboarding-only', 'onboarding-and-annual', 'onboarding-and-quarterly']);
 export const phishingFrequencySchema = z.enum(['monthly', 'quarterly', 'semi-annual', 'n-a']);
 export const penTestFrequencySchema = z.enum(['annual', 'semi-annual', 'quarterly', 'none']);
 export const policyPublicationMethodSchema = z.enum(['intranet', 'wiki', 'sharepoint', 'confluence', 'notion', 'other']);
@@ -38,6 +40,8 @@ export const wizardSchema = z.object({
     primaryContactName: z.string().trim().min(2, 'Primary contact is required'),
     primaryContactEmail: z.string().trim().email('Enter a valid contact email'),
     industry: z.string().trim().min(2, 'Industry is required'),
+    orgAge: orgAgeSchema,
+    complianceMaturity: complianceMaturitySchema,
   }),
   governance: z.object({
     hasEmployeeHandbook: z.boolean(),
@@ -196,6 +200,8 @@ export const wizardSchema = z.object({
 });
 
 export type WizardData = z.infer<typeof wizardSchema>;
+export type OrgAge = z.infer<typeof orgAgeSchema>;
+export type ComplianceMaturity = z.infer<typeof complianceMaturitySchema>;
 export type SubserviceInput = z.infer<typeof subserviceSchema>;
 export type InfrastructureType = z.infer<typeof infrastructureTypeSchema>;
 export type CloudProvider = z.infer<typeof cloudProviderSchema>;
@@ -213,11 +219,13 @@ export const defaultWizardValues: WizardData = {
     primaryContactName: '',
     primaryContactEmail: '',
     industry: '',
+    orgAge: '<1' as const,
+    complianceMaturity: 'first-time' as const,
   },
   governance: {
     hasEmployeeHandbook: false,
     hasCodeOfConduct: false,
-    acknowledgementCadence: 'hire-and-annual',
+    acknowledgementCadence: 'not-yet' as const,
     hasDisciplinaryProcedures: false,
     hasBoardOrAdvisory: false,
     boardMeetingFrequency: 'quarterly',
@@ -232,7 +240,7 @@ export const defaultWizardValues: WizardData = {
   },
   training: {
     securityAwarenessTrainingTool: '',
-    trainingCadence: 'onboarding-and-annual',
+    trainingCadence: 'not-yet' as const,
     hasPhishingSimulation: false,
     phishingSimulationFrequency: 'n-a',
     hasSecurityBulletinSubscription: false,
@@ -487,10 +495,36 @@ export const controlInclusionOptions = [
   { value: 'carve-out', label: 'Carve-out — controls excluded, covered by vendor report' },
 ] as const;
 
+export const orgAgeOptions = [
+  { value: '<1',   label: 'Less than 1 year old' },
+  { value: '1-3',  label: '1–3 years old' },
+  { value: '3-10', label: '3–10 years old' },
+  { value: '10+',  label: 'More than 10 years old' },
+] as const;
+
+export const complianceMaturityOptions = [
+  {
+    value: 'first-time',
+    label: 'First time',
+    description: 'We have never formally addressed SOC 2 or similar compliance. Most practices are informal or not yet established.',
+  },
+  {
+    value: 'some-experience',
+    label: 'Some experience',
+    description: 'We have informal security practices in place and have thought about compliance, but have not completed a formal audit.',
+  },
+  {
+    value: 'established',
+    label: 'Established program',
+    description: 'We have completed at least one formal compliance exercise (audit, assessment, or certification) and have documented controls.',
+  },
+] as const;
+
 export const acknowledgementCadenceOptions = [
-  { value: 'hire-only', label: 'At hire only' },
-  { value: 'hire-and-annual', label: 'At hire + annual renewal' },
-  { value: 'hire-and-quarterly', label: 'At hire + quarterly renewal' },
+  { value: 'not-yet',           label: 'Not yet — we haven\'t established this practice' },
+  { value: 'hire-only',         label: 'At hire only' },
+  { value: 'hire-and-annual',   label: 'At hire + annual renewal' },
+  { value: 'hire-and-quarterly',label: 'At hire + quarterly renewal' },
 ] as const;
 
 export const orgChartMaintenanceOptions = [
@@ -516,9 +550,10 @@ export const internalAuditFrequencyOptions = [
 ] as const;
 
 export const trainingCadenceOptions = [
-  { value: 'onboarding-only', label: 'During onboarding only' },
-  { value: 'onboarding-and-annual', label: 'Onboarding + annual renewal' },
-  { value: 'onboarding-and-quarterly', label: 'Onboarding + quarterly renewal' },
+  { value: 'not-yet',                    label: 'Not yet — no formal training program exists' },
+  { value: 'onboarding-only',            label: 'During onboarding only' },
+  { value: 'onboarding-and-annual',      label: 'Onboarding + annual renewal' },
+  { value: 'onboarding-and-quarterly',   label: 'Onboarding + quarterly renewal' },
 ] as const;
 
 export const phishingFrequencyOptions = [
