@@ -16,6 +16,28 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_ROOT"
 
+# ── Port utilities ─────────────────────────────────────────────────────────────
+# Returns 0 (true) if the port is NOT bound on any interface.
+is_port_free() {
+  local port=$1
+  if command -v ss &>/dev/null; then
+    ! ss -tlnp 2>/dev/null | grep -qE ":${port}[[:space:]]"
+  elif command -v nc &>/dev/null; then
+    ! nc -z 127.0.0.1 "$port" 2>/dev/null
+  else
+    ! (bash -c ">/dev/tcp/127.0.0.1/$port" 2>/dev/null)
+  fi
+}
+
+# Prints first free port in [start, start+range) or fails.
+find_free_port() {
+  local start=$1 count=${2:-10}
+  for ((p=start; p<start+count; p++)); do
+    if is_port_free "$p"; then echo "$p"; return 0; fi
+  done
+  fail "No free port found in range ${start}–$((start+count-1)). Free a port and retry."
+}
+
 # ── 1. Node version ───────────────────────────────────────────────────────────
 step "Checking Node.js"
 NODE_MAJOR=$(node -e "process.stdout.write(process.versions.node.split('.')[0])" 2>/dev/null) || fail "Node.js not found. Install Node 20+."
@@ -35,13 +57,32 @@ fi
 SUPA_CMD="npx supabase"
 ok "Supabase CLI ready"
 
-# ── 4. Start Supabase ─────────────────────────────────────────────────────────
+# ── 4. Check Supabase ports before starting ───────────────────────────────────
+step "Checking Supabase port availability"
+SUPA_PORTS=(54321 54322 54327)
+SUPA_LABELS=("API" "DB" "Analytics")
+SUPA_CONFLICT=0
+for i in "${!SUPA_PORTS[@]}"; do
+  p="${SUPA_PORTS[$i]}"
+  label="${SUPA_LABELS[$i]}"
+  if ! is_port_free "$p"; then
+    warn "Port $p (Supabase ${label}) is already in use — Supabase may already be running or another process owns it."
+    SUPA_CONFLICT=1
+  fi
+done
+if [[ "$SUPA_CONFLICT" -eq 0 ]]; then
+  ok "Supabase ports 54321/54322/54327 are free"
+else
+  warn "Supabase start will attempt to reuse the running instance. If it fails, run: npx supabase stop && bash scripts/setup.sh"
+fi
+
+# ── 5. Start Supabase ─────────────────────────────────────────────────────────
 step "Starting Supabase local stack"
 $SUPA_CMD start 2>&1 | grep -E '(Starting|Applying|Seeding|Started|Error|failed)' || true
 ok "Supabase stack started"
 
-# ── 5. Parse supabase status → .env.local ─────────────────────────────────────
-step "Generating .env.local from supabase status"
+# ── 6. Parse supabase status → env vars ──────────────────────────────────────
+step "Reading Supabase connection details"
 
 PROJECT_URL=""; ANON_KEY=""; SERVICE_KEY=""
 
@@ -56,8 +97,8 @@ fi
 if [[ -z "$PROJECT_URL" || -z "$ANON_KEY" || -z "$SERVICE_KEY" ]]; then
   STATUS=$($SUPA_CMD status 2>/dev/null)
   [[ -z "$PROJECT_URL" ]] && PROJECT_URL=$(echo "$STATUS" | grep -i "Project URL\|api_url" | grep -oE 'https?://[^[:space:]]+' | head -1)
-  [[ -z "$ANON_KEY" ]]    && ANON_KEY=$(echo    "$STATUS" | grep -i "Publishable\|anon_key" | grep -oE 'sb_publishable_[A-Za-z0-9_-]+' | head -1)
-  [[ -z "$SERVICE_KEY" ]] && SERVICE_KEY=$(echo "$STATUS" | grep -i "Secret\|service_role"  | grep -oE 'sb_secret_[A-Za-z0-9_-]+'      | head -1)
+  [[ -z "$ANON_KEY" ]]    && ANON_KEY=$(echo    "$STATUS" | grep -i "Publishable\|anon_key" | grep -oE 'sb_publishable_[A-Za-z0-9_-]+|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+' | head -1)
+  [[ -z "$SERVICE_KEY" ]] && SERVICE_KEY=$(echo "$STATUS" | grep -i "Secret\|service_role"  | grep -oE 'sb_secret_[A-Za-z0-9_-]+|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+'      | head -1)
 fi
 
 # Strategy 3: well-known local dev defaults (always correct for stock config)
@@ -65,37 +106,54 @@ fi
 [[ -z "$ANON_KEY" ]]    && fail "Could not determine anon key. Run: npx supabase status"
 [[ -z "$SERVICE_KEY" ]] && fail "Could not determine service role key. Run: npx supabase status"
 
+ok "Supabase connection details parsed"
+
+# ── 7. Detect free Next.js port ───────────────────────────────────────────────
+step "Detecting available port for Next.js dev server"
+NEXTJS_PORT=$(find_free_port 3000 10)
+if [[ "$NEXTJS_PORT" -ne 3000 ]]; then
+  warn "Port 3000 is occupied (Grafana or another service). Next.js will use port ${NEXTJS_PORT}."
+else
+  ok "Port 3000 is free"
+fi
+ok "Next.js will bind to port ${NEXTJS_PORT}"
+
+# ── 8. Write .env.local ───────────────────────────────────────────────────────
+step "Generating .env.local"
+
 # Compare against any existing .env.local and warn on drift
 if [[ -f .env.local ]]; then
   EXISTING_URL=$(grep -i 'NEXT_PUBLIC_SUPABASE_URL'     .env.local | cut -d= -f2- | tr -d '[:space:]"' || true)
   EXISTING_ANON=$(grep -i 'NEXT_PUBLIC_SUPABASE_ANON_KEY' .env.local | cut -d= -f2- | tr -d '[:space:]"' || true)
   EXISTING_SVC=$(grep -i 'SUPABASE_SERVICE_ROLE_KEY'    .env.local | cut -d= -f2- | tr -d '[:space:]"' || true)
+  EXISTING_PORT=$(grep -i '^PORT='                       .env.local | cut -d= -f2- | tr -d '[:space:]"' || true)
 
   DRIFT=0
-  [[ "$EXISTING_URL"  != "$PROJECT_URL" ]] && { warn "URL mismatch:  existing=$EXISTING_URL  new=$PROJECT_URL";   DRIFT=1; }
-  [[ "$EXISTING_ANON" != "$ANON_KEY" ]]    && { warn "Anon key mismatch — keys have rotated or env is stale";     DRIFT=1; }
-  [[ "$EXISTING_SVC"  != "$SERVICE_KEY" ]] && { warn "Service key mismatch — keys have rotated or env is stale";  DRIFT=1; }
+  [[ "$EXISTING_URL"  != "$PROJECT_URL" ]]   && { warn "URL mismatch:  existing=$EXISTING_URL  new=$PROJECT_URL";  DRIFT=1; }
+  [[ "$EXISTING_ANON" != "$ANON_KEY" ]]       && { warn "Anon key mismatch — keys have rotated or env is stale";   DRIFT=1; }
+  [[ "$EXISTING_SVC"  != "$SERVICE_KEY" ]]    && { warn "Service key mismatch — keys have rotated or env is stale"; DRIFT=1; }
+  [[ "$EXISTING_PORT" != "$NEXTJS_PORT" ]]    && { warn "PORT mismatch: existing=${EXISTING_PORT:-unset}  new=${NEXTJS_PORT}"; DRIFT=1; }
 
   if [[ "$DRIFT" -eq 0 ]]; then
     ok ".env.local already correct — no changes needed"
   else
-    warn "Overwriting .env.local with values from running Supabase instance"
-    printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nNEXT_PUBLIC_SUPABASE_ANON_KEY=%s\nSUPABASE_SERVICE_ROLE_KEY=%s\n' \
-      "$PROJECT_URL" "$ANON_KEY" "$SERVICE_KEY" > .env.local
+    warn "Overwriting .env.local with current values"
+    printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nNEXT_PUBLIC_SUPABASE_ANON_KEY=%s\nSUPABASE_SERVICE_ROLE_KEY=%s\nPORT=%s\n' \
+      "$PROJECT_URL" "$ANON_KEY" "$SERVICE_KEY" "$NEXTJS_PORT" > .env.local
     ok ".env.local updated"
   fi
 else
-  # Write fresh — printf ensures Unix line endings, no quotes, no backslashes
-  printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nNEXT_PUBLIC_SUPABASE_ANON_KEY=%s\nSUPABASE_SERVICE_ROLE_KEY=%s\n' \
-    "$PROJECT_URL" "$ANON_KEY" "$SERVICE_KEY" > .env.local
+  printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nNEXT_PUBLIC_SUPABASE_ANON_KEY=%s\nSUPABASE_SERVICE_ROLE_KEY=%s\nPORT=%s\n' \
+    "$PROJECT_URL" "$ANON_KEY" "$SERVICE_KEY" "$NEXTJS_PORT" > .env.local
   ok ".env.local created"
 fi
 
 echo "  NEXT_PUBLIC_SUPABASE_URL=$PROJECT_URL"
-echo "  NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+echo "  NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY:0:20}…"
 echo "  SUPABASE_SERVICE_ROLE_KEY=${SERVICE_KEY:0:12}…"
+echo "  PORT=$NEXTJS_PORT"
 
-# ── 6. Create evidence storage bucket ─────────────────────────────────────────
+# ── 9. Create evidence storage bucket ─────────────────────────────────────────
 step "Creating evidence storage bucket"
 BUCKET_RESPONSE=$(curl -s -X POST "${PROJECT_URL}/storage/v1/bucket" \
   -H "Authorization: Bearer ${SERVICE_KEY}" \
@@ -115,7 +173,7 @@ else
   warn "Evidence ingestion (test plan §6) may be unavailable."
 fi
 
-# ── 7. Verify template seed ───────────────────────────────────────────────────
+# ── 10. Verify template seed ──────────────────────────────────────────────────
 step "Verifying template seed"
 DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
 TEMPLATE_COUNT=$(PGPASSWORD=postgres psql "$DB_URL" -t -c "SELECT COUNT(*) FROM public.templates;" 2>/dev/null | tr -d '[:space:]')
@@ -128,15 +186,14 @@ else
   fail "Expected ≥16 templates, found $TEMPLATE_COUNT. Run: npx supabase db reset"
 fi
 
-# ── 8. Production build ───────────────────────────────────────────────────────
+# ── 11. Production build ──────────────────────────────────────────────────────
 step "Running production build"
 npm run build 2>&1 | grep -E '(Compiled|error|Error|warn|✓|✗|Route)' | grep -v '^$' || true
 
-# Confirm build succeeded by checking for .next/
 [[ -d ".next" ]] || fail "Build failed — .next/ directory not created."
 ok "Build passed"
 
-# ── 9. Optional integrations guidance ────────────────────────────────────────
+# ── 12. Optional integrations guidance ───────────────────────────────────────
 step "Optional integrations (configure after first login)"
 cat <<'GUIDE'
   Evidence storage    — always local (Supabase DB + Storage bucket). No setup needed.
@@ -169,5 +226,5 @@ echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${GREEN}  Setup complete. Start the dev server with:${NC}"
 echo -e "${GREEN}    npm run dev${NC}"
-echo -e "${GREEN}  Then open: http://localhost:3000/signup${NC}"
+echo -e "${GREEN}  Then open: http://localhost:${NEXTJS_PORT}/signup${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
