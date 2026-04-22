@@ -5,6 +5,7 @@ import {
   archiveSelectedGeneratedDocsAction,
   exportToAzureDevOpsFromDashboardAction,
   exportToGithubFromDashboardAction,
+  regenerateAllDocsAction,
 } from '@/app/(dashboard)/generated-docs/actions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,20 +41,34 @@ export default async function GeneratedDocsPage({
   const errorMessage = typeof resolvedSearchParams.error === 'string' ? resolvedSearchParams.error : null;
   const isAdmin = context.organization.role === 'admin';
 
+
   const supabase = await createSupabaseServerClient();
-  const { data: docs, error } = await supabase
-    .from('generated_docs')
-    .select('id, title, file_name, status, version, updated_at, content_markdown, committed_to_repo, pr_url, templates(name, slug)')
-    .eq('organization_id', context.organization.id)
-    .order('updated_at', { ascending: false });
+  const [{ data: docs, error }, { data: draft }] = await Promise.all([
+    supabase
+      .from('generated_docs')
+      .select('id, title, file_name, status, version, updated_at, content_markdown, committed_to_repo, pr_url, templates(name, slug)')
+      .eq('organization_id', context.organization.id)
+      .order('updated_at', { ascending: false }),
+    supabase
+      .from('wizard_drafts')
+      .select('updated_at')
+      .eq('organization_id', context.organization.id)
+      .maybeSingle(),
+  ]);
 
   if (error) {
     throw new Error(`Unable to load generated docs: ${error.message}`);
   }
 
+  const draftUpdatedAt = draft?.updated_at ? new Date(draft.updated_at) : null;
+  const staleDocs = draftUpdatedAt && docs
+    ? docs.filter((doc) => doc.status !== 'archived' && new Date(doc.updated_at) < draftUpdatedAt)
+    : [];
+
   const draftCount = docs?.filter((doc) => doc.status === 'draft').length ?? 0;
   const approvedCount = docs?.filter((doc) => doc.status === 'approved').length ?? 0;
   const archivedCount = docs?.filter((doc) => doc.status === 'archived').length ?? 0;
+  const canRegenerate = ['admin', 'editor'].includes(context.organization.role);
 
   return (
     <div className="space-y-6">
@@ -72,6 +87,23 @@ export default async function GeneratedDocsPage({
         <CardContent className="space-y-4">
           {successMessage ? <p className="rounded-2xl bg-primary/10 px-4 py-3 text-sm text-primary">{successMessage}</p> : null}
           {errorMessage ? <p className="rounded-2xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{errorMessage}</p> : null}
+          {staleDocs.length > 0 ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Org profile updated since last generation</p>
+                <p className="text-xs text-amber-700">
+                  {staleDocs.length} document{staleDocs.length === 1 ? '' : 's'} may be out of date. Last profile update: {draftUpdatedAt ? draftUpdatedAt.toLocaleString() : ''}
+                </p>
+              </div>
+              {canRegenerate ? (
+                <form action={regenerateAllDocsAction}>
+                  <Button type="submit" size="sm" variant="outline" className="border-amber-300 text-amber-800 hover:bg-amber-100">
+                    Update All Documents
+                  </Button>
+                </form>
+              ) : null}
+            </div>
+          ) : null}
           <div className="flex flex-wrap gap-2 text-sm">
             <Badge variant="secondary">Draft: {draftCount}</Badge>
             <Badge className="bg-emerald-100 text-emerald-700">Approved: {approvedCount}</Badge>

@@ -249,6 +249,77 @@ export async function regenerateDocAction(formData: FormData) {
   redirect(buildGeneratedDocRoute(documentId, 'success=Document+regenerated+from+saved+wizard+data'));
 }
 
+export async function regenerateAllDocsAction() {
+  const context = await getDashboardContext();
+  if (!context?.organization) redirect('/login');
+
+  if (!['admin', 'editor'].includes(context.organization.role)) {
+    redirect(buildGeneratedDocsRoute('error=Only%20admins%20and%20editors%20can%20regenerate%20documents'));
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data: draft } = await supabase
+    .from('wizard_drafts')
+    .select('payload')
+    .eq('organization_id', context.organization.id)
+    .maybeSingle();
+
+  if (!draft?.payload) {
+    redirect(buildGeneratedDocsRoute('error=No%20org%20profile%20found.%20Complete%20the%20wizard%20first.'));
+  }
+
+  const parsed = wizardSchema.safeParse(draft.payload);
+  if (!parsed.success) {
+    redirect(buildGeneratedDocsRoute('error=Org%20profile%20is%20invalid.%20Re-run%20the%20wizard.'));
+  }
+
+  const payload = { ...buildTemplatePayload(parsed.data), wizard_data: parsed.data };
+
+  const { data: docs } = await supabase
+    .from('generated_docs')
+    .select('id, templates(name, output_filename_pattern, markdown_template, default_variables)')
+    .eq('organization_id', context.organization.id)
+    .neq('status', 'archived');
+
+  if (!docs?.length) {
+    redirect(buildGeneratedDocsRoute('error=No%20active%20documents%20to%20regenerate'));
+  }
+
+  let successCount = 0;
+  for (const doc of docs) {
+    const template = Array.isArray(doc.templates) ? doc.templates[0] : doc.templates;
+    if (!template) continue;
+
+    const mergedVariables = { ...(template.default_variables ?? {}), ...payload };
+    let newFilename: string;
+    let newContent: string;
+    try {
+      newFilename = renderTemplate(template.output_filename_pattern, mergedVariables, template.name);
+      newContent = renderTemplate(template.markdown_template, mergedVariables, template.name);
+    } catch {
+      continue;
+    }
+
+    const { error: updateError } = await supabase
+      .from('generated_docs')
+      .update({ file_name: newFilename, content_markdown: newContent, status: 'draft' })
+      .eq('id', doc.id);
+
+    if (!updateError) {
+      await supabase.rpc('insert_document_revision', {
+        p_document_id: doc.id,
+        p_source: 'generated',
+        p_content_markdown: newContent,
+      });
+      successCount++;
+    }
+  }
+
+  revalidatePath('/generated-docs');
+  redirect(buildGeneratedDocsRoute(`success=Regenerated%20${successCount}%20document${successCount === 1 ? '' : 's'}%20from%20current%20org%20profile`));
+}
+
 export async function exportToGithubFromDashboardAction(formData: FormData) {
   const result = await exportApprovedDocsToGithubAction(formData);
 

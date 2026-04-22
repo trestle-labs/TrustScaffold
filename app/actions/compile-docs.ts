@@ -30,6 +30,15 @@ export async function compileDocsAction(rawWizardData: WizardData): Promise<Comp
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Wizard payload failed validation' };
   }
 
+  const { company, scope } = parsed.data;
+  const missing: string[] = [];
+  if (!company.name?.trim()) missing.push('Company name (Step 0 — Company Info)');
+  if (!scope.systemName?.trim()) missing.push('System name (System Scope step)');
+  if (!scope.systemDescription?.trim()) missing.push('System description (System Scope step)');
+  if (missing.length) {
+    return { ok: false, error: `Required fields missing: ${missing.join('; ')}` };
+  }
+
   const context = await getDashboardContext();
 
   if (!context?.organization) {

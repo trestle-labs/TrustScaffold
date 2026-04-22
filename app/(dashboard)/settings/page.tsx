@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
+import { updateOrgProfileAction } from '@/app/actions/org-profile';
 import { deleteIntegrationAction, deleteIntegrationTokenAction, saveIntegrationAction } from './actions';
 import {
   createAuditSnapshotAction,
@@ -46,6 +47,8 @@ export default async function SettingsPage({
 
   return (
     <div className="space-y-6">
+      <OrgProfileSection organizationId={context.organization.id} role={context.organization.role} />
+
       <Card>
         <CardHeader>
           <CardTitle>Settings</CardTitle>
@@ -217,6 +220,158 @@ export default async function SettingsPage({
 
       <ControlGraphSection organizationId={context.organization.id} isAdmin={isAdmin} />
     </div>
+  );
+}
+
+async function OrgProfileSection({ organizationId, role }: { organizationId: string; role: string }) {
+  const supabase = await createSupabaseServerClient();
+  const { data: draft } = await supabase
+    .from('wizard_drafts')
+    .select('payload, updated_at')
+    .eq('organization_id', organizationId)
+    .maybeSingle();
+
+  const canEdit = ['admin', 'editor'].includes(role);
+
+  if (!draft?.payload) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Org Profile</CardTitle>
+          <CardDescription>Central source of truth for tool names and contacts that propagate into all generated documents.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No org profile yet. Complete the Policy Wizard to establish your profile — then return here to update individual fields without re-running the full wizard.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  type Payload = {
+    company?: { primaryContactName?: string; primaryContactEmail?: string; complianceMaturity?: string; targetAuditType?: string };
+    governance?: { securityOfficerTitle?: string };
+    infrastructure?: { idpProvider?: string };
+    securityTooling?: { siemTool?: string; endpointProtectionTool?: string; monitoringTool?: string; vulnerabilityScanningTool?: string };
+    operations?: { ticketingSystem?: string; hrisProvider?: string; onCallTool?: string; versionControlSystem?: string };
+  };
+
+  const p = draft.payload as Payload;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Org Profile</CardTitle>
+        <CardDescription>
+          Changes here propagate into all documents when you click &ldquo;Update All Documents&rdquo; on the Generated Documents page.
+          Last updated: {new Date(draft.updated_at).toLocaleString()}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {canEdit ? (
+          <form action={updateOrgProfileAction} className="space-y-6">
+            <div className="grid gap-6 sm:grid-cols-2">
+
+              {/* Key Personnel */}
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-foreground">Key Personnel</p>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground" htmlFor="primaryContactName">Security / Compliance Lead</label>
+                  <Input id="primaryContactName" name="primaryContactName" defaultValue={p.company?.primaryContactName ?? ''} placeholder="Jane Smith" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground" htmlFor="primaryContactEmail">Security Contact Email</label>
+                  <Input id="primaryContactEmail" name="primaryContactEmail" type="email" defaultValue={p.company?.primaryContactEmail ?? ''} placeholder="security@example.com" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground" htmlFor="securityOfficerTitle">Security Officer Title</label>
+                  <Input id="securityOfficerTitle" name="securityOfficerTitle" defaultValue={p.governance?.securityOfficerTitle ?? ''} placeholder="CISO" />
+                </div>
+              </div>
+
+              {/* Security Tooling */}
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-foreground">Security Tooling</p>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground" htmlFor="siemTool">SIEM</label>
+                  <Input id="siemTool" name="siemTool" defaultValue={p.securityTooling?.siemTool ?? ''} placeholder="Splunk, Datadog, Elastic…" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground" htmlFor="endpointProtectionTool">Endpoint Protection</label>
+                  <Input id="endpointProtectionTool" name="endpointProtectionTool" defaultValue={p.securityTooling?.endpointProtectionTool ?? ''} placeholder="CrowdStrike, SentinelOne…" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground" htmlFor="monitoringTool">Monitoring & Observability</label>
+                  <Input id="monitoringTool" name="monitoringTool" defaultValue={p.securityTooling?.monitoringTool ?? ''} placeholder="Datadog, Grafana, New Relic…" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground" htmlFor="vulnerabilityScanningTool">Vulnerability Scanner</label>
+                  <Input id="vulnerabilityScanningTool" name="vulnerabilityScanningTool" defaultValue={p.securityTooling?.vulnerabilityScanningTool ?? ''} placeholder="Tenable, Qualys, Wiz…" />
+                </div>
+              </div>
+
+              {/* Identity & Operations */}
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-foreground">Identity & Operations</p>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground" htmlFor="idpProvider">Identity Provider</label>
+                  <Input id="idpProvider" name="idpProvider" defaultValue={p.infrastructure?.idpProvider ?? ''} placeholder="Okta, Entra ID, Google…" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground" htmlFor="ticketingSystem">Ticketing System</label>
+                  <Input id="ticketingSystem" name="ticketingSystem" defaultValue={p.operations?.ticketingSystem ?? ''} placeholder="Jira, Linear, GitHub Issues…" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground" htmlFor="hrisProvider">HRIS</label>
+                  <Input id="hrisProvider" name="hrisProvider" defaultValue={p.operations?.hrisProvider ?? ''} placeholder="Rippling, Workday, BambooHR…" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground" htmlFor="onCallTool">On-Call / Escalation</label>
+                  <Input id="onCallTool" name="onCallTool" defaultValue={p.operations?.onCallTool ?? ''} placeholder="PagerDuty, Opsgenie…" />
+                </div>
+              </div>
+
+              {/* Compliance Posture */}
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-foreground">Compliance Posture</p>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground" htmlFor="complianceMaturity">Maturity Level</label>
+                  <select
+                    id="complianceMaturity"
+                    name="complianceMaturity"
+                    defaultValue={p.company?.complianceMaturity ?? 'first-time'}
+                    className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="first-time">First time — just getting started</option>
+                    <option value="some-experience">Some experience — practices exist, not documented</option>
+                    <option value="established">Established — documented and operating</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground" htmlFor="targetAuditType">Target Audit Type</label>
+                  <select
+                    id="targetAuditType"
+                    name="targetAuditType"
+                    defaultValue={p.company?.targetAuditType ?? 'unsure'}
+                    className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="type1">Type I — point-in-time design review</option>
+                    <option value="type2">Type II — operating effectiveness over period</option>
+                    <option value="unsure">Not sure yet</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Saving updates your org profile. Go to Generated Documents and click &ldquo;Update All Documents&rdquo; to propagate changes into your policy drafts.
+            </p>
+            <Button type="submit">Save org profile</Button>
+          </form>
+        ) : (
+          <p className="text-sm text-muted-foreground">Only admins and editors can update the org profile.</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

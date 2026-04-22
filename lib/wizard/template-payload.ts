@@ -138,6 +138,15 @@ export function buildTemplatePayload(data: WizardData) {
     has_autoscaling: data.securityTooling.hasAutoscaling,
     log_retention_days: data.securityTooling.logRetentionDays,
 
+    // Compliance maturity & audit type (drives template tone and audit period language)
+    industry: data.company.industry,
+    compliance_maturity: data.company.complianceMaturity,
+    is_first_timer: data.company.complianceMaturity === 'first-time',
+    target_audit_type: data.company.targetAuditType,
+    is_type1: data.company.targetAuditType === 'type1',
+    is_type2: data.company.targetAuditType === 'type2',
+    org_age: data.company.orgAge,
+
     // Extended operations fields (CC2.2, CC2.3, CC3.2, CC3.3, C1.1, C1.2)
     policy_publication_method: data.operations.policyPublicationMethod,
     has_customer_contracts: data.operations.hasCustomerContracts,
