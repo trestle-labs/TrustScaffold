@@ -5,6 +5,7 @@ export const assuranceReportTypeSchema = z.enum(['soc2-type2', 'soc2-type1', 'so
 export const controlInclusionSchema = z.enum(['inclusive', 'carve-out']);
 export const orgAgeSchema = z.enum(['<1', '1-3', '3-10', '10+']);
 export const complianceMaturitySchema = z.enum(['first-time', 'some-experience', 'established']);
+export const targetAuditTypeSchema = z.enum(['type1', 'type2', 'unsure']);
 
 const subserviceSchema = z.object({
   name: z.string().trim().min(1, 'Vendor name is required'),
@@ -42,6 +43,7 @@ export const wizardSchema = z.object({
     industry: z.string().trim().min(2, 'Industry is required'),
     orgAge: orgAgeSchema,
     complianceMaturity: complianceMaturitySchema,
+    targetAuditType: targetAuditTypeSchema,
   }),
   governance: z.object({
     hasEmployeeHandbook: z.boolean(),
@@ -202,6 +204,7 @@ export const wizardSchema = z.object({
 export type WizardData = z.infer<typeof wizardSchema>;
 export type OrgAge = z.infer<typeof orgAgeSchema>;
 export type ComplianceMaturity = z.infer<typeof complianceMaturitySchema>;
+export type TargetAuditType = z.infer<typeof targetAuditTypeSchema>;
 export type SubserviceInput = z.infer<typeof subserviceSchema>;
 export type InfrastructureType = z.infer<typeof infrastructureTypeSchema>;
 export type CloudProvider = z.infer<typeof cloudProviderSchema>;
@@ -221,6 +224,7 @@ export const defaultWizardValues: WizardData = {
     industry: '',
     orgAge: '<1' as const,
     complianceMaturity: 'first-time' as const,
+    targetAuditType: 'unsure' as const,
   },
   governance: {
     hasEmployeeHandbook: false,

@@ -11,6 +11,7 @@ import { compileDocsAction } from '@/app/actions/compile-docs';
 import { getExpectedTemplates } from '@/lib/wizard/template-manifest';
 import { useOrg } from '@/components/providers/org-provider';
 import { AuditorLensCallout } from '@/components/wizard/auditor-lens-callout';
+import { AuditTypeGuidance, recommendAuditType } from '@/components/wizard/audit-type-guidance';
 import { GapAnalysisCard } from '@/components/wizard/gap-analysis-card';
 import { LoneWolfWarning } from '@/components/wizard/lone-wolf-warning';
 import { StepProgressCard } from '@/components/wizard/step-progress-card';
@@ -57,13 +58,14 @@ import {
   wizardSchema,
   wizardStepTitles,
   type WizardData,
+  type TargetAuditType,
 } from '@/lib/wizard/schema';
 import { useWizardStore } from '@/lib/wizard/store';
 import { computeAssessmentSummary, computeStepCompletions } from '@/lib/wizard/security-scoring';
 
 const stepFields: FieldPath<WizardData>[][] = [
   // Step 0: Welcome
-  ['company.name', 'company.website', 'company.primaryContactName', 'company.primaryContactEmail', 'company.industry', 'company.orgAge', 'company.complianceMaturity'],
+  ['company.name', 'company.website', 'company.primaryContactName', 'company.primaryContactEmail', 'company.industry', 'company.orgAge', 'company.complianceMaturity', 'company.targetAuditType'],
   // Step 1: Governance
   ['governance.acknowledgementCadence', 'governance.boardMeetingFrequency', 'governance.orgChartMaintenance', 'governance.internalAuditFrequency', 'training.securityAwarenessTrainingTool', 'training.trainingCadence'],
   // Step 2: System Scope
@@ -513,7 +515,17 @@ export function PolicyWizard() {
                         <FormItem className="md:col-span-2">
                           <FormLabel>What best describes your compliance experience?</FormLabel>
                           <FormControl>
-                            <RadioGroup value={field.value} onValueChange={field.onChange} className="mt-2 grid gap-3 md:grid-cols-3">
+                            <RadioGroup value={field.value} onValueChange={(v) => {
+                              field.onChange(v);
+                              // Auto-update audit type recommendation when maturity changes
+                              const newRec = recommendAuditType(
+                                v as WizardData['company']['complianceMaturity'],
+                                form.getValues('company.orgAge')
+                              );
+                              if (form.getValues('company.targetAuditType') === 'unsure') {
+                                form.setValue('company.targetAuditType', newRec);
+                              }
+                            }} className="mt-2 grid gap-3 md:grid-cols-3">
                               {complianceMaturityOptions.map((opt) => (
                                 <label
                                   key={opt.value}
@@ -536,6 +548,23 @@ export function PolicyWizard() {
                           <FormDescription>
                             This calibrates guidance throughout the wizard — first-time organizations see &quot;getting started&quot; recommendations instead of remediation language.
                           </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="company.targetAuditType"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormControl>
+                            <AuditTypeGuidance
+                              value={field.value}
+                              maturity={form.watch('company.complianceMaturity')}
+                              orgAge={form.watch('company.orgAge')}
+                              onChange={(v: TargetAuditType) => field.onChange(v)}
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -2209,6 +2238,26 @@ export function PolicyWizard() {
                         All required fields passed schema validation. This payload is ready for server-side compilation.
                       </div>
                     )}
+
+                    {/* Audit type summary */}
+                    {(() => {
+                      const auditType = watchedValues.company?.targetAuditType ?? 'unsure';
+                      const auditLabels: Record<string, { label: string; color: string; note: string }> = {
+                        type1: { label: 'SOC 2 Type I', color: 'text-emerald-700 bg-emerald-50 border-emerald-200', note: 'Point-in-time design assessment — ideal for organizations establishing their control environment.' },
+                        type2: { label: 'SOC 2 Type II', color: 'text-blue-700 bg-blue-50 border-blue-200', note: 'Period-of-time operating effectiveness — the standard required by most enterprise customers.' },
+                        unsure: { label: 'Audit type not yet decided', color: 'text-amber-700 bg-amber-50 border-amber-200', note: 'Generated policies satisfy both Type I and Type II requirements. Revisit this in Step 1.' },
+                      };
+                      const meta = auditLabels[auditType] ?? auditLabels.unsure;
+                      return (
+                        <div className={cn('flex items-start gap-3 rounded-2xl border p-4 text-sm', meta.color)}>
+                          <div className="min-w-0 space-y-0.5">
+                            <p className="font-semibold">Target audit: {meta.label}</p>
+                            <p className="text-xs opacity-80">{meta.note}</p>
+                          </div>
+                          <button type="button" onClick={() => jumpToStep(0)} className="shrink-0 text-xs underline underline-offset-2 opacity-70 hover:opacity-100">Change</button>
+                        </div>
+                      );
+                    })()}
 
                     <StepProgressCard completions={stepCompletions} onNavigateToStep={jumpToStep} />
 
