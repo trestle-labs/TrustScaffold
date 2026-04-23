@@ -249,6 +249,7 @@ export function PolicyWizard() {
   });
 
   const [draftSyncStatus, setDraftSyncStatus] = React.useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [maxStepReached, setMaxStepReached] = React.useState(currentStep);
   const watchedInfrastructure = form.watch('infrastructure.type');
   const watchedCloudProviders = form.watch('infrastructure.cloudProviders') ?? [];
   const watchedHostsOwnHardware = form.watch('infrastructure.hostsOwnHardware') ?? false;
@@ -276,6 +277,7 @@ export function PolicyWizard() {
         if (result.ok && result.payload) {
           setData(result.payload);
           setCurrentStep(result.currentStep);
+          setMaxStepReached(result.currentStep);
           form.reset(result.payload);
           setDraftSyncStatus('saved');
         } else {
@@ -301,7 +303,7 @@ export function PolicyWizard() {
   const reviewErrors = reviewParseResult.success ? [] : reviewParseResult.error.issues.map((issue) => issue.message);
 
   const assessmentSummary = useMemo(() => computeAssessmentSummary(watchedValues as WizardData), [watchedValues]);
-  const stepCompletions = useMemo(() => computeStepCompletions(watchedValues as WizardData), [watchedValues]);
+  const stepCompletions = useMemo(() => computeStepCompletions(watchedValues as WizardData, maxStepReached), [watchedValues, maxStepReached]);
 
   // Track which security assessment domains are expanded (all expanded by default)
   const [expandedDomains, setExpandedDomains] = React.useState<Record<string, boolean>>({
@@ -340,6 +342,7 @@ export function PolicyWizard() {
 
     const nextStep = Math.min(currentStep + 1, wizardStepTitles.length - 1);
     setCurrentStep(nextStep);
+    setMaxStepReached((prev) => Math.max(prev, nextStep));
 
     // Persist draft server-side on every step advance
     setDraftSyncStatus('saving');

@@ -186,15 +186,20 @@ export interface StepCompletion {
  * Computes per-step completion status based on the current wizard data.
  * "empty" = no fields touched, "partial" = some filled, "complete" = all required fields present.
  */
-export function computeStepCompletions(data: WizardData): StepCompletion[] {
+// highWaterStep: the furthest step index the user has actively advanced to.
+// Steps at or below this mark are treated as "visited" — a visited step
+// with no affirmative answers shows as 'partial' (reviewed but all-negative)
+// rather than 'empty' (never opened), which is the accurate state for a
+// first-timer who answers every question "No / Not yet".
+export function computeStepCompletions(data: WizardData, highWaterStep = 0): StepCompletion[] {
   const c = data.company;
   const companyFilled = [c.name, c.website, c.primaryContactName, c.primaryContactEmail, c.industry].filter(Boolean).length;
   const companyTotal = 5;
 
   const g = data.governance;
+  // Count any explicit engagement: true booleans OR the training tool name
   const govBools = [g.hasEmployeeHandbook, g.hasCodeOfConduct, g.hasDisciplinaryProcedures, g.hasBoardOrAdvisory, g.hasDedicatedSecurityOfficer, g.hasOrgChart, g.hasJobDescriptions, g.hasInternalAuditProgram, g.hasPerformanceReviewsLinkedToControls];
-  const govFilled = govBools.filter(Boolean).length + (data.training.securityAwarenessTrainingTool ? 1 : 0);
-  const govTotal = govBools.length + 1;
+  const govEngaged = govBools.filter(Boolean).length + (data.training.securityAwarenessTrainingTool ? 1 : 0);
 
   const s = data.scope;
   const scopeFilled = [s.systemName, s.systemDescription].filter(Boolean).length + (s.dataTypesHandled.length > 0 ? 1 : 0);
@@ -202,7 +207,6 @@ export function computeStepCompletions(data: WizardData): StepCompletion[] {
 
   const tsc = data.tscSelections;
   const tscFilled = [tsc.availability, tsc.confidentiality, tsc.processingIntegrity, tsc.privacy].filter(Boolean).length;
-  // TSC always has security=true, so even 0 optional selections is valid
   const tscStatus: StepCompletion['status'] = tscFilled > 0 ? 'complete' : 'partial';
 
   const inf = data.infrastructure;
@@ -211,33 +215,47 @@ export function computeStepCompletions(data: WizardData): StepCompletion[] {
 
   const sa = data.securityAssessment;
   const saStarted = [sa.documentReview.readiness, sa.logReview.readiness, sa.rulesetReview.readiness, sa.configReview.readiness, sa.networkAnalysis.readiness, sa.fileIntegrity.readiness].filter((r) => r !== 'not-started').length;
-  const saTotal = 6;
 
   const st = data.securityTooling;
-  const toolBools = [st.hasIdsIps, st.hasWaf, st.hasMdm, st.hasDast, st.hasAutoscaling];
-  const toolFilled = toolBools.filter(Boolean).length + [st.siemTool, st.endpointProtectionTool, st.vulnerabilityScanningTool, st.monitoringTool].filter(Boolean).length;
-  const toolTotal = toolBools.length + 4;
+  const toolEngaged = [st.hasIdsIps, st.hasWaf, st.hasMdm, st.hasDast, st.hasAutoscaling].filter(Boolean).length
+    + [st.siemTool, st.endpointProtectionTool, st.vulnerabilityScanningTool, st.monitoringTool].filter(Boolean).length;
 
   const o = data.operations;
   const opsFilled = [o.ticketingSystem, o.versionControlSystem, o.onCallTool].filter(Boolean).length;
   const opsTotal = 3;
 
-  function status(filled: number, total: number): StepCompletion['status'] {
+  // Base heuristic — field-count based
+  function fieldStatus(filled: number, total: number): StepCompletion['status'] {
     if (filled === 0) return 'empty';
     if (filled >= total) return 'complete';
     return 'partial';
   }
 
+  // For text-required steps: field count is authoritative; visited floor lifts 'empty' → 'partial'
+  function textStatus(filled: number, total: number, step: number): StepCompletion['status'] {
+    const base = fieldStatus(filled, total);
+    if (base === 'empty' && step <= highWaterStep) return 'partial';
+    return base;
+  }
+
+  // For boolean/choice steps: visited = at least 'partial'; any affirmative answer = 'complete'
+  // This correctly handles first-timers who answer every question "No / Not yet".
+  function choiceStatus(engaged: number, step: number): StepCompletion['status'] {
+    if (step > highWaterStep) return 'empty';
+    if (engaged > 0) return 'complete';
+    return 'partial'; // visited but all-negative answers
+  }
+
   return [
-    { step: 0, label: 'Welcome', status: status(companyFilled, companyTotal) },
-    { step: 1, label: 'Governance', status: status(govFilled, govTotal) },
-    { step: 2, label: 'System Scope', status: status(scopeFilled, scopeTotal) },
-    { step: 3, label: 'TSC Selection', status: tscStatus },
-    { step: 4, label: 'Infrastructure', status: status(infraFilled, infraTotal) },
-    { step: 5, label: 'Security Assessment', status: status(saStarted, saTotal) },
-    { step: 6, label: 'Security Tooling', status: status(toolFilled, toolTotal) },
-    { step: 7, label: 'Operations', status: status(opsFilled, opsTotal) },
-    { step: 8, label: 'Review', status: 'complete' }, // always visitable
-    { step: 9, label: 'Generate', status: 'complete' },
+    { step: 0, label: 'Welcome',             status: textStatus(companyFilled, companyTotal, 0) },
+    { step: 1, label: 'Governance',           status: choiceStatus(govEngaged, 1) },
+    { step: 2, label: 'System Scope',         status: textStatus(scopeFilled, scopeTotal, 2) },
+    { step: 3, label: 'TSC Selection',        status: highWaterStep >= 3 ? tscStatus : 'empty' },
+    { step: 4, label: 'Infrastructure',       status: textStatus(infraFilled, infraTotal, 4) },
+    { step: 5, label: 'Security Assessment',  status: choiceStatus(saStarted, 5) },
+    { step: 6, label: 'Security Tooling',     status: choiceStatus(toolEngaged, 6) },
+    { step: 7, label: 'Operations',           status: textStatus(opsFilled, opsTotal, 7) },
+    { step: 8, label: 'Review',               status: 'complete' },
+    { step: 9, label: 'Generate',             status: 'complete' },
   ];
 }
