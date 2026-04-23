@@ -61,13 +61,13 @@ const domainMeta: Record<DomainKey, { label: string; tscCriteria: string[] }> = 
   },
 };
 
-interface BoolField {
+export interface BoolField {
   field: string;
   gap: string;
   recommendation: string;
 }
 
-const domainBoolFields: Record<DomainKey, BoolField[]> = {
+export const domainBoolFields: Record<DomainKey, BoolField[]> = {
   documentReview: [
     { field: 'hasSecurityPolicyInventory', gap: 'No centralized security policy inventory', recommendation: 'Create a master index of all security policies with owners, review dates, and version numbers.' },
     { field: 'hasNetworkDiagrams', gap: 'Network architecture diagrams missing or outdated', recommendation: 'Generate network topology diagrams from your cloud provider (VPC Visualizer, Azure Network Watcher) and keep them in version control.' },
