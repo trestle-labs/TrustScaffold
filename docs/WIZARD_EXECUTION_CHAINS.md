@@ -60,6 +60,8 @@ The machine-readable source of truth now lives in [lib/wizard/rule-matrix.ts](..
 - `scope.systemName`
 - `scope.systemDescription`
 - `scope.dataTypesHandled`
+- `scope.containsPhi`
+- `scope.hasCardholderDataEnvironment`
 - `subservices[*]`
 
 ### Branches
@@ -76,6 +78,8 @@ The machine-readable source of truth now lives in [lib/wizard/rule-matrix.ts](..
 - Sub-service vendor and role text influence Governance training recommendations.
 - Sub-service count is summarized again in Generate.
 - Data type choices now trigger explicit Privacy contradiction warnings on TSC Selection, Review, and Generate when customer PII is in scope but Privacy TSC is not.
+- The dedicated `PHI in scope` field extends those Privacy warnings and now drives HIPAA-oriented preview and generated-document language.
+- The dedicated `CDE in scope` field drives confidentiality-oriented warnings and now drives PCI segmentation preview and generated-document language.
 
 ### Improvement opportunities
 - Auto-suggest `dataShared` defaults by vendor role, for example IdP -> identities/MFA metadata.
@@ -117,7 +121,8 @@ The machine-readable source of truth now lives in [lib/wizard/rule-matrix.ts](..
 ### Downstream effects
 - Selected TSCs change template count and generated document set.
 - Review and Generate reflect the selected scope.
-- Privacy contradiction warnings now appear immediately on this step when customer PII is selected but Privacy is still out of scope.
+- Privacy contradiction warnings now appear immediately on this step when customer PII or PHI is selected but Privacy is still out of scope.
+- Confidentiality warnings now appear when a cardholder data environment is in scope but Confidentiality remains out of scope.
 
 ### Improvement opportunities
 - Add an impact preview that says “you just added X templates and Y evidence domains.”
@@ -249,6 +254,8 @@ The machine-readable source of truth now lives in [lib/wizard/rule-matrix.ts](..
      - Okta + MFA + GitHub + peer review
      - AWS + Azure + on-premises hybrid
      - privacy data + no Privacy TSC
+   - PHI in scope + Privacy selected + HIPAA review preview
+   - CDE in scope + Confidentiality selected + PCI segmentation preview
 
 ## Recommendation
 

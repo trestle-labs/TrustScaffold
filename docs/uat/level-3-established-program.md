@@ -17,6 +17,21 @@ Validate that the wizard remains efficient and credible for an organization with
 - Governance posture: board or advisory oversight, named security ownership, and documented cadences already exist
 - Infrastructure posture: formal tooling, broader scope, and possible multi-cloud complexity
 
+## Default System Profiles
+
+Use one of these as the concrete provider bundle for this script:
+
+- [SP-4 — Established Multi-Cloud SaaS](./system-profiles.md)
+- [SP-5 — Established Hybrid Cloud + Self-Hosted](./system-profiles.md)
+
+Default assurance posture for Level 3 vendor rows:
+
+- Review cadence: `Quarterly review`
+- Assurance report: `SOC 2 Type II`
+- Control treatment: `Carve-out — controls excluded, covered by vendor report`
+
+If you need to validate a mature provider choice that is not explicitly pre-bundled, keep the Level 3 maturity answers and swap the vendor rows from the catalog in [System Profile Library](./system-profiles.md).
+
 ## Exact Answer Rules
 
 This script should prove that a mature program can complete the wizard without beginner-only friction while still surfacing advanced infrastructure and scope warnings when selected.
@@ -85,13 +100,18 @@ Expected outcome:
 Enter:
 
 - A fully described production system
+- Use the SP-4 or SP-5 description seed so the system narrative matches the selected providers
 - Multiple relevant data types
 - A richer sub-service map, such as:
+  - `AWS`
+  - `Azure`
   - `Okta`
   - `GitHub`
   - `Datadog`
   - `Zendesk`
   - `Rippling`
+
+For an exact baseline, start with the vendor rows from SP-4 or SP-5, then add any extra support tools such as `Datadog` or `Zendesk` to prove the mature vendor inventory remains manageable.
 
 Expected outcome:
 
@@ -143,6 +163,11 @@ Answer:
 - Second pass or follow-up check: keep one or more cloud providers selected and check `We host our own hardware`
 - Select a mature IdP such as `Okta` or `Entra ID`
 
+Keep the rest of the provider bundle aligned to the selected system profile:
+
+- SP-4: `Okta` + `GitHub` + `Workday`
+- SP-5: `Entra ID` + `Azure DevOps` + `Workday`
+
 Expected outcome:
 
 - The multi-cloud warning should appear in the first pass.
@@ -184,6 +209,8 @@ Answer:
 - Peer review required: `Yes`
 - Onboarding and offboarding SLAs: realistic controlled values
 - Policy publication method: choose a real method
+
+If you need mature coverage for `GitLab`, `Bitbucket`, `Google Workspace`, `JumpCloud`, `Rippling`, `BambooHR`, `Gusto`, or `Other`, swap those values from [System Profile Library](./system-profiles.md) while keeping the positive-control expectations intact.
 
 Leave blank because the mature positive branches should suppress them:
 

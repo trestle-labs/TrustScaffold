@@ -473,6 +473,34 @@ These are branch-driven QA clusters derived from the typed wizard rule matrix in
       - Whether the Review trace explained the contradiction clearly.
       - Whether the message was specific enough to act on.
 
+7. **PHI in scope + HIPAA preview path**
+      Setup:
+      - In System Scope, enable `Protected health information (PHI) is in scope`.
+      - Select `Privacy` before going to Review.
+      - Navigate to Review, then Generate.
+      Expected:
+      - Review shows `PHI in scope: Yes`.
+      - Review shows a HIPAA administrative safeguards preview callout.
+      - Generated privacy and system-description drafts include explicit healthcare-regulated language.
+      Report back with:
+      - Whether the PHI scope row appeared correctly.
+      - Whether the review preview explained the generated HIPAA-oriented language clearly.
+      - Whether the generated draft language felt specific enough to be useful.
+
+8. **CDE in scope + PCI preview path**
+      Setup:
+      - In System Scope, enable `Cardholder data environment (CDE) is in scope`.
+      - Select `Confidentiality` before going to Review.
+      - Navigate to Review, then Generate.
+      Expected:
+      - Review shows `CDE in scope: Yes`.
+      - Review shows a PCI segmentation preview callout.
+      - Generated system-description and classification drafts include explicit CDE boundary and segmentation language.
+      Report back with:
+      - Whether the CDE scope row appeared correctly.
+      - Whether the review preview explained the generated PCI-oriented language clearly.
+      - Whether the generated draft language felt specific enough to be useful.
+
 6. **Multi-cloud + hybrid infrastructure path**
       Setup:
       - In Infrastructure, select at least two cloud providers.
@@ -503,6 +531,12 @@ Environment-specific UAT profiles now live in [docs/uat/environments/README.md](
 - [Multi-Cloud SaaS](./uat/environments/multi-cloud-saas.md)
 - [Hybrid Cloud + Self-Hosted](./uat/environments/hybrid-cloud-self-hosted.md)
 - [Pure On-Prem / Self-Hosted Gap](./uat/environments/on-prem-self-hosted-gap.md)
+
+System-profile and overlay guidance now live in [docs/uat/system-profiles.md](./uat/system-profiles.md), including:
+
+- provider-profile coverage such as Azure-first and GCP-first paths
+- combined `SOC 2 + HIPAA` and `SOC 2 + PCI-DSS` overlays
+- dedicated `PHI in scope` and `CDE in scope` expectations for Review and Generate
 
 #### UAT objective
 
@@ -550,18 +584,18 @@ Environment-specific UAT profiles now live in [docs/uat/environments/README.md](
 - Org age: `1–3 years` or `3–10 years`
 - Compliance maturity: `Some experience`
 - Governance posture: partial structure in place, maybe advisory oversight, maybe a named security owner, but inconsistent cadences
-- Infrastructure posture: multiple vendors, possibly customer PII, maybe multi-cloud or hybrid decisions emerging
+- Infrastructure posture: multiple vendors, possibly customer PII, PHI, or cardholder-data boundaries, maybe multi-cloud or hybrid decisions emerging
 - Operations posture: ticketing, VCS, onboarding/offboarding, and monitoring exist but may be unevenly formalized
 
 **Test goals:**
 - Confirm the wizard recognizes partial maturity and does not fall back to first-time-only messaging.
 - Confirm System Scope, TSC Selection, Infrastructure, and Review expose contradictions in a way the admin can act on.
-- Confirm vendor-aware recommendations, privacy contradiction warnings, and infrastructure warnings all appear when appropriate.
+- Confirm vendor-aware recommendations, privacy contradiction warnings, regulated-data previews, and infrastructure warnings all appear when appropriate.
 - Confirm the Review decision trace helps the user understand cross-step implications.
 
 **Expected wizard behavior:**
 - Governance should feel more like targeted gap analysis than basic onboarding.
-- TSC Selection and Review should call out mismatches such as handling PII without Privacy scope.
+- TSC Selection and Review should call out mismatches such as handling PII or PHI without Privacy scope, or marking a CDE in scope without matching confidentiality expectations.
 - Infrastructure should warn on multi-cloud and hybrid ownership-boundary complexity when selected.
 - Review should help the admin navigate back to the exact step that needs correction.
 
@@ -632,6 +666,7 @@ npx tsx tests/e2e/run-all.ts
 ```
 
 **Expected:** 51 tests, 0 failures across all 5 suites.
+**Expected:** 55 tests, 0 failures across all 6 suites.
 
 ### 0.9 Red Team Suite — Full Pass
 
@@ -739,6 +774,7 @@ npx tsx tests/e2e/02-wizard-compilation.ts
 npx tsx tests/e2e/03-control-graph.ts
 npx tsx tests/e2e/04-evidence-crypto.ts
 npx tsx tests/e2e/05-auditor-portal.ts
+npx tsx tests/e2e/06-regulated-scope-smoke.ts
 ```
 
 ---

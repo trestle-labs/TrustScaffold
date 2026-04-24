@@ -82,6 +82,8 @@ export const wizardSchema = z.object({
     systemName: z.string().trim().min(2, 'System name is required'),
     systemDescription: z.string().trim().min(20, 'Describe the in-scope system in at least 20 characters'),
     dataTypesHandled: z.array(z.string()).min(1, 'Select at least one data type'),
+    containsPhi: z.boolean(),
+    hasCardholderDataEnvironment: z.boolean(),
     isMultiTenant: z.boolean(),
   }),
   tscSelections: z.object({
@@ -269,6 +271,8 @@ export const defaultWizardValues: WizardData = {
     systemName: '',
     systemDescription: '',
     dataTypesHandled: [],
+    containsPhi: false,
+    hasCardholderDataEnvironment: false,
     isMultiTenant: true,
   },
   tscSelections: {
@@ -423,7 +427,7 @@ export const dataTypeOptions = [
     label: 'Customer PII',
     description: 'Personally identifiable information belonging to your end users or customers.',
     examples: ['Names and email addresses', 'Phone numbers and home addresses', 'Government-issued IDs, date of birth', 'IP addresses tied to identifiable individuals'],
-    socNote: 'Selecting this is the primary trigger for the Privacy TSC (P1–P8). Auditors will expect a public privacy notice, consent tracking, and a DSAR (data subject access request) process.',
+    socNote: 'Selecting this is the primary trigger for the Privacy TSC (P1–P8). Auditors will expect a public privacy notice, consent tracking, and a DSAR (data subject access request) process. If the system also handles healthcare-regulated records, turn on the dedicated PHI field below this selector.',
     triggersPrivacy: true,
   },
   {
@@ -437,7 +441,7 @@ export const dataTypeOptions = [
     label: 'Payment data',
     description: 'Financial transaction data including card or bank account information.',
     examples: ['Credit and debit card numbers (PAN)', 'Bank account and routing numbers', 'Billing addresses linked to payment methods', 'Transaction histories'],
-    socNote: 'If you use a payment processor (Stripe, Braintree, etc.) and never store raw card data, select this and list the processor as a subservice vendor. Auditors will check that no card data touches your systems directly.',
+    socNote: 'If you use a payment processor (Stripe, Braintree, etc.) and never store raw card data, select this and list the processor as a subservice vendor. Auditors will check that no card data touches your systems directly. If your environment includes systems that store, process, transmit, or are directly connected to cardholder data, turn on the dedicated cardholder data environment field below this selector.',
     triggersPrivacy: false,
   },
   {

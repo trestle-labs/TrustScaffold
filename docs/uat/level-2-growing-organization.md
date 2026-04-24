@@ -18,6 +18,24 @@ Validate that the wizard recognizes partial maturity, surfaces contradictions cl
 - Governance posture: some formal ownership exists, but cadences and coverage are inconsistent
 - Infrastructure posture: multiple vendors, customer-sensitive data, and possible scope contradictions
 
+## Default System Profiles
+
+Use one of these as the concrete provider bundle for this script:
+
+- [SP-2 — Growing Azure-First SaaS](./system-profiles.md) for a cleaner single-cloud pass
+- [SP-3 — Growing GCP-First SaaS](./system-profiles.md) for alternate provider coverage
+
+When you want contradiction and infrastructure branching in the same run, start from SP-2 or SP-3 and then intentionally add:
+
+- A second cloud provider for the multi-cloud check
+- `We host our own hardware (on-premises / colocation)` for the hybrid check
+
+Default assurance posture for Level 2 vendor rows:
+
+- Review cadence: `Semi-annual review`
+- Assurance report: `SOC 2 Type II`
+- Control treatment: `Carve-out — controls excluded, covered by vendor report`
+
 ## Exact Answer Rules
 
 This script intentionally exercises contradiction and advanced infrastructure branches. Use the exact labels below so the expected warnings line up with the current rule matrix.
@@ -75,13 +93,17 @@ Expected outcome:
 Enter:
 
 - A realistic production system name and description
+- Use one of the description seeds from [System Profile Library](./system-profiles.md) so the provider choices match the system narrative
 - Data types including `Customer PII`
 - Add several sub-service organizations such as:
+  - `Azure` or `GCP` to match the primary system profile
   - `Microsoft`
   - `Google Workspace`
   - `Datadog`
   - `GitHub`
 - Use one `Other` vendor and one `Other` role path to verify manual fallback behavior
+
+For an exact provider bundle, use the vendor rows from SP-2 or SP-3 first, then add the contradiction or fallback rows on top of that baseline.
 
 Expected outcome:
 
@@ -143,6 +165,10 @@ Answer:
 - Enable `We host our own hardware`
 - Select a real IdP such as `Entra ID`
 
+If the primary profile is SP-2, use `Entra ID`, `Azure DevOps`, and `BambooHR` consistently.
+
+If the primary profile is SP-3, use `Google Workspace`, `GitLab`, and `Gusto` consistently.
+
 This stage should be treated as two exact checks in one pass:
 
 1. Multi-cloud check:
@@ -192,6 +218,8 @@ Answer:
 - HRIS provider: a real provider such as `Rippling` or `BambooHR`
 - MFA required: `No`
 - Peer review required: `No`
+
+If you need to cover `Bitbucket`, `Workday`, `Gusto`, `JumpCloud`, or an `Other` provider path at this maturity level, swap those values using [System Profile Library](./system-profiles.md) and keep the same Level 2 negative-control expectations.
 
 Then complete the resulting deep dives.
 

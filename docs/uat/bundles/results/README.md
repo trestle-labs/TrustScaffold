@@ -13,3 +13,7 @@ Use the template that matches the bundle you executed. The goal is to capture th
 5. [Bundle E result template](./bundle-e-established-multi-cloud-result.md)
 6. [Bundle F result template](./bundle-f-established-hybrid-result.md)
 7. [Bundle G result template](./bundle-g-on-prem-gap-result.md)
+8. [Bundle H result template](./bundle-h-growing-azure-first-result.md)
+9. [Bundle I result template](./bundle-i-growing-gcp-first-result.md)
+10. [Bundle J result template](./bundle-j-soc2-hipaa-readiness-result.md)
+11. [Bundle K result template](./bundle-k-soc2-pci-dss-readiness-result.md)

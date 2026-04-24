@@ -75,6 +75,8 @@ export function buildTemplatePayload(data: WizardData, options?: { workspaceOrga
     runs_dependency_scanning: true,
     has_production_change_reviews: true,
     stores_customer_pii: data.scope.dataTypesHandled.includes('Customer PII'),
+    stores_phi: data.scope.containsPhi,
+    has_cardholder_data_environment: data.scope.hasCardholderDataEnvironment,
     has_subprocessors: data.subservices.length > 0,
     subprocessors: data.subservices.map((subservice) => ({
       name: subservice.name,

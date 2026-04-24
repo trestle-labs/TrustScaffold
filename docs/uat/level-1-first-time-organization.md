@@ -18,6 +18,22 @@ Validate that the wizard supports a first-time compliance team without assuming 
 - Governance posture: no board, no designated security officer, no internal audit program
 - Infrastructure posture: single cloud provider and a few recognizable vendors
 
+## Default System Profile
+
+Use [SP-1 — First Audit, AWS-Only SaaS](./system-profiles.md) as the default provider bundle for this script.
+
+That profile gives this level an exact, low-friction path:
+
+- Cloud provider: `AWS`
+- Identity provider: `Okta`
+- VCS provider: `GitHub`
+- HRIS provider: `Rippling`
+- Vendor assurance cadence: `Annual review` for each major vendor
+- Vendor assurance report: `SOC 2 Type II`
+- Vendor control treatment: `Carve-out — controls excluded, covered by vendor report`
+
+If you need another single-cloud provider or a different IdP, VCS, or HRIS, keep the Level 1 maturity answers the same and swap only the provider rows using the catalog in [System Profile Library](./system-profiles.md).
+
 ## Exact Answer Rules
 
 Use the wizard's exact option labels where shown below. If a field is listed under `Leave blank / unchecked`, do not fill it unless the UI makes it appear as a required follow-up.
@@ -82,13 +98,23 @@ Expected outcome:
 Enter:
 
 - System name: a concrete product/system name
-- Description: at least 20 characters
+- Description: use the SP-1 description seed or another provider-aligned description from [System Profile Library](./system-profiles.md)
 - Data types: include at least one customer-sensitive data type
 - Deployment model: either single-tenant or multi-tenant, but choose one intentionally
 - Add sub-service organizations:
+  - `AWS`
   - `Okta`
   - `GitHub`
   - `Rippling`
+
+For the SP-1 baseline, use these vendor details:
+
+| Vendor | Role | Description | Data shared | Review cadence | Assurance report | Control treatment |
+| --- | --- | --- | --- | --- | --- | --- |
+| AWS | Cloud Hosting | Primary cloud hosting platform for production workloads, storage, backups, and infrastructure logs. | Customer application data, backups, infrastructure metadata, security logs | Annual review | SOC 2 Type II | Carve-out — controls excluded, covered by vendor report |
+| Okta | Identity Provider | Workforce SSO and MFA provider for employee access to in-scope systems. | Employee identities, group memberships, authentication events | Annual review | SOC 2 Type II | Carve-out — controls excluded, covered by vendor report |
+| GitHub | Version Control / Source Code Hosting | Source control and pull-request workflow for application and infrastructure code. | Source code, pull requests, CI metadata, user identities | Annual review | SOC 2 Type II | Carve-out — controls excluded, covered by vendor report |
+| Rippling | HRIS | System of record for employee lifecycle events that drive onboarding and offboarding. | Employee roster data, role changes, termination events | Annual review | SOC 2 Type II | Carve-out — controls excluded, covered by vendor report |
 
 For each vendor:
 
@@ -154,7 +180,7 @@ Explicitly leave unchecked:
 
 Answer:
 
-- Select one cloud provider, such as `AWS`
+- Select one cloud provider, such as `AWS`, and keep it aligned to the system profile you chose
 - Do not enable self-hosted hardware
 - Select a valid IdP, such as `Okta`
 
@@ -204,6 +230,8 @@ Answer:
 - Peer review required: `Yes`
 - Onboarding SLA: a realistic value such as `2`
 - Offboarding SLA: a realistic value such as `24`
+
+If you swapped providers using [System Profile Library](./system-profiles.md), keep Operations aligned to the same provider family you used in `System Scope`.
 
 Leave blank because the branch should not appear:
 

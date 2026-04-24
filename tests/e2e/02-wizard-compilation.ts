@@ -10,9 +10,13 @@
 import {
   suite, test, runAll, printSummary,
   authClient, serviceClient,
-  assert, assertEqual,
+  assert, assertEqual, assertIncludes,
   ORG, USER,
 } from './helpers';
+import { renderTemplate } from '@/lib/documents/template-engine';
+import { buildTemplatePayload } from '@/lib/wizard/template-payload';
+import { defaultWizardValues, type WizardData } from '@/lib/wizard/schema';
+import { getActiveWizardRules } from '@/lib/wizard/rule-matrix';
 
 // ── 4.1 Idempotency — Unique Constraint ─────────────────────────────────────
 
@@ -217,6 +221,135 @@ test('Approved doc has approved revision', async () => {
     .eq('source', 'approved');
 
   assert(!!data && data.length >= 1, 'approved doc must have approved revision');
+});
+
+// ── 4.9 Regulated Scope Smoke Paths ─────────────────────────────────────────
+
+suite('4.9 Regulated Scope Smoke Paths');
+
+function makeWizardData(overrides: Partial<WizardData>): WizardData {
+  return {
+    ...defaultWizardValues,
+    company: { ...defaultWizardValues.company, ...overrides.company },
+    governance: { ...defaultWizardValues.governance, ...overrides.governance },
+    training: { ...defaultWizardValues.training, ...overrides.training },
+    scope: { ...defaultWizardValues.scope, ...overrides.scope },
+    tscSelections: { ...defaultWizardValues.tscSelections, ...overrides.tscSelections },
+    infrastructure: { ...defaultWizardValues.infrastructure, ...overrides.infrastructure },
+    subservices: overrides.subservices ?? defaultWizardValues.subservices,
+    securityTooling: { ...defaultWizardValues.securityTooling, ...overrides.securityTooling },
+    operations: { ...defaultWizardValues.operations, ...overrides.operations },
+    securityAssessment: {
+      ...defaultWizardValues.securityAssessment,
+      ...overrides.securityAssessment,
+    },
+  };
+}
+
+test('Bundle J smoke path surfaces PHI review state and generates explicit PHI language', async () => {
+  const svc = serviceClient();
+  const { data: systemDescriptionTemplate } = await svc
+    .from('templates')
+    .select('slug, markdown_template')
+    .eq('slug', 'system-description')
+    .single();
+
+  const { data: privacyTemplate } = await svc
+    .from('templates')
+    .select('slug, markdown_template')
+    .eq('slug', 'privacy-notice-consent-policy')
+    .single();
+
+  assert(!!systemDescriptionTemplate, 'system-description template must exist');
+  assert(!!privacyTemplate, 'privacy-notice-consent-policy template must exist');
+
+  const data = makeWizardData({
+    company: {
+      name: 'HealthCo',
+      industry: 'Healthcare',
+      complianceMaturity: 'some-experience',
+      targetAuditType: 'type1',
+    },
+    scope: {
+      systemName: 'HealthCo Portal',
+      systemDescription: 'a healthcare workflow platform that stores regulated patient and member information',
+      dataTypesHandled: ['Customer PII', 'Employee data', 'Authentication secrets'],
+      containsPhi: true,
+      hasCardholderDataEnvironment: false,
+    },
+    tscSelections: {
+      security: true,
+      privacy: true,
+      confidentiality: true,
+      availability: false,
+      processingIntegrity: false,
+    },
+  });
+
+  const rules = getActiveWizardRules(data);
+  assert(!rules.some((rule) => rule.id === 'review-privacy-scope-warning'), 'PHI path should not show privacy warning when Privacy TSC is selected');
+  assertEqual(data.scope.containsPhi, true, 'review source preserves PHI scope state');
+  assertEqual(data.scope.hasCardholderDataEnvironment, false, 'review source preserves CDE scope state');
+
+  const payload = buildTemplatePayload(data, { workspaceOrganizationName: data.company.name });
+  const renderedSystem = renderTemplate(systemDescriptionTemplate!.markdown_template, payload, 'system-description');
+  const renderedPrivacy = renderTemplate(privacyTemplate!.markdown_template, payload, 'privacy-notice-consent-policy');
+
+  assertIncludes(renderedSystem, 'Protected health information (PHI) is identified as regulated data', 'system description PHI language');
+  assertIncludes(renderedPrivacy, 'handles protected health information', 'privacy template PHI language');
+});
+
+test('Bundle K smoke path surfaces CDE review state and generates explicit CDE language', async () => {
+  const svc = serviceClient();
+  const { data: systemDescriptionTemplate } = await svc
+    .from('templates')
+    .select('slug, markdown_template')
+    .eq('slug', 'system-description')
+    .single();
+
+  const { data: dataClassificationTemplate } = await svc
+    .from('templates')
+    .select('slug, markdown_template')
+    .eq('slug', 'data-classification-handling-policy')
+    .single();
+
+  assert(!!systemDescriptionTemplate, 'system-description template must exist');
+  assert(!!dataClassificationTemplate, 'data-classification-handling-policy template must exist');
+
+  const data = makeWizardData({
+    company: {
+      name: 'PaymentsCo',
+      industry: 'Financial Technology',
+      complianceMaturity: 'some-experience',
+      targetAuditType: 'type1',
+    },
+    scope: {
+      systemName: 'PaymentsCo Checkout',
+      systemDescription: 'a payment processing platform with a segmented cardholder data environment for checkout and settlement operations',
+      dataTypesHandled: ['Payment data', 'Customer PII', 'Authentication secrets'],
+      containsPhi: false,
+      hasCardholderDataEnvironment: true,
+    },
+    tscSelections: {
+      security: true,
+      privacy: true,
+      confidentiality: true,
+      availability: false,
+      processingIntegrity: false,
+    },
+  });
+
+  const rules = getActiveWizardRules(data);
+  assert(!rules.some((rule) => rule.id === 'review-cde-confidentiality-warning'), 'CDE path should not show confidentiality warning when Confidentiality TSC is selected');
+  assertEqual(data.scope.containsPhi, false, 'review source preserves PHI scope state');
+  assertEqual(data.scope.hasCardholderDataEnvironment, true, 'review source preserves CDE scope state');
+
+  const payload = buildTemplatePayload(data, { workspaceOrganizationName: data.company.name });
+  const renderedSystem = renderTemplate(systemDescriptionTemplate!.markdown_template, payload, 'system-description');
+  const renderedClassification = renderTemplate(dataClassificationTemplate!.markdown_template, payload, 'data-classification-handling-policy');
+
+  assertIncludes(renderedSystem, 'cardholder data environment (CDE) is explicitly defined', 'system description CDE language');
+  assertIncludes(renderedClassification, 'operates an in-scope cardholder data environment (CDE)', 'data classification CDE language');
 });
 
 // ── Run ──────────────────────────────────────────────────────────────────────

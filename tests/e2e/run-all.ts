@@ -24,6 +24,7 @@ const suites = [
   { name: '03 — Control Graph (GitOps)',      file: '03-control-graph.ts' },
   { name: '04 — Evidence & Cryptography',     file: '04-evidence-crypto.ts' },
   { name: '05 — Auditor Portal',             file: '05-auditor-portal.ts' },
+  { name: '06 — Regulated Scope Smoke',      file: '06-regulated-scope-smoke.ts' },
 ];
 
 console.log('╔═══════════════════════════════════════════════════════════════╗');

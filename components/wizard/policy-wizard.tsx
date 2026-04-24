@@ -1761,6 +1761,56 @@ export function PolicyWizard() {
                           <div className="grid gap-3 md:grid-cols-2">
                             {dataTypeOptions.map((option) => (
                               <FormField
+
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="scope.containsPhi"
+                          render={({ field }) => (
+                            <FormItem className="flex items-start gap-3 rounded-2xl border border-border bg-white p-3 transition-colors hover:border-primary/30">
+                              <FormControl>
+                                <Checkbox className="mt-0.5" checked={field.value} onCheckedChange={(checked) => field.onChange(Boolean(checked))} />
+                              </FormControl>
+                              <div className="min-w-0 flex-1 space-y-1">
+                                <div className="flex items-center gap-1.5">
+                                  <FormLabel className="font-medium leading-none">Protected health information (PHI) is in scope</FormLabel>
+                                  <Badge className="bg-emerald-100 px-1.5 py-0 text-[9px] text-emerald-700">HIPAA signal</Badge>
+                                </div>
+                                <FormDescription>
+                                  Turn this on when the system handles treatment, diagnosis, claims, medical records, or other healthcare-regulated information. This is separate from generic customer PII.
+                                </FormDescription>
+                                {!form.watch('scope.dataTypesHandled').includes('Customer PII') ? (
+                                  <p className="text-xs text-amber-700">PHI often overlaps with `Customer PII`, but keep this field accurate even if your regulated health data is modeled separately.</p>
+                                ) : null}
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="scope.hasCardholderDataEnvironment"
+                          render={({ field }) => (
+                            <FormItem className="flex items-start gap-3 rounded-2xl border border-border bg-white p-3 transition-colors hover:border-primary/30">
+                              <FormControl>
+                                <Checkbox className="mt-0.5" checked={field.value} onCheckedChange={(checked) => field.onChange(Boolean(checked))} />
+                              </FormControl>
+                              <div className="min-w-0 flex-1 space-y-1">
+                                <div className="flex items-center gap-1.5">
+                                  <FormLabel className="font-medium leading-none">Cardholder data environment (CDE) is in scope</FormLabel>
+                                  <Badge className="bg-blue-100 px-1.5 py-0 text-[9px] text-blue-700">PCI signal</Badge>
+                                </div>
+                                <FormDescription>
+                                  Turn this on when systems that store, process, transmit, or are directly connected to cardholder data are in scope. This is more specific than simply selecting `Payment data`.
+                                </FormDescription>
+                                {!form.watch('scope.dataTypesHandled').includes('Payment data') ? (
+                                  <p className="text-xs text-amber-700">A CDE usually accompanies `Payment data`. If this stays on, make sure the system description explains the payment boundary clearly.</p>
+                                ) : null}
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                                 key={option.label}
                                 control={form.control}
                                 name="scope.dataTypesHandled"
@@ -3137,6 +3187,24 @@ export function PolicyWizard() {
                                 : <span className="text-xs italic text-muted-foreground/40">None selected</span>
                               }
                             </div>
+                            <ReviewRow label="PHI in scope" value={reviewSummary.scope.containsPhi ? 'Yes' : 'No'} />
+                            <ReviewRow label="CDE in scope" value={reviewSummary.scope.hasCardholderDataEnvironment ? 'Yes' : 'No'} />
+                            {reviewSummary.scope.containsPhi ? (
+                              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900">
+                                <p className="font-semibold">HIPAA administrative safeguards preview</p>
+                                <p className="mt-1 text-emerald-800">
+                                  Generated drafts will include workforce access administration, HRIS and identity-driven access changes, PHI-aware training and sanctions expectations, incident escalation, and vendor oversight language for healthcare-regulated data.
+                                </p>
+                              </div>
+                            ) : null}
+                            {reviewSummary.scope.hasCardholderDataEnvironment ? (
+                              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+                                <p className="font-semibold">PCI segmentation preview</p>
+                                <p className="mt-1 text-blue-800">
+                                  Generated drafts will include cardholder data environment boundary ownership, segmentation change review, restricted connectivity expectations, administrative access controls, and vendor impact on the CDE.
+                                </p>
+                              </div>
+                            ) : null}
                             <ReviewRow label="Tenancy" value={reviewSummary.scope.isMultiTenant ? 'Multi-tenant SaaS' : 'Single-tenant'} />
                           </CardContent>
                         </Card>

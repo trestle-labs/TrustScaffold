@@ -17,10 +17,23 @@ These scripts are derived from the organization-level UAT model in [../MASTER_TE
 ## Environment Profiles
 
 1. [Environment UAT Index](./environments/README.md)
-2. [Single-Cloud SaaS](./environments/single-cloud-saas.md)
-3. [Multi-Cloud SaaS](./environments/multi-cloud-saas.md)
-4. [Hybrid Cloud + Self-Hosted](./environments/hybrid-cloud-self-hosted.md)
-5. [Pure On-Prem / Self-Hosted Gap](./environments/on-prem-self-hosted-gap.md)
+2. [System Profile Library](./system-profiles.md)
+3. [Single-Cloud SaaS](./environments/single-cloud-saas.md)
+4. [Multi-Cloud SaaS](./environments/multi-cloud-saas.md)
+5. [Hybrid Cloud + Self-Hosted](./environments/hybrid-cloud-self-hosted.md)
+6. [Pure On-Prem / Self-Hosted Gap](./environments/on-prem-self-hosted-gap.md)
+
+## Provider Coverage
+
+Use [System Profile Library](./system-profiles.md) when you need an exact provider bundle or when you need to swap in a supported provider that is not already called out in a bundle.
+
+That file gives you:
+
+- Ready-to-run provider packs such as `AWS + Okta + GitHub + Rippling`
+- Description seeds for the `System Scope` step
+- Vendor assurance defaults including review cadence, report type, and control treatment
+- A coverage catalog for every supported IdP, VCS, and HRIS option currently exposed in the wizard
+- Compliance overlays for combined motions such as `SOC 2 + HIPAA` and `SOC 2 + PCI-DSS`
 
 ## Recommended UAT Bundles
 
@@ -63,6 +76,28 @@ Compact one-page run sheets now live in [./bundles/README.md](./bundles/README.m
 	- Environment: [Pure On-Prem / Self-Hosted Gap](./environments/on-prem-self-hosted-gap.md)
 	- Best for: confirming the current product limitation is documented accurately if pure on-prem support is a roadmap requirement.
 
+8. **Bundle H — Growing company, Azure-first provider path**
+	- Organization level: [Level 2 — Growing Organization](./level-2-growing-organization.md)
+	- System profile: [System Profile Library](./system-profiles.md) using `SP-2 — Growing Azure-First SaaS`
+	- Best for: validating a clean single-cloud Microsoft-leaning provider path without multi-cloud or hybrid noise.
+
+9. **Bundle I — Growing company, GCP-first provider path**
+	- Organization level: [Level 2 — Growing Organization](./level-2-growing-organization.md)
+	- System profile: [System Profile Library](./system-profiles.md) using `SP-3 — Growing GCP-First SaaS`
+	- Best for: validating a clean single-cloud GCP path and confirming the wizard behaves correctly when provider-specific helper panels are intentionally absent.
+
+10. **Bundle J — SOC 2 + HIPAA readiness**
+	- Organization level: [Level 2 — Growing Organization](./level-2-growing-organization.md)
+	- System profile: [System Profile Library](./system-profiles.md) using `SP-2 — Growing Azure-First SaaS`
+	- Compliance overlay: [System Profile Library](./system-profiles.md) using `Overlay O-1 — SOC 2 + HIPAA Readiness`
+	- Best for: validating the dedicated PHI field and a healthcare-regulated combined-audit path.
+
+11. **Bundle K — SOC 2 + PCI-DSS readiness**
+	- Organization level: [Level 2 — Growing Organization](./level-2-growing-organization.md)
+	- System profile: [System Profile Library](./system-profiles.md) using `SP-3 — Growing GCP-First SaaS`
+	- Compliance overlay: [System Profile Library](./system-profiles.md) using `Overlay O-2 — SOC 2 + PCI-DSS Readiness`
+	- Best for: validating the dedicated CDE field and a payment-environment combined-audit path.
+
 One-page run sheets:
 
 1. [Bundle A run sheet](./bundles/bundle-a-first-audit-simple-saas.md)
@@ -72,14 +107,19 @@ One-page run sheets:
 5. [Bundle E run sheet](./bundles/bundle-e-established-multi-cloud.md)
 6. [Bundle F run sheet](./bundles/bundle-f-established-hybrid.md)
 7. [Bundle G run sheet](./bundles/bundle-g-on-prem-gap.md)
+8. [Bundle H run sheet](./bundles/bundle-h-growing-azure-first.md)
+9. [Bundle I run sheet](./bundles/bundle-i-growing-gcp-first.md)
+10. [Bundle J run sheet](./bundles/bundle-j-soc2-hipaa-readiness.md)
+11. [Bundle K run sheet](./bundles/bundle-k-soc2-pci-dss-readiness.md)
 
 ## How To Use This Pack
 
 1. Pick the UAT file that matches the organization maturity you want to validate.
 2. Pick an environment profile that matches the system shape you want to validate.
-3. Follow the steps exactly as written, including the sample answers where provided.
-4. Record any deviation between the expected result and the actual UI behavior.
-5. If the wizard behaves differently from the expected maturity tier or environment profile, log that as a product issue.
+3. If you need exact provider choices, pair the run with [System Profile Library](./system-profiles.md).
+4. Follow the steps exactly as written, including the sample answers where provided.
+5. Record any deviation between the expected result and the actual UI behavior.
+6. If the wizard behaves differently from the expected maturity tier or environment profile, log that as a product issue.
 
 If you want the fastest route, start with one of the recommended bundles above and run it end-to-end.
 
@@ -91,6 +131,7 @@ These scripts are intended to be close to 1:1 with the current wizard implementa
 - They use current option labels where those labels are important to branching.
 - They call out fields that must stay blank, unchecked, or hidden for each path.
 - They explicitly cover both multi-cloud and hybrid infrastructure branches where relevant.
+- They now pair with [System Profile Library](./system-profiles.md) when exact provider combinations, vendor descriptions, or assurance-review defaults matter.
 
 They are still manual UAT scripts, not generated snapshots of the form schema, so they should be reviewed whenever new wizard fields, option labels, or branching rules are added.
 

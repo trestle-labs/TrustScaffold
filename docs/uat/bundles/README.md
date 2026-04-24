@@ -22,6 +22,10 @@ Track overall execution state in [../UAT_TRACKER.md](../UAT_TRACKER.md).
 5. [Bundle E — Established Program, Advanced Cloud Scope](./bundle-e-established-multi-cloud.md)
 6. [Bundle F — Established Program, Mature Hybrid](./bundle-f-established-hybrid.md)
 7. [Bundle G — Pure On-Prem Product Gap Check](./bundle-g-on-prem-gap.md)
+8. [Bundle H — Growing Company, Azure-First Provider Path](./bundle-h-growing-azure-first.md)
+9. [Bundle I — Growing Company, GCP-First Provider Path](./bundle-i-growing-gcp-first.md)
+10. [Bundle J — SOC 2 + HIPAA Readiness](./bundle-j-soc2-hipaa-readiness.md)
+11. [Bundle K — SOC 2 + PCI-DSS Readiness](./bundle-k-soc2-pci-dss-readiness.md)
 
 ## Matching Result Templates
 
