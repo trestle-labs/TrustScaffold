@@ -219,7 +219,7 @@ export async function regenerateDocAction(formData: FormData) {
     redirect(buildGeneratedDocRoute(documentId, 'error=Stored+wizard+payload+is+invalid+-+re-run+the+full+wizard'));
   }
 
-  const payload = { ...buildTemplatePayload(parsed.data), wizard_data: parsed.data };
+  const payload = { ...buildTemplatePayload(parsed.data, { workspaceOrganizationName: context.organization.name }), wizard_data: parsed.data };
   const mergedVariables = { ...(template.default_variables ?? {}), ...payload };
 
   let newFilename: string;
@@ -274,7 +274,7 @@ export async function regenerateAllDocsAction() {
     redirect(buildGeneratedDocsRoute('error=Org%20profile%20is%20invalid.%20Re-run%20the%20wizard.'));
   }
 
-  const payload = { ...buildTemplatePayload(parsed.data), wizard_data: parsed.data };
+  const payload = { ...buildTemplatePayload(parsed.data, { workspaceOrganizationName: context.organization.name }), wizard_data: parsed.data };
 
   const { data: docs } = await supabase
     .from('generated_docs')

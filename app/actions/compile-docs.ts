@@ -69,7 +69,7 @@ export async function compileDocsAction(rawWizardData: WizardData): Promise<Comp
   }
 
   const payload = {
-    ...buildTemplatePayload(parsed.data),
+    ...buildTemplatePayload(parsed.data, { workspaceOrganizationName: organization.name }),
     wizard_data: parsed.data,
   };
 

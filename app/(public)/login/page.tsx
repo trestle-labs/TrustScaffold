@@ -1,10 +1,12 @@
 import Link from 'next/link';
 
 import { loginAction, loginWithGithubAction } from '@/app/(public)/login/actions';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { APP_GIT_COMMIT, APP_VERSION_LABEL } from '@/lib/app-version';
 
 export default async function LoginPage({
   searchParams,
@@ -17,7 +19,11 @@ export default async function LoginPage({
   return (
     <div className="grid w-full max-w-5xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
       <section className="hidden rounded-[2rem] border border-white/60 bg-page-grid bg-grid bg-[size:24px_24px] p-10 lg:block">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">TrustScaffold</p>
+        <div className="flex items-center gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">TrustScaffold</p>
+          <Badge variant="outline" className="text-[10px]">{APP_VERSION_LABEL}</Badge>
+          <Badge variant="outline" className="text-[10px] font-mono">{APP_GIT_COMMIT}</Badge>
+        </div>
         <h1 className="mt-6 max-w-lg text-5xl font-semibold leading-tight text-foreground">
           Secure-by-default policy generation for early-stage compliance teams.
         </h1>
@@ -27,7 +33,13 @@ export default async function LoginPage({
       </section>
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Login</CardTitle>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>Login</CardTitle>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-[10px]">{APP_VERSION_LABEL}</Badge>
+              <Badge variant="outline" className="text-[10px] font-mono">{APP_GIT_COMMIT}</Badge>
+            </div>
+          </div>
           <CardDescription>Authenticate with Supabase Auth and land in your protected organization dashboard.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

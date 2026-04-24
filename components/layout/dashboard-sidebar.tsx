@@ -7,7 +7,7 @@ import { FileText, LayoutDashboard, Settings, ShieldCheck, Users } from 'lucide-
 
 import { cn } from '@/lib/utils';
 
-const navigation = [
+export const dashboardNavigation = [
   { href: '/dashboard' as Route, label: 'Dashboard', icon: LayoutDashboard },
   { href: '/wizard' as Route, label: 'Policy Wizard', icon: ShieldCheck },
   { href: '/generated-docs' as Route, label: 'Generated Docs', icon: FileText },
@@ -19,14 +19,14 @@ export function DashboardSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-72 shrink-0 border-r border-white/60 bg-white/70 px-5 py-6 backdrop-blur lg:block">
+    <aside className="hidden w-72 shrink-0 border-r border-white/60 bg-white/70 px-5 py-6 backdrop-blur dark:border-border dark:bg-card/80 lg:block">
       <div className="mb-8 px-3">
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">TrustScaffold</p>
         <h1 className="mt-3 text-2xl font-semibold text-foreground">Compliance Workspace</h1>
         <p className="mt-2 text-sm text-muted-foreground">Secure-by-default scaffolding for policy generation and review.</p>
       </div>
       <nav className="space-y-2">
-        {navigation.map((item) => {
+        {dashboardNavigation.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
           return (

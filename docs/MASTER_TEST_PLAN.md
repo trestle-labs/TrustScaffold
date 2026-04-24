@@ -122,6 +122,8 @@ curl -s -o /dev/null -w '%{http_code}' "http://localhost:${PORT}/signup"
 - `handle_new_user()` trigger fires, creating an `organizations` row and an `organization_members` row with `role = 'admin'`.
 - User lands on `/dashboard`.
 - Dashboard displays the organization name and `admin` role.
+- Dashboard shows quick actions for Policy Wizard, Team, Generated Docs, and Settings.
+- The header exposes the theme toggle so the admin can switch between light and dark mode before starting the wizard.
 
 **Database verification:**
 ```bash
@@ -173,11 +175,23 @@ PORT=$(grep '^PORT=' .env.local 2>/dev/null | cut -d= -f2); PORT=${PORT:-3000}
 npm run dev
 ```
 
-Open `http://localhost:${PORT}/wizard` after signing in as a fresh admin user.
+Open `http://localhost:${PORT}/dashboard` after signing in as a fresh admin user.
 
 **Checklist:**
 
+0. **Dashboard-first landing**
+      Expected:
+      - A fresh admin lands on `/dashboard`, not `/wizard`.
+      - The dashboard shows quick actions for the wizard, team management, generated docs, and settings.
+      - The top-right header shows a light/dark theme toggle.
+      Report back with:
+      - The first route you landed on after signup.
+      - Which quick actions were visible.
+      - Whether the theme toggle worked without a reload.
+
 1. **Wizard shell & step map**
+      Action:
+      - Launch the wizard from the dashboard quick action.
        Expected:
       - Left rail shows 10 steps in this order: Welcome, System Scope, Governance, TSC Selection, Infrastructure, Security Assessment, Security Tooling, Operations, Review, Generate.
        - Active organization name and org ID are visible.
@@ -198,6 +212,20 @@ Open `http://localhost:${PORT}/wizard` after signing in as a fresh admin user.
        - Whether the step blocked navigation.
        - Which fields showed inline errors.
        - Exact toast text if it differs.
+
+2A. **Org vs company onboarding path**
+      Action:
+      - On Welcome, check the new org/company relationship question.
+      - Choose `The org is the company` and confirm the company field auto-fills from the workspace organization and becomes read-only.
+      - Switch to `The org governs another company` and confirm the company field becomes editable again.
+      Expected:
+      - The wizard makes the org/company relationship explicit before the rest of the company metadata is collected.
+      - Same-company mode copies the workspace org name directly into the Company field.
+      - Governing-company mode keeps the workspace org visible but lets the admin enter a different governed company name.
+      Report back with:
+      - The workspace org name shown in the helper text.
+      - Whether the company field locked and unlocked correctly.
+      - Whether the Review step reflected the chosen relationship clearly.
 
 3. **First-time compliance guidance path**
        Action:
@@ -257,9 +285,11 @@ Open `http://localhost:${PORT}/wizard` after signing in as a fresh admin user.
        Expected:
        - The wizard blocks progression to generation.
        - A toast explains validation issues must be resolved before drafts can be generated.
+      - Review shows a matrix-driven decision trace explaining active warnings, recommendations, and deep dives.
        Report back with:
        - Whether Review surfaced the missing field.
        - Whether the toast appeared.
+      - Which decision-trace entries appeared.
        - Whether the step navigation helped you get back to the broken field.
 
 7. **Generate preflight & document list**
@@ -308,6 +338,10 @@ Open `http://localhost:${PORT}/wizard` after signing in as a fresh admin user.
 - User/org tested:
 
 ### Results
+- 0. Dashboard-first landing: pass | partial | fail
+      Expected:
+      Actual:
+      Notes:
 - 1. Wizard shell & step map: pass | partial | fail
       Expected:
       Actual:
@@ -345,6 +379,88 @@ Open `http://localhost:${PORT}/wizard` after signing in as a fresh admin user.
       Actual:
       Notes:
 ```
+
+### 0.7B Answer-Path Cluster Pass
+
+These are branch-driven QA clusters derived from the typed wizard rule matrix in [lib/wizard/rule-matrix.ts](../lib/wizard/rule-matrix.ts). Run these after the page-by-page worksheet if you want confidence that cross-step logic still behaves correctly.
+
+1. **First-time founder-led governance path**
+      Setup:
+      - Set compliance maturity to `First time`.
+      - Leave `board/advisory`, `designated security officer`, and `internal audit program` unchecked.
+      Expected:
+      - Governance shows first-time guidance.
+      - Governance shows deep-dive follow-up prompts for current oversight approach, current security program owner, and current monitoring approach.
+      - The step should not advance until those deep-dive follow-ups are answered.
+      Report back with:
+      - Whether each negative-answer deep dive appeared.
+      - Whether each deep-dive answer became required before advancing.
+
+2. **Okta + MFA + GitHub peer review path**
+      Setup:
+      - In Infrastructure, select `Okta` as the IdP.
+      - In Operations, select `GitHub` as the VCS provider.
+      - Enable MFA and peer review.
+      Expected:
+      - Operations shows the Okta MFA setup guide.
+      - Operations shows the GitHub branch protection guide.
+      - No negative-answer deep dives appear for MFA or peer review.
+      Report back with:
+      - Which setup guides rendered.
+      - Whether any unnecessary negative-answer prompts still appeared.
+
+3. **No MFA + no peer review path**
+      Setup:
+      - In Operations, disable MFA.
+      - Disable peer review.
+      Expected:
+      - Operations shows a warning and a deep-dive prompt for MFA.
+      - Operations shows a warning and a deep-dive prompt for peer review.
+      - The step should not advance until both follow-up answers are completed.
+      Report back with:
+      - Whether the warnings felt specific enough.
+      - Whether both deep-dive answers became required.
+
+4. **Vendor-aware training recommendation path**
+      Setup:
+      - In System Scope, add recognizable sub-service vendors such as `Microsoft`, `Google Workspace`, or `Rippling`.
+      - Open Governance.
+      Expected:
+      - Governance shows vendor-aware training recommendations.
+      - The recommendation text explains why those suggestions appeared.
+      Report back with:
+      - Which vendors you used.
+      - Which training recommendations appeared.
+      - Whether the recommendation text felt understandable.
+
+5. **Privacy scope contradiction path**
+      Setup:
+      - Select `Customer PII` in System Scope.
+      - Leave Privacy TSC unchecked.
+      - Navigate to TSC Selection, then Review, then Generate.
+      Expected:
+      - TSC Selection shows a privacy-scope warning before draft generation.
+      - Review decision trace shows the unresolved privacy contradiction.
+      - Generate shows a privacy-scope warning before draft generation.
+      - The warning explains that the data profile and selected TSC scope may be inconsistent.
+      Report back with:
+      - Whether the warning appeared.
+      - Whether the Review trace explained the contradiction clearly.
+      - Whether the message was specific enough to act on.
+
+6. **Multi-cloud + hybrid infrastructure path**
+      Setup:
+      - In Infrastructure, select at least two cloud providers.
+      - Enable `We host our own hardware`.
+      - Continue to Review.
+      Expected:
+      - Infrastructure shows a multi-cloud warning.
+      - Infrastructure shows a hybrid ownership-boundary warning.
+      - Review decision trace repeats both warnings before generation.
+      Report back with:
+      - Which cloud providers you selected.
+      - Whether both infrastructure warnings appeared.
+      - Whether the Review trace made the implications clear enough to act on.
 
 ### 0.8 E2E Suite — Full Pass
 

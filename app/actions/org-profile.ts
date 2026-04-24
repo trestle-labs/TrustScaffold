@@ -7,7 +7,7 @@ import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { wizardSchema, type WizardData } from '@/lib/wizard/schema';
 
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 7;
 
 function str(formData: FormData, key: string, fallback: string): string {
   const val = formData.get(key);

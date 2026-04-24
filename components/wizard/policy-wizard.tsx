@@ -60,6 +60,16 @@ import {
   type WizardData,
   type TargetAuditType,
 } from '@/lib/wizard/schema';
+import {
+  getActiveWizardRules,
+  getActiveWizardRulesForField,
+  getWizardDecisionTrace,
+  getStepValidationFields,
+  type WizardDecisionTraceItem,
+  type WizardDeepDiveRule,
+  type WizardRecommendationRule,
+  type WizardWarningRule,
+} from '@/lib/wizard/rule-matrix';
 import { useWizardStore } from '@/lib/wizard/store';
 import { computeAssessmentSummary, computeStepCompletions, domainBoolFields } from '@/lib/wizard/security-scoring';
 
@@ -133,38 +143,6 @@ function getSuggestedSubserviceRole(vendorName: string) {
   return suggestedSubserviceRolesByVendor[vendorName.trim()] ?? '';
 }
 
-const stepFields: FieldPath<WizardData>[][] = [
-  // Step 0: Welcome
-  ['company.name', 'company.website', 'company.primaryContactName', 'company.primaryContactEmail', 'company.industry', 'company.orgAge', 'company.complianceMaturity', 'company.targetAuditType'],
-  // Step 1: System Scope
-  ['scope.systemName', 'scope.systemDescription', 'scope.dataTypesHandled'],
-  // Step 2: Governance
-  ['governance.acknowledgementCadence', 'governance.boardMeetingFrequency', 'governance.orgChartMaintenance', 'governance.internalAuditFrequency', 'training.securityAwarenessTrainingTool', 'training.trainingCadence'],
-  // Step 3: TSC Selection
-  ['tscSelections.availability', 'tscSelections.confidentiality', 'tscSelections.processingIntegrity', 'tscSelections.privacy'],
-  // Step 4: Infrastructure
-  ['infrastructure.cloudProviders', 'infrastructure.type', 'infrastructure.idpProvider'],
-  // Step 5: Security Assessment
-  ['securityAssessment.documentReview.readiness', 'securityAssessment.logReview.readiness', 'securityAssessment.rulesetReview.readiness', 'securityAssessment.configReview.readiness', 'securityAssessment.networkAnalysis.readiness', 'securityAssessment.fileIntegrity.readiness'],
-  // Step 6: Security Tooling
-  ['securityTooling.penetrationTestFrequency'],
-  // Step 7: Operations
-  [
-    'operations.ticketingSystem',
-    'operations.versionControlSystem',
-    'operations.onCallTool',
-    'operations.vcsProvider',
-    'operations.hrisProvider',
-    'operations.terminationSlaHours',
-    'operations.onboardingSlaDays',
-    'operations.policyPublicationMethod',
-  ],
-  // Step 8: Review
-  [],
-  // Step 9: Generate
-  [],
-];
-
 type TrainingToolOption = {
   value: string;
   label: string;
@@ -210,7 +188,7 @@ function StepShell({ title, description, children }: { title: string; descriptio
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
+        <h2 className="text-xl font-semibold text-foreground sm:text-2xl">{title}</h2>
         <p className="mt-2 text-sm text-muted-foreground">{description}</p>
       </div>
       {children}
@@ -298,6 +276,71 @@ function FirstTimerTip({ tip }: { tip: string }) {
   );
 }
 
+function RuleWarningCard({ rule }: { rule: WizardWarningRule }) {
+  const tones = rule.severity === 'warning'
+    ? {
+        wrapper: 'border-amber-200 bg-amber-50',
+        title: 'text-amber-900',
+        body: 'text-amber-800',
+      }
+    : {
+        wrapper: 'border-blue-200 bg-blue-50',
+        title: 'text-blue-900',
+        body: 'text-blue-800',
+      };
+
+  return (
+    <div className={`rounded-xl border p-3 ${tones.wrapper}`}>
+      <p className={`text-xs font-semibold ${tones.title}`}>{rule.title}</p>
+      <p className={`mt-1 text-xs ${tones.body}`}>{rule.recommendation}</p>
+    </div>
+  );
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function DeepDiveSelectCard({ control, rule }: { control: any; rule: WizardDeepDiveRule }) {
+  return (
+    <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+      <div className="space-y-1">
+        <p className="text-sm font-semibold text-blue-900">{rule.title}</p>
+        <p className="text-xs text-blue-800">{rule.description}</p>
+        <p className="text-xs text-blue-700">{rule.recommendation}</p>
+      </div>
+      <div className="mt-3">
+        <FormField
+          control={control}
+          name={rule.field as any}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{rule.label}</FormLabel>
+              <FormControl>
+                <select
+                  {...field}
+                  className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="">Select an answer</option>
+                  {rule.options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </FormControl>
+              {field.value ? (
+                <FormDescription>
+                  {rule.options.find((option) => option.value === field.value)?.description}
+                </FormDescription>
+              ) : null}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </div>
+  );
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 function DomainHeader({ label, criteria, score, answered, total, readiness, expanded, onToggle }: {
   label: string; criteria: string; score: number; answered: number; total: number;
   readiness: string; expanded: boolean; onToggle: () => void;
@@ -339,6 +382,48 @@ function ReviewRow({ label, value, required }: { label: string; value?: string |
   );
 }
 
+function DecisionTraceCard({ items }: { items: WizardDecisionTraceItem[] }) {
+  const kindStyles: Record<WizardDecisionTraceItem['kind'], { badge: string; label: string }> = {
+    branching: { badge: 'bg-blue-100 text-blue-800', label: 'Guidance' },
+    recommendation: { badge: 'bg-emerald-100 text-emerald-800', label: 'Recommendation' },
+    warning: { badge: 'bg-amber-100 text-amber-900', label: 'Warning' },
+    'deep-dive': { badge: 'bg-violet-100 text-violet-800', label: 'Deep dive' },
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Decision Trace</CardTitle>
+        <CardDescription>The review step reads the active rule matrix directly so you can see why the wizard surfaced each warning, recommendation, or follow-up question.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {items.length === 0 ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+            No matrix-driven warnings, recommendations, or deep dives are active for the current answer set.
+          </div>
+        ) : (
+          items.map((item) => {
+            const tone = kindStyles[item.kind];
+
+            return (
+              <div key={item.id} className="rounded-2xl border border-border bg-secondary/30 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={cn('rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide', tone.badge)}>{tone.label}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{item.stepLabel}</span>
+                  {item.criteria?.length ? <span className="text-[10px] text-muted-foreground">{item.criteria.join(', ')}</span> : null}
+                </div>
+                <p className="mt-2 text-sm font-semibold text-foreground">{item.title}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{item.summary}</p>
+                {item.recommendation ? <p className="mt-2 text-xs text-foreground">{item.recommendation}</p> : null}
+              </div>
+            );
+          })
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function GenerateStep({
   watchedValues,
   selectedTsc,
@@ -353,6 +438,7 @@ function GenerateStep({
   onNavigateToStep: (step: number) => void;
 }) {
   const templates = getExpectedTemplates(watchedValues.tscSelections);
+  const generateWarnings = getActiveWizardRules(watchedValues, 'generate', 'warning') as WizardWarningRule[];
   const [completedCount, setCompletedCount] = React.useState(0);
 
   React.useEffect(() => {
@@ -383,6 +469,14 @@ function GenerateStep({
 
   return (
     <div className="space-y-5">
+      {generateWarnings.length > 0 ? (
+        <div className="space-y-2">
+          {generateWarnings.map((rule) => (
+            <RuleWarningCard key={rule.id} rule={rule} />
+          ))}
+        </div>
+      ) : null}
+
       {/* Pre-flight required field gate */}
       {missingFields.length > 0 && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm">
@@ -604,6 +698,21 @@ export function PolicyWizard() {
 
   const completion = ((currentStep + 1) / wizardStepTitles.length) * 100;
   const selectedTsc = selectedTscLabels(watchedValues as WizardData);
+  const organizationRelationship = form.watch('company.organizationRelationship');
+
+  useEffect(() => {
+    if (!organization || organizationRelationship !== 'same-as-company') {
+      return;
+    }
+
+    if (form.getValues('company.name') !== organization.name) {
+      form.setValue('company.name', organization.name, {
+        shouldDirty: false,
+        shouldTouch: false,
+        shouldValidate: currentStep === 0,
+      });
+    }
+  }, [currentStep, form, organization, organizationRelationship]);
 
   const reviewParseResult = useMemo(() => wizardSchema.safeParse(watchedValues), [watchedValues]);
   const reviewSummary = reviewParseResult.success ? reviewParseResult.data : null;
@@ -611,6 +720,19 @@ export function PolicyWizard() {
 
   const assessmentSummary = useMemo(() => computeAssessmentSummary(watchedValues as WizardData), [watchedValues]);
   const stepCompletions = useMemo(() => computeStepCompletions(watchedValues as WizardData, maxStepReached), [watchedValues, maxStepReached]);
+  const currentWizardData = watchedValues as WizardData;
+  const activeTscWarningRules = getActiveWizardRules(currentWizardData, 'tsc-selection', 'warning') as WizardWarningRule[];
+  const activeInfrastructureWarningRules = getActiveWizardRules(currentWizardData, 'infrastructure', 'warning') as WizardWarningRule[];
+  const activeGovernanceBranchingRules = getActiveWizardRules(currentWizardData, 'governance', 'branching');
+  const activeOperationsBranchingRules = getActiveWizardRules(currentWizardData, 'operations', 'branching');
+  const getWarningRulesForField = (step: 'governance' | 'operations', field: string) =>
+    getActiveWizardRulesForField(currentWizardData, step, field, 'warning') as WizardWarningRule[];
+  const getDeepDiveRulesForField = (step: 'governance' | 'operations', field: string) =>
+    getActiveWizardRulesForField(currentWizardData, step, field, 'deep-dive') as WizardDeepDiveRule[];
+  const activeTrainingRecommendationRules = getActiveWizardRules(currentWizardData, 'governance', 'recommendation') as WizardRecommendationRule[];
+  const decisionTraceItems = useMemo(() => getWizardDecisionTrace(currentWizardData), [currentWizardData]);
+  const hasActiveGovernanceRule = (ruleId: string) => activeGovernanceBranchingRules.some((rule) => rule.id === ruleId);
+  const hasActiveOperationsRule = (ruleId: string) => activeOperationsBranchingRules.some((rule) => rule.id === ruleId);
 
   // Track which security assessment domains are expanded (all expanded by default)
   const [expandedDomains, setExpandedDomains] = React.useState<Record<string, boolean>>({
@@ -631,7 +753,7 @@ export function PolicyWizard() {
   }
 
   async function goToNextStep() {
-    const fieldsToValidate = stepFields[currentStep] ?? [];
+    const fieldsToValidate = getStepValidationFields(currentStep, currentWizardData) as FieldPath<WizardData>[];
     const isValid = fieldsToValidate.length ? await form.trigger(fieldsToValidate) : true;
 
     if (!isValid) {
@@ -696,8 +818,50 @@ export function PolicyWizard() {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
-      <Card className="h-fit xl:sticky xl:top-6">
+    <div className="space-y-6 xl:grid xl:grid-cols-[280px_minmax(0,1fr)] xl:gap-6 xl:space-y-0">
+      <Card className="xl:hidden">
+        <CardHeader>
+          <CardTitle>Wizard Navigation</CardTitle>
+          <CardDescription>Use this compact step switcher on smaller screens.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs font-medium uppercase tracking-[0.24em] text-primary/70">
+              <span>Progress</span>
+              <span>{Math.round(completion)}%</span>
+            </div>
+            <Progress value={completion} />
+          </div>
+          <div className="rounded-2xl bg-secondary/50 p-4 text-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">Current step</p>
+            <p className="mt-2 font-medium text-foreground">{wizardStepTitles[currentStep]}</p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {wizardStepTitles.map((stepTitle, index) => {
+              const sc = stepCompletions[index];
+              const statusLabel = sc?.status === 'complete' ? 'Complete' : sc?.status === 'partial' ? 'In progress' : 'Not started';
+
+              return (
+                <button
+                  key={stepTitle}
+                  type="button"
+                  onClick={() => jumpToStep(index)}
+                  className={cn(
+                    'rounded-2xl border px-3 py-3 text-left transition-colors',
+                    index === currentStep ? 'border-primary bg-primary/10 text-foreground' : 'border-border bg-background hover:bg-secondary/50'
+                  )}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-primary/70">Step {index + 1}</p>
+                  <p className="mt-1 text-sm font-medium text-foreground">{stepTitle}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{statusLabel}</p>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="hidden h-fit xl:sticky xl:top-6 xl:block">
         <CardHeader>
           <CardTitle>Policy Wizard</CardTitle>
           <CardDescription>Seven steps, one persisted payload, compiled server-side into tenant-scoped Markdown drafts.</CardDescription>
@@ -761,7 +925,7 @@ export function PolicyWizard() {
 
       <Form {...form}>
         <form className="space-y-6" onSubmit={(event) => event.preventDefault()}>
-          <Card>
+          <Card className="min-w-0 overflow-hidden">
             <CardContent className="p-6">
               {currentStep === 0 ? (
                 <StepShell
@@ -771,13 +935,82 @@ export function PolicyWizard() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <FormField
                       control={form.control}
+                      name="company.organizationRelationship"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>How does this workspace organization relate to the company in scope?</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              value={field.value}
+                              onValueChange={(value) => {
+                                field.onChange(value);
+
+                                if (value === 'same-as-company') {
+                                  form.setValue('company.name', organization.name, {
+                                    shouldDirty: true,
+                                    shouldTouch: true,
+                                    shouldValidate: true,
+                                  });
+                                }
+                              }}
+                              className="mt-2 grid gap-3 md:grid-cols-2"
+                            >
+                              <label
+                                className={cn(
+                                  'flex cursor-pointer flex-col gap-1.5 rounded-2xl border p-4 transition-colors',
+                                  field.value === 'same-as-company'
+                                    ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                    : 'border-border bg-white hover:bg-secondary/40'
+                                )}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <RadioGroupItem value="same-as-company" id="org-rel-same" />
+                                  <span className="text-sm font-medium text-foreground">The org is the company</span>
+                                </div>
+                                <p className="pl-6 text-xs text-muted-foreground">Use the workspace organization name directly in the company field and generated documentation.</p>
+                              </label>
+                              <label
+                                className={cn(
+                                  'flex cursor-pointer flex-col gap-1.5 rounded-2xl border p-4 transition-colors',
+                                  field.value === 'governing-company'
+                                    ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                    : 'border-border bg-white hover:bg-secondary/40'
+                                )}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <RadioGroupItem value="governing-company" id="org-rel-governing" />
+                                  <span className="text-sm font-medium text-foreground">The org governs another company</span>
+                                </div>
+                                <p className="pl-6 text-xs text-muted-foreground">Keep the workspace org as the governing entity, but enter the governed company name below for the generated policy set.</p>
+                              </label>
+                            </RadioGroup>
+                          </FormControl>
+                          <FormDescription>
+                            Workspace org: <span className="font-medium text-foreground">{organization.name}</span>
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
                       name="company.name"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Company name</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input
+                              {...field}
+                              disabled={organizationRelationship === 'same-as-company'}
+                              value={organizationRelationship === 'same-as-company' ? organization.name : field.value}
+                              placeholder={organizationRelationship === 'same-as-company' ? organization.name : 'Acme, Inc.'}
+                            />
                           </FormControl>
+                          <FormDescription>
+                            {organizationRelationship === 'same-as-company'
+                              ? 'Copied from the workspace organization because this org is the company in scope.'
+                              : 'Enter the specific company this workspace organization governs so the generated documents reference the correct operating entity.'}
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -922,7 +1155,7 @@ export function PolicyWizard() {
                   description="Capture the organizational controls that auditors evaluate for CC1 (Control Environment), CC4 (Monitoring), and CC1.4 (Competence). These questions determine which governance documents and evidence the checklist will generate."
                 >
                   <div className="space-y-6">
-                    {form.watch('company.complianceMaturity') === 'first-time' && (
+                    {hasActiveGovernanceRule('welcome-first-time-guidance') && (
                       <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm space-y-1">
                         <p className="font-semibold text-blue-900">First-time compliance guidance</p>
                         <p className="text-xs text-blue-700">
@@ -987,7 +1220,13 @@ export function PolicyWizard() {
                           <FormLabel>A board of directors, advisory board, or equivalent oversight body exists.</FormLabel>
                         </FormItem>
                       )} />
-                      {form.watch('governance.hasBoardOrAdvisory') && (
+                      {getWarningRulesForField('governance', 'governance.hasBoardOrAdvisory').map((rule) => (
+                        <RuleWarningCard key={rule.id} rule={rule} />
+                      ))}
+                      {getDeepDiveRulesForField('governance', 'governance.hasBoardOrAdvisory').map((rule) => (
+                        <DeepDiveSelectCard key={rule.id} control={form.control} rule={rule} />
+                      ))}
+                      {hasActiveGovernanceRule('governance-board-frequency') && (
                         <FormField control={form.control} name="governance.boardMeetingFrequency" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Board meeting frequency</FormLabel>
@@ -1006,7 +1245,13 @@ export function PolicyWizard() {
                           <FormLabel>A designated security officer or CISO owns the information security program.</FormLabel>
                         </FormItem>
                       )} />
-                      {form.watch('governance.hasDedicatedSecurityOfficer') && (
+                      {getWarningRulesForField('governance', 'governance.hasDedicatedSecurityOfficer').map((rule) => (
+                        <RuleWarningCard key={rule.id} rule={rule} />
+                      ))}
+                      {getDeepDiveRulesForField('governance', 'governance.hasDedicatedSecurityOfficer').map((rule) => (
+                        <DeepDiveSelectCard key={rule.id} control={form.control} rule={rule} />
+                      ))}
+                      {hasActiveGovernanceRule('governance-security-officer-title') && (
                         <FormField control={form.control} name="governance.securityOfficerTitle" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Security officer title</FormLabel>
@@ -1024,7 +1269,7 @@ export function PolicyWizard() {
                           <FormLabel>A current organizational chart exists.</FormLabel>
                         </FormItem>
                       )} />
-                      {form.watch('governance.hasOrgChart') && (
+                      {hasActiveGovernanceRule('governance-org-chart-maintenance') && (
                         <FormField control={form.control} name="governance.orgChartMaintenance" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Org chart maintenance method</FormLabel>
@@ -1058,7 +1303,13 @@ export function PolicyWizard() {
                           <FormLabel>A formal internal audit or controls monitoring program is in place.</FormLabel>
                         </FormItem>
                       )} />
-                      {form.watch('governance.hasInternalAuditProgram') && (
+                      {getWarningRulesForField('governance', 'governance.hasInternalAuditProgram').map((rule) => (
+                        <RuleWarningCard key={rule.id} rule={rule} />
+                      ))}
+                      {getDeepDiveRulesForField('governance', 'governance.hasInternalAuditProgram').map((rule) => (
+                        <DeepDiveSelectCard key={rule.id} control={form.control} rule={rule} />
+                      ))}
+                      {hasActiveGovernanceRule('governance-internal-audit-frequency') && (
                         <FormField control={form.control} name="governance.internalAuditFrequency" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Internal audit frequency</FormLabel>
@@ -1094,9 +1345,10 @@ export function PolicyWizard() {
                           <FormDescription>
                             Choose the platform used to deliver and track security awareness training. Recommendations refresh whenever you add or update the sub-service organizations captured in System Scope.
                           </FormDescription>
-                          {trainingToolSuggestions.recommended.length > 0 ? (
+                          {trainingToolSuggestions.recommended.length > 0 && activeTrainingRecommendationRules.length > 0 ? (
                             <div className="space-y-2 rounded-xl border border-blue-200 bg-blue-50 p-3">
                               <p className="text-xs font-medium text-blue-900">Suggested based on your current sub-service organizations</p>
+                              <p className="text-xs text-blue-800">{activeTrainingRecommendationRules[0]?.recommendation}</p>
                               <div className="flex flex-wrap gap-2">
                                 {trainingToolSuggestions.recommended.map((option) => (
                                   <button
@@ -1700,6 +1952,14 @@ export function PolicyWizard() {
                       <span className="font-medium text-foreground">Selected scope: </span>
                       <span className="text-muted-foreground">{selectedTsc.join(' · ')}</span>
                     </div>
+
+                    {activeTscWarningRules.length > 0 ? (
+                      <div className="space-y-2">
+                        {activeTscWarningRules.map((rule) => (
+                          <RuleWarningCard key={rule.id} rule={rule} />
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 </StepShell>
               ) : null}
@@ -1764,6 +2024,14 @@ export function PolicyWizard() {
                       criterion="CC6.1–CC6.8"
                       message="Each cloud provider you select adds specific evidence expectations. AWS means IAM policy exports, Azure means Entra ID configs, GCP means IAM bindings. Multi-cloud multiplies your evidence surface — select only the providers that host in-scope workloads."
                     />
+
+                    {activeInfrastructureWarningRules.length > 0 ? (
+                      <div className="space-y-2">
+                        {activeInfrastructureWarningRules.map((rule) => (
+                          <RuleWarningCard key={rule.id} rule={rule} />
+                        ))}
+                      </div>
+                    ) : null}
 
                     {/* Keep legacy type field in sync — hidden */}
                     <FormField
@@ -2602,6 +2870,12 @@ export function PolicyWizard() {
                         gap="Without enforced MFA, access to production systems is protected only by passwords — making phishing and credential stuffing attacks highly effective against your environment."
                         recommendation="Enforce MFA through your IdP (Okta, Entra ID, Google Workspace) via authentication policies. Apply to all workforce, not just admins. FIDO2/passkeys are the strongest option."
                       />
+                      {getWarningRulesForField('operations', 'operations.requiresMfa').map((rule) => (
+                        <RuleWarningCard key={rule.id} rule={rule} />
+                      ))}
+                      {getDeepDiveRulesForField('operations', 'operations.requiresMfa').map((rule) => (
+                        <DeepDiveSelectCard key={rule.id} control={form.control} rule={rule} />
+                      ))}
                       <ControlRow
                         control={form.control}
                         name="operations.requiresPeerReview"
@@ -2609,6 +2883,12 @@ export function PolicyWizard() {
                         gap="Without required peer review, a single developer can deploy unauthorized or untested changes to production — a fundamental CC8.1 change management gap."
                         recommendation="Enable branch protection in your VCS requiring at least one approving reviewer before merge. This creates an immutable audit trail of who reviewed each change."
                       />
+                      {getWarningRulesForField('operations', 'operations.requiresPeerReview').map((rule) => (
+                        <RuleWarningCard key={rule.id} rule={rule} />
+                      ))}
+                      {getDeepDiveRulesForField('operations', 'operations.requiresPeerReview').map((rule) => (
+                        <DeepDiveSelectCard key={rule.id} control={form.control} rule={rule} />
+                      ))}
                       <ControlRow
                         control={form.control}
                         name="operations.requiresCyberInsurance"
@@ -2620,19 +2900,19 @@ export function PolicyWizard() {
                         requiresPeerReview={form.watch('operations.requiresPeerReview')}
                         requiresMfa={form.watch('operations.requiresMfa')}
                       />
-                      {form.watch('operations.requiresMfa') && form.watch('infrastructure.idpProvider') === 'Entra ID' && (
+                      {hasActiveOperationsRule('operations-mfa-entra-guidance') && (
                         <ShowMeHow {...SHOW_ME_HOW_ENTRA_MFA} />
                       )}
-                      {form.watch('operations.requiresMfa') && form.watch('infrastructure.idpProvider') === 'Okta' && (
+                      {hasActiveOperationsRule('operations-mfa-okta-guidance') && (
                         <ShowMeHow {...SHOW_ME_HOW_OKTA_MFA} />
                       )}
-                      {form.watch('operations.requiresPeerReview') && form.watch('operations.vcsProvider') === 'GitHub' && (
+                      {hasActiveOperationsRule('operations-peer-review-github-guidance') && (
                         <ShowMeHow {...SHOW_ME_HOW_GITHUB_BRANCH_PROTECTION} />
                       )}
-                      {form.watch('operations.requiresPeerReview') && form.watch('operations.vcsProvider') === 'Azure DevOps' && (
+                      {hasActiveOperationsRule('operations-peer-review-azure-guidance') && (
                         <ShowMeHow {...SHOW_ME_HOW_AZURE_DEVOPS_BRANCH_POLICY} />
                       )}
-                      {form.watch('infrastructure.cloudProviders')?.includes('aws') && (
+                      {hasActiveOperationsRule('operations-aws-scp-guidance') && (
                         <ShowMeHow {...SHOW_ME_HOW_AWS_SCPs} />
                       )}
                       <div className="pt-2">
@@ -2795,6 +3075,8 @@ export function PolicyWizard() {
 
                     <GapAnalysisCard summary={assessmentSummary} onNavigateToAssessment={() => jumpToStep(5)} />
 
+                    <DecisionTraceCard items={decisionTraceItems} />
+
                     {reviewSummary ? (
                       <div className="grid gap-4 lg:grid-cols-2">
 
@@ -2806,6 +3088,13 @@ export function PolicyWizard() {
                           </CardHeader>
                           <CardContent className="space-y-1.5">
                             <ReviewRow label="Company name" value={reviewSummary.company.name} required />
+                            <ReviewRow
+                              label="Org relationship"
+                              value={reviewSummary.company.organizationRelationship === 'same-as-company' ? 'Workspace org is the company' : `Workspace org governs ${reviewSummary.company.name}`}
+                            />
+                            {reviewSummary.company.organizationRelationship === 'governing-company' ? (
+                              <ReviewRow label="Workspace org" value={organization.name} />
+                            ) : null}
                             <ReviewRow label="Website" value={reviewSummary.company.website} />
                             <ReviewRow label="Contact name" value={reviewSummary.company.primaryContactName} />
                             <ReviewRow label="Contact email" value={reviewSummary.company.primaryContactEmail} />

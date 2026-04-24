@@ -4,7 +4,7 @@ import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { wizardSchema, type WizardData } from '@/lib/wizard/schema';
 
-const CURRENT_SCHEMA_VERSION = 6;
+const CURRENT_SCHEMA_VERSION = 7;
 
 export type WizardDraftResult =
   | { ok: true }

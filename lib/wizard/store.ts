@@ -122,7 +122,7 @@ export const useWizardStore = create<WizardStore>()(
     }),
     {
       name: 'trustscaffold-wizard',
-      version: 6,
+      version: 7,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         organizationId: state.organizationId,

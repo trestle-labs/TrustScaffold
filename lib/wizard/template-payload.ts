@@ -1,15 +1,24 @@
 import type { WizardData } from '@/lib/wizard/schema';
 
-export function buildTemplatePayload(data: WizardData) {
+export function buildTemplatePayload(data: WizardData, options?: { workspaceOrganizationName?: string | null }) {
   const cloudProviders = data.infrastructure.cloudProviders ?? [data.infrastructure.type === 'hybrid' ? 'aws' : data.infrastructure.type === 'self-hosted' ? 'aws' : data.infrastructure.type];
   const usesAws = cloudProviders.includes('aws');
   const usesAzure = cloudProviders.includes('azure');
   const usesGcp = cloudProviders.includes('gcp');
   const usesHybrid = cloudProviders.length > 1 || data.infrastructure.hostsOwnHardware;
   const isSelfHosted = data.infrastructure.hostsOwnHardware && cloudProviders.length === 0;
+  const workspaceOrganizationName = options?.workspaceOrganizationName?.trim() || data.company.name;
+  const isSameAsCompany = data.company.organizationRelationship === 'same-as-company';
+  const governingOrganizationName = isSameAsCompany ? data.company.name : workspaceOrganizationName;
 
   return {
     organization_name: data.company.name,
+    company_name: data.company.name,
+    workspace_organization_name: workspaceOrganizationName,
+    governing_organization_name: governingOrganizationName,
+    governed_company_name: data.company.name,
+    company_is_workspace_organization: isSameAsCompany,
+    organization_relationship: data.company.organizationRelationship,
     primary_product_name: data.scope.systemName,
     effective_date: new Date().toISOString().slice(0, 10),
     policy_version: 'v0.1-draft',

@@ -1,10 +1,12 @@
 import Link from 'next/link';
 
 import { signupAction } from '@/app/(public)/signup/actions';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { APP_GIT_COMMIT, APP_VERSION_LABEL } from '@/lib/app-version';
 
 export default async function SignupPage({
   searchParams,
@@ -17,7 +19,13 @@ export default async function SignupPage({
     <div className="grid w-full max-w-5xl gap-8 lg:grid-cols-[0.9fr_1.1fr]">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Create your workspace</CardTitle>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>Create your workspace</CardTitle>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-[10px]">{APP_VERSION_LABEL}</Badge>
+              <Badge variant="outline" className="text-[10px] font-mono">{APP_GIT_COMMIT}</Badge>
+            </div>
+          </div>
           <CardDescription>
             A successful signup triggers the database bootstrap path that creates the organization and your initial admin membership.
           </CardDescription>
@@ -49,7 +57,11 @@ export default async function SignupPage({
         </CardContent>
       </Card>
       <section className="rounded-[2rem] border border-white/60 bg-white/70 p-10 backdrop-blur">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">Phase 2 MVP</p>
+        <div className="flex items-center gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">Phase 2 MVP</p>
+          <Badge variant="outline" className="text-[10px]">{APP_VERSION_LABEL}</Badge>
+          <Badge variant="outline" className="text-[10px] font-mono">{APP_GIT_COMMIT}</Badge>
+        </div>
         <h1 className="mt-6 max-w-lg text-5xl font-semibold leading-tight text-foreground">Start with a secure organization boundary.</h1>
         <ul className="mt-6 space-y-4 text-sm text-muted-foreground">
           <li>Every signup creates an organization automatically through the validated auth trigger.</li>

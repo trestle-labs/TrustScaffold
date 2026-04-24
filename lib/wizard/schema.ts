@@ -6,6 +6,7 @@ export const controlInclusionSchema = z.enum(['inclusive', 'carve-out']);
 export const orgAgeSchema = z.enum(['<1', '1-3', '3-10', '10+']);
 export const complianceMaturitySchema = z.enum(['first-time', 'some-experience', 'established']);
 export const targetAuditTypeSchema = z.enum(['type1', 'type2', 'unsure']);
+export const organizationRelationshipSchema = z.enum(['same-as-company', 'governing-company']);
 
 const subserviceSchema = z.object({
   name: z.string().trim().min(1, 'Vendor name is required'),
@@ -27,15 +28,21 @@ export const acknowledgementCadenceSchema = z.enum(['not-yet', 'hire-only', 'hir
 export const orgChartMaintenanceSchema = z.enum(['hris-auto', 'manual-quarterly', 'manual-annual', 'ad-hoc']);
 export const boardMeetingFrequencySchema = z.enum(['monthly', 'quarterly', 'semi-annual', 'annual', 'n-a']);
 export const internalAuditFrequencySchema = z.enum(['annual', 'semi-annual', 'quarterly', 'n-a']);
+export const governanceOversightApproachSchema = z.union([z.literal(''), z.enum(['founder-ceo', 'executive-team', 'engineering-leadership', 'external-advisor', 'informal-as-needed'])]);
+export const securityProgramOwnerSchema = z.union([z.literal(''), z.enum(['founder-ceo', 'cto-vp-engineering', 'it-ops-lead', 'fractional-consultant', 'shared-ownership', 'no-clear-owner'])]);
+export const controlMonitoringApproachSchema = z.union([z.literal(''), z.enum(['ad-hoc-founder-review', 'manager-review', 'external-consultant-review', 'customer-driven-remediation', 'none-today'])]);
 export const trainingCadenceSchema = z.enum(['not-yet', 'onboarding-only', 'onboarding-and-annual', 'onboarding-and-quarterly']);
 export const phishingFrequencySchema = z.enum(['monthly', 'quarterly', 'semi-annual', 'n-a']);
 export const penTestFrequencySchema = z.enum(['annual', 'semi-annual', 'quarterly', 'none']);
 export const policyPublicationMethodSchema = z.enum(['intranet', 'wiki', 'sharepoint', 'confluence', 'notion', 'other']);
+export const mfaGapReasonSchema = z.union([z.literal(''), z.enum(['not-configured-yet', 'legacy-tooling-limitations', 'rollout-in-progress', 'limited-to-admins-today', 'not-prioritized-yet'])]);
+export const changeReviewApproachSchema = z.union([z.literal(''), z.enum(['author-self-review', 'pairing-without-gate', 'founder-or-lead-approval', 'post-deploy-review', 'none-today'])]);
 
 export const securityAssessmentReadinessSchema = z.enum(['not-started', 'in-progress', 'established']);
 
 export const wizardSchema = z.object({
   company: z.object({
+    organizationRelationship: organizationRelationshipSchema,
     name: z.string().trim().min(2, 'Company name is required'),
     website: z.string().trim().url('Enter a valid website URL'),
     primaryContactName: z.string().trim().min(2, 'Primary contact is required'),
@@ -52,13 +59,16 @@ export const wizardSchema = z.object({
     hasDisciplinaryProcedures: z.boolean(),
     hasBoardOrAdvisory: z.boolean(),
     boardMeetingFrequency: boardMeetingFrequencySchema,
+    oversightApproachWhenNoBoard: governanceOversightApproachSchema,
     hasDedicatedSecurityOfficer: z.boolean(),
     securityOfficerTitle: z.string().trim().default(''),
+    securityProgramOwnerWhenNoOfficer: securityProgramOwnerSchema,
     hasOrgChart: z.boolean(),
     orgChartMaintenance: orgChartMaintenanceSchema,
     hasJobDescriptions: z.boolean(),
     hasInternalAuditProgram: z.boolean(),
     internalAuditFrequency: internalAuditFrequencySchema,
+    controlMonitoringApproachWhenNoInternalAudit: controlMonitoringApproachSchema,
     hasPerformanceReviewsLinkedToControls: z.boolean(),
   }),
   training: z.object({
@@ -124,7 +134,9 @@ export const wizardSchema = z.object({
     terminationSlaHours: z.number().int().min(1, 'Termination SLA must be at least 1 hour').max(168, 'Termination SLA must be 168 hours or less'),
     onboardingSlaDays: z.number().int().min(1, 'Onboarding SLA must be at least 1 day').max(30, 'Onboarding SLA must be 30 days or less'),
     requiresMfa: z.boolean(),
+    mfaGapReason: mfaGapReasonSchema,
     requiresPeerReview: z.boolean(),
+    changeReviewApproachWhenNoPeerReview: changeReviewApproachSchema,
     requiresCyberInsurance: z.boolean(),
     policyPublicationMethod: policyPublicationMethodSchema,
     hasCustomerContracts: z.boolean(),
@@ -217,6 +229,7 @@ export type ControlInclusion = z.infer<typeof controlInclusionSchema>;
 
 export const defaultWizardValues: WizardData = {
   company: {
+    organizationRelationship: 'same-as-company',
     name: '',
     website: 'https://',
     primaryContactName: '',
@@ -233,13 +246,16 @@ export const defaultWizardValues: WizardData = {
     hasDisciplinaryProcedures: false,
     hasBoardOrAdvisory: false,
     boardMeetingFrequency: 'quarterly',
+    oversightApproachWhenNoBoard: '',
     hasDedicatedSecurityOfficer: false,
     securityOfficerTitle: '',
+    securityProgramOwnerWhenNoOfficer: '',
     hasOrgChart: false,
     orgChartMaintenance: 'manual-annual',
     hasJobDescriptions: false,
     hasInternalAuditProgram: false,
     internalAuditFrequency: 'annual',
+    controlMonitoringApproachWhenNoInternalAudit: '',
     hasPerformanceReviewsLinkedToControls: false,
   },
   training: {
@@ -316,7 +332,9 @@ export const defaultWizardValues: WizardData = {
     terminationSlaHours: 4,
     onboardingSlaDays: 2,
     requiresMfa: true,
+    mfaGapReason: '',
     requiresPeerReview: true,
+    changeReviewApproachWhenNoPeerReview: '',
     requiresCyberInsurance: false,
     policyPublicationMethod: 'wiki',
     hasCustomerContracts: false,

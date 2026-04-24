@@ -24,6 +24,28 @@
     --radius: 1rem;
 }
 
+.dark {
+    --background: 220 24% 10%;
+    --foreground: 36 40% 96%;
+    --card: 221 24% 14%;
+    --card-foreground: 36 40% 96%;
+    --popover: 221 24% 14%;
+    --popover-foreground: 36 40% 96%;
+    --primary: 193 87% 55%;
+    --primary-foreground: 220 30% 10%;
+    --secondary: 213 23% 20%;
+    --secondary-foreground: 36 40% 94%;
+    --muted: 217 21% 18%;
+    --muted-foreground: 215 15% 72%;
+    --accent: 31 67% 24%;
+    --accent-foreground: 36 80% 92%;
+    --destructive: 0 72% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 18% 24%;
+    --input: 217 18% 24%;
+    --ring: 193 87% 55%;
+}
+
 * {
     @apply border-border;
 }
@@ -31,6 +53,10 @@
 body {
     @apply min-h-screen bg-background text-foreground antialiased;
     background-image: radial-gradient(circle at top left, rgba(11, 116, 164, 0.14), transparent 26%), radial-gradient(circle at bottom right, rgba(251, 191, 36, 0.16), transparent 24%), linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(248, 250, 252, 0.95));
+}
+
+.dark body {
+    background-image: radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 22%), radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.14), transparent 20%), linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(9, 14, 26, 0.98));
 }
 
 main {
