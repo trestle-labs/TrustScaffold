@@ -1761,56 +1761,6 @@ export function PolicyWizard() {
                           <div className="grid gap-3 md:grid-cols-2">
                             {dataTypeOptions.map((option) => (
                               <FormField
-
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <FormField
-                          control={form.control}
-                          name="scope.containsPhi"
-                          render={({ field }) => (
-                            <FormItem className="flex items-start gap-3 rounded-2xl border border-border bg-white p-3 transition-colors hover:border-primary/30">
-                              <FormControl>
-                                <Checkbox className="mt-0.5" checked={field.value} onCheckedChange={(checked) => field.onChange(Boolean(checked))} />
-                              </FormControl>
-                              <div className="min-w-0 flex-1 space-y-1">
-                                <div className="flex items-center gap-1.5">
-                                  <FormLabel className="font-medium leading-none">Protected health information (PHI) is in scope</FormLabel>
-                                  <Badge className="bg-emerald-100 px-1.5 py-0 text-[9px] text-emerald-700">HIPAA signal</Badge>
-                                </div>
-                                <FormDescription>
-                                  Turn this on when the system handles treatment, diagnosis, claims, medical records, or other healthcare-regulated information. This is separate from generic customer PII.
-                                </FormDescription>
-                                {!form.watch('scope.dataTypesHandled').includes('Customer PII') ? (
-                                  <p className="text-xs text-amber-700">PHI often overlaps with `Customer PII`, but keep this field accurate even if your regulated health data is modeled separately.</p>
-                                ) : null}
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="scope.hasCardholderDataEnvironment"
-                          render={({ field }) => (
-                            <FormItem className="flex items-start gap-3 rounded-2xl border border-border bg-white p-3 transition-colors hover:border-primary/30">
-                              <FormControl>
-                                <Checkbox className="mt-0.5" checked={field.value} onCheckedChange={(checked) => field.onChange(Boolean(checked))} />
-                              </FormControl>
-                              <div className="min-w-0 flex-1 space-y-1">
-                                <div className="flex items-center gap-1.5">
-                                  <FormLabel className="font-medium leading-none">Cardholder data environment (CDE) is in scope</FormLabel>
-                                  <Badge className="bg-blue-100 px-1.5 py-0 text-[9px] text-blue-700">PCI signal</Badge>
-                                </div>
-                                <FormDescription>
-                                  Turn this on when systems that store, process, transmit, or are directly connected to cardholder data are in scope. This is more specific than simply selecting `Payment data`.
-                                </FormDescription>
-                                {!form.watch('scope.dataTypesHandled').includes('Payment data') ? (
-                                  <p className="text-xs text-amber-700">A CDE usually accompanies `Payment data`. If this stays on, make sure the system description explains the payment boundary clearly.</p>
-                                ) : null}
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
                                 key={option.label}
                                 control={form.control}
                                 name="scope.dataTypesHandled"
@@ -1873,6 +1823,55 @@ export function PolicyWizard() {
                                 )}
                               />
                             ))}
+                          </div>
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <FormField
+                              control={form.control}
+                              name="scope.containsPhi"
+                              render={({ field }) => (
+                                <FormItem className="flex items-start gap-3 rounded-2xl border border-border bg-white p-3 transition-colors hover:border-primary/30">
+                                  <FormControl>
+                                    <Checkbox className="mt-0.5" checked={field.value} onCheckedChange={(checked) => field.onChange(Boolean(checked))} />
+                                  </FormControl>
+                                  <div className="min-w-0 flex-1 space-y-1">
+                                    <div className="flex items-center gap-1.5">
+                                      <FormLabel className="font-medium leading-none">Protected health information (PHI) is in scope</FormLabel>
+                                      <Badge className="bg-emerald-100 px-1.5 py-0 text-[9px] text-emerald-700">HIPAA signal</Badge>
+                                    </div>
+                                    <FormDescription>
+                                      Turn this on when the system handles treatment, diagnosis, claims, medical records, or other healthcare-regulated information. This is separate from generic customer PII.
+                                    </FormDescription>
+                                    {!form.watch('scope.dataTypesHandled').includes('Customer PII') ? (
+                                      <p className="text-xs text-amber-700">PHI often overlaps with `Customer PII`, but keep this field accurate even if your regulated health data is modeled separately.</p>
+                                    ) : null}
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="scope.hasCardholderDataEnvironment"
+                              render={({ field }) => (
+                                <FormItem className="flex items-start gap-3 rounded-2xl border border-border bg-white p-3 transition-colors hover:border-primary/30">
+                                  <FormControl>
+                                    <Checkbox className="mt-0.5" checked={field.value} onCheckedChange={(checked) => field.onChange(Boolean(checked))} />
+                                  </FormControl>
+                                  <div className="min-w-0 flex-1 space-y-1">
+                                    <div className="flex items-center gap-1.5">
+                                      <FormLabel className="font-medium leading-none">Cardholder data environment (CDE) is in scope</FormLabel>
+                                      <Badge className="bg-blue-100 px-1.5 py-0 text-[9px] text-blue-700">PCI signal</Badge>
+                                    </div>
+                                    <FormDescription>
+                                      Turn this on when systems that store, process, transmit, or are directly connected to cardholder data are in scope. This is more specific than simply selecting `Payment data`.
+                                    </FormDescription>
+                                    {!form.watch('scope.dataTypesHandled').includes('Payment data') ? (
+                                      <p className="text-xs text-amber-700">A CDE usually accompanies `Payment data`. If this stays on, make sure the system description explains the payment boundary clearly.</p>
+                                    ) : null}
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
                           </div>
                           <FormMessage />
                         </FormItem>
