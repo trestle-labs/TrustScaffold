@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import type { IntegrationProvider } from '@/lib/types';
 
 import { updateOrgProfileAction } from '@/app/actions/org-profile';
 import { deleteIntegrationAction, deleteIntegrationTokenAction, saveIntegrationAction, saveWizardAutosaveSettingsAction } from './actions';
@@ -16,6 +17,17 @@ import {
   revokeAuditorPortalTokenAction,
   revokeOrganizationApiKeyAction,
 } from './control-graph-actions';
+
+type SavedIntegration = {
+  id: string;
+  provider: IntegrationProvider;
+  repo_owner: string;
+  repo_name: string;
+  default_branch: string;
+  encrypted_token: string | null;
+  webhook_secret: string | null;
+  updated_at: string;
+};
 
 export default async function SettingsPage({
   searchParams,
@@ -44,6 +56,9 @@ export default async function SettingsPage({
   }
 
   const isAdmin = context.organization.role === 'admin';
+  const savedIntegrations = (integrations ?? []) as SavedIntegration[];
+  const githubIntegration = savedIntegrations.find((integration) => integration.provider === 'github') ?? null;
+  const azureDevOpsIntegration = savedIntegrations.find((integration) => integration.provider === 'azure_devops') ?? null;
 
   return (
     <div className="space-y-6">
@@ -141,7 +156,20 @@ export default async function SettingsPage({
                     <p className="text-base font-semibold text-foreground">{integration.provider}</p>
                     <Badge variant="secondary">{integration.repo_owner}/{integration.repo_name}</Badge>
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">Default branch: {integration.default_branch}</p>
+                  <div className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
+                    <div className="rounded-xl bg-secondary/40 px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Owner / project</p>
+                      <p className="mt-1 font-medium text-foreground">{integration.repo_owner}</p>
+                    </div>
+                    <div className="rounded-xl bg-secondary/40 px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Repository</p>
+                      <p className="mt-1 font-medium text-foreground">{integration.repo_name}</p>
+                    </div>
+                    <div className="rounded-xl bg-secondary/40 px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Default branch</p>
+                      <p className="mt-1 font-medium text-foreground">{integration.default_branch}</p>
+                    </div>
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     {integration.provider === 'azure_devops'
                       ? 'Azure DevOps owner format: organization/project'
@@ -199,64 +227,135 @@ export default async function SettingsPage({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Save Integration</CardTitle>
-            <CardDescription>
-              One target per provider per organization. This is admin-only because it controls where approved documents are delivered.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isAdmin ? (
-              <form action={saveIntegrationAction} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground" htmlFor="provider">Provider</label>
-                  <select
-                    id="provider"
-                    name="provider"
-                    defaultValue="github"
-                    className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <option value="github">GitHub</option>
-                    <option value="azure_devops">Azure DevOps</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground" htmlFor="repo_owner">Repo owner / project</label>
-                  <Input id="repo_owner" name="repo_owner" placeholder="acme-security or contoso/security-project" required />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground" htmlFor="repo_name">Repo name</label>
-                  <Input id="repo_name" name="repo_name" placeholder="trustscaffold-docs" required />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground" htmlFor="default_branch">Default branch</label>
-                  <Input id="default_branch" name="default_branch" defaultValue="main" required />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground" htmlFor="token">PAT / access token</label>
-                  <Input id="token" name="token" type="password" placeholder="Paste a new token to set or rotate it" />
-                  <div className="rounded-xl bg-secondary/60 p-3 space-y-2 text-xs text-muted-foreground">
-                    <p className="font-semibold text-foreground">How to create a token</p>
-                    <p><strong>GitHub:</strong> Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token. Required scope: <code className="rounded bg-secondary px-1">repo</code> (or fine-grained: Contents read/write + Pull requests read/write).</p>
-                    <p><strong>Azure DevOps:</strong> dev.azure.com → User Settings (top-right) → Personal access tokens → New token. Required scope: <strong>Code — Read &amp; Write</strong>. Set organization to your ADO org.</p>
-                    <p>Tokens are encrypted with AES-256-GCM before storage and never returned to the browser.</p>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Saving with a new token rotates the existing credential. Leaving the token blank keeps the current encrypted token unchanged.
-                </p>
-                <Button type="submit" className="w-full">Save integration</Button>
-              </form>
-            ) : (
-              <p className="text-sm text-muted-foreground">Only admins can configure GitOps targets.</p>
-            )}
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <IntegrationFormCard
+            provider="github"
+            title="GitHub Export Target"
+            description="Save and review the GitHub repository target used for approved document export. The saved destination remains visible here for admins after refresh or redeploy."
+            ownerLabel="Owner / organization"
+            ownerPlaceholder="acme-security"
+            repoPlaceholder="trustscaffold-docs"
+            integration={githubIntegration}
+            isAdmin={isAdmin}
+          />
+          <IntegrationFormCard
+            provider="azure_devops"
+            title="Azure DevOps Export Target"
+            description="Save and review the Azure DevOps repository target used for approved document export. Use the owner field in organization/project format."
+            ownerLabel="Organization / project"
+            ownerPlaceholder="contoso/security-project"
+            repoPlaceholder="trustscaffold-docs"
+            integration={azureDevOpsIntegration}
+            isAdmin={isAdmin}
+          />
+        </div>
       </div>
 
       <ControlGraphSection organizationId={context.organization.id} isAdmin={isAdmin} />
     </div>
+  );
+}
+
+function IntegrationFormCard({
+  provider,
+  title,
+  description,
+  ownerLabel,
+  ownerPlaceholder,
+  repoPlaceholder,
+  integration,
+  isAdmin,
+}: {
+  provider: IntegrationProvider;
+  title: string;
+  description: string;
+  ownerLabel: string;
+  ownerPlaceholder: string;
+  repoPlaceholder: string;
+  integration: SavedIntegration | null;
+  isAdmin: boolean;
+}) {
+  const hasSavedTarget = Boolean(integration);
+  const providerLabel = provider === 'github' ? 'GitHub' : 'Azure DevOps';
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isAdmin ? (
+          <form action={saveIntegrationAction} className="space-y-4">
+            <input type="hidden" name="provider" value={provider} />
+            {hasSavedTarget ? (
+              <div className="rounded-2xl border border-border bg-secondary/35 p-4 text-sm">
+                <p className="font-semibold text-foreground">Current saved destination</p>
+                <p className="mt-1 text-muted-foreground">{integration?.repo_owner}/{integration?.repo_name} on branch {integration?.default_branch}</p>
+                <p className="mt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  Token configured: {integration?.encrypted_token ? 'yes' : 'no'} · Updated {integration ? new Date(integration.updated_at).toLocaleString() : 'never'}
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-border bg-secondary/20 p-4 text-sm text-muted-foreground">
+                No {providerLabel} repository target has been saved yet.
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground" htmlFor={`${provider}_repo_owner`}>{ownerLabel}</label>
+              <Input
+                id={`${provider}_repo_owner`}
+                name="repo_owner"
+                defaultValue={integration?.repo_owner ?? ''}
+                placeholder={ownerPlaceholder}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground" htmlFor={`${provider}_repo_name`}>Repo name</label>
+              <Input
+                id={`${provider}_repo_name`}
+                name="repo_name"
+                defaultValue={integration?.repo_name ?? ''}
+                placeholder={repoPlaceholder}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground" htmlFor={`${provider}_default_branch`}>Default branch</label>
+              <Input
+                id={`${provider}_default_branch`}
+                name="default_branch"
+                defaultValue={integration?.default_branch ?? 'main'}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground" htmlFor={`${provider}_token`}>PAT / access token</label>
+              <Input
+                id={`${provider}_token`}
+                name="token"
+                type="password"
+                placeholder={hasSavedTarget ? 'Leave blank to keep the current encrypted token' : 'Paste a token to save this integration'}
+              />
+              <div className="rounded-xl bg-secondary/60 p-3 space-y-2 text-xs text-muted-foreground">
+                <p className="font-semibold text-foreground">How to create a token</p>
+                <p><strong>GitHub:</strong> Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token. Required scope: <code className="rounded bg-secondary px-1">repo</code> (or fine-grained: Contents read/write + Pull requests read/write).</p>
+                <p><strong>Azure DevOps:</strong> dev.azure.com → User Settings (top-right) → Personal access tokens → New token. Required scope: <strong>Code — Read &amp; Write</strong>. Set organization to your ADO org.</p>
+                <p>Tokens are encrypted with AES-256-GCM before storage and never returned to the browser.</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Saving updates the stored {providerLabel} destination for this organization. Leaving the token blank preserves the existing encrypted credential.
+            </p>
+            <Button type="submit" className="w-full">Save {providerLabel} integration</Button>
+          </form>
+        ) : (
+          <p className="text-sm text-muted-foreground">Only admins can configure GitOps targets.</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

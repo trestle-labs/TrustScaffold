@@ -2,7 +2,7 @@
 
 > **Audience:** Internal Developers, QA, and Red Team Leads
 > **Status:** Pre-Launch
-> **Last Updated:** 2026-04-23
+> **Last Updated:** 2026-04-24
 
 ---
 
@@ -193,11 +193,13 @@ Open `http://localhost:${PORT}/dashboard` after signing in as a fresh admin user
       Action:
       - Launch the wizard from the dashboard quick action.
        Expected:
-      - Left rail shows 10 steps in this order: Welcome, System Scope, Governance, TSC Selection, Infrastructure, Security Assessment, Security Tooling, Operations, Review, Generate.
+      - On desktop, the main left platform sidebar shows 10 wizard steps in this order: Welcome, System Scope, Governance, TSC Selection, Infrastructure, Security Assessment, Security Tooling, Operations, Review, Generate.
+      - On smaller screens, a compact step navigator appears above the form instead of a standalone side rail.
        - Active organization name and org ID are visible.
        - A draft sync status is visible in the sidebar.
        Report back with:
        - Which step titles you actually see.
+       - Whether the step navigator moved into the left platform sidebar on desktop and above the form on smaller screens.
        - Whether the active org card renders.
        - Whether draft status shows `saved`, `saving`, `error`, or stays idle.
 
@@ -274,10 +276,29 @@ Open `http://localhost:${PORT}/dashboard` after signing in as a fresh admin user
        - The wizard returns to the saved step.
        - Previously entered data is restored.
        - Sidebar status eventually shows the draft was saved to the server.
+      - When moving between steps with Next, Previous, or the step navigator, the viewport returns to the top of the form instead of leaving the user mid-form.
        Report back with:
        - Which step reopened.
        - Any fields that were lost.
+      - Whether step navigation consistently returned you to the top of the form.
        - Whether persistence felt local-only or server-backed.
+
+5A. **Wizard autosave setting and cadence**
+      Action:
+      - Open `/settings` as an admin.
+      - In `Wizard Autosave`, change the interval from the default to `1 minute`, save, then return to `/wizard`.
+      - Make a visible change in the wizard and wait long enough for the interval to elapse.
+      - Return to Settings and set the interval to `Disabled`, then verify the wizard reflects that state.
+      Expected:
+      - Settings shows a `Wizard Autosave` control with options `Disabled`, `Every 1 minute`, `Every 5 minutes`, `Every 10 minutes`, and `Every 15 minutes`.
+      - The settings summary badge reflects the saved interval.
+      - The wizard status area shows the current cadence, such as `Server autosave every 1 minute`, or shows that autosave is disabled.
+      - The wizard only performs timed server sync when the payload changed since the last successful save.
+      Report back with:
+      - Which interval you saved.
+      - Whether the badge and wizard status text updated to match.
+      - Whether a timed server save occurred after a change.
+      - Whether disabling autosave removed the cadence message and stopped timed sync behavior.
 
 6. **Review step catches whole-wizard issues**
        Action:
@@ -358,7 +379,11 @@ Open `http://localhost:${PORT}/dashboard` after signing in as a fresh admin user
       Expected:
       Actual:
       Notes:
-- 5. Draft persistence across reload: pass | partial | fail
+| 5. Draft persistence across reload: pass | partial | fail
+      Expected:
+      Actual:
+      Notes:
+| 5A. Wizard autosave setting and cadence: pass | partial | fail
       Expected:
       Actual:
       Notes:
@@ -461,6 +486,134 @@ These are branch-driven QA clusters derived from the typed wizard rule matrix in
       - Which cloud providers you selected.
       - Whether both infrastructure warnings appeared.
       - Whether the Review trace made the implications clear enough to act on.
+
+### 0.7C UAT Plan By Organization Level
+
+Use this section when validating the wizard with real users or internal stakeholders representing different organization levels. The goal is not just form completion. The goal is to confirm that the wizard changes its guidance, friction, and recommendations appropriately for the organization's actual maturity.
+
+Detailed, stage-by-stage UAT scripts now live in [docs/uat/README.md](./uat/README.md):
+
+- [Level 1 — First-Time Organization](./uat/level-1-first-time-organization.md)
+- [Level 2 — Growing Organization](./uat/level-2-growing-organization.md)
+- [Level 3 — Established Program](./uat/level-3-established-program.md)
+
+Environment-specific UAT profiles now live in [docs/uat/environments/README.md](./uat/environments/README.md):
+
+- [Single-Cloud SaaS](./uat/environments/single-cloud-saas.md)
+- [Multi-Cloud SaaS](./uat/environments/multi-cloud-saas.md)
+- [Hybrid Cloud + Self-Hosted](./uat/environments/hybrid-cloud-self-hosted.md)
+- [Pure On-Prem / Self-Hosted Gap](./uat/environments/on-prem-self-hosted-gap.md)
+
+#### UAT objective
+
+- Confirm the wizard calibrates tone and next-step guidance to the organization's maturity instead of treating every organization like an established audit program.
+- Confirm the branching logic surfaces the right deep dives, warnings, and recommendations for each level.
+- Confirm the Review and Generate steps still feel credible to admins at each maturity level.
+
+#### Organization-level UAT matrix
+
+| UAT level | Primary persona | Wizard setup | What the wizard must do well | Highest-risk failure |
+| --- | --- | --- | --- | --- |
+| Level 1: First-time organization | Founder, solo admin, or first compliance owner | `complianceMaturity = first-time`, younger org age, minimal formal governance, simple stack | Reduce ambiguity, explain terminology, allow "not yet" answers where appropriate, and require the right follow-up deep dives before proceeding | Overwhelming the user with enterprise-style assumptions or allowing them to skip critical follow-up questions |
+| Level 2: Growing organization | Ops lead, IT manager, or security generalist | `complianceMaturity = some-experience`, some controls exist, vendors and processes are partially formalized | Preserve momentum, surface contradictions and missing operational detail, and turn partial maturity into targeted remediation guidance | Treating the org as either fully immature or fully mature, causing bad recommendations in both directions |
+| Level 3: Established program | Security lead, compliance manager, or audit owner | `complianceMaturity = established`, more complete governance, formal tooling, broader scope | Stay efficient, avoid beginner-only friction, preserve advanced answers cleanly, and make the Review/Generate output feel audit-ready | Regressing into repetitive beginner coaching or hiding advanced scope warnings behind overly simple defaults |
+
+#### Level 1 UAT — First-time organization
+
+**Representative profile:**
+- Org age: `< 1 year` or `1–3 years`
+- Compliance maturity: `First time`
+- Org/company relationship: test both `The org is the company` and `The org governs another company`
+- Governance posture: no board, no designated security officer, no internal audit program yet
+- Infrastructure posture: single cloud provider, a few sub-service organizations, basic operational tooling
+
+**Test goals:**
+- Confirm Welcome and Governance feel educational rather than punitive.
+- Confirm first-time guidance appears where the wizard claims it will.
+- Confirm negative governance answers trigger the required deep dives before the user can continue.
+- Confirm the user can still complete the wizard with realistic "not yet" answers where the product intentionally allows that path.
+
+**Expected wizard behavior:**
+- Welcome should recommend a reasonable target audit type when the user is unsure.
+- Governance should show first-time guidance and actionable recommendations rather than assuming a mature compliance team exists.
+- Review should summarize the current gaps clearly without making the product feel unusable for first-time organizations.
+- Generate should still work once required follow-ups are completed.
+
+**UAT pass criteria:**
+- The tester can explain why the wizard asked each follow-up question.
+- The tester never gets blocked by hidden requirements or unexplained jargon.
+- The tester believes the generated drafts are plausible starting points for a first audit cycle.
+
+#### Level 2 UAT — Growing organization
+
+**Representative profile:**
+- Org age: `1–3 years` or `3–10 years`
+- Compliance maturity: `Some experience`
+- Governance posture: partial structure in place, maybe advisory oversight, maybe a named security owner, but inconsistent cadences
+- Infrastructure posture: multiple vendors, possibly customer PII, maybe multi-cloud or hybrid decisions emerging
+- Operations posture: ticketing, VCS, onboarding/offboarding, and monitoring exist but may be unevenly formalized
+
+**Test goals:**
+- Confirm the wizard recognizes partial maturity and does not fall back to first-time-only messaging.
+- Confirm System Scope, TSC Selection, Infrastructure, and Review expose contradictions in a way the admin can act on.
+- Confirm vendor-aware recommendations, privacy contradiction warnings, and infrastructure warnings all appear when appropriate.
+- Confirm the Review decision trace helps the user understand cross-step implications.
+
+**Expected wizard behavior:**
+- Governance should feel more like targeted gap analysis than basic onboarding.
+- TSC Selection and Review should call out mismatches such as handling PII without Privacy scope.
+- Infrastructure should warn on multi-cloud and hybrid ownership-boundary complexity when selected.
+- Review should help the admin navigate back to the exact step that needs correction.
+
+**UAT pass criteria:**
+- The tester says the guidance feels tailored to a company that has started formalizing controls but is not done.
+- The contradictions and warnings are specific enough to drive action.
+- The decision trace improves confidence instead of reading like generic noise.
+
+#### Level 3 UAT — Established program
+
+**Representative profile:**
+- Org age: `3–10 years` or `10+ years`
+- Compliance maturity: `Established program`
+- Governance posture: board or advisory oversight exists, a security owner exists, and review cadences are defined
+- Infrastructure posture: formal IdP, VCS, HRIS, monitoring, scanning, and change-management expectations already exist
+- Scope posture: may include multiple cloud providers, broader TSC scope, and more structured evidence expectations
+
+**Test goals:**
+- Confirm the wizard stays fast and does not burden mature users with unnecessary coaching.
+- Confirm advanced selections are preserved through Review and Generate without flattening important distinctions.
+- Confirm document expectations, decision trace entries, and generated policy tone still feel credible to someone who already runs compliance.
+
+**Expected wizard behavior:**
+- The wizard should avoid overusing first-time guidance or entry-level tips.
+- Advanced choices like board frequency, internal-audit frequency, peer review, and broader TSC scope should remain visible and correctly summarized.
+- Review should feel like a final control-plane check, not a beginner checklist.
+- Generate should produce a believable draft set without losing scoped infrastructure or governance detail.
+
+**UAT pass criteria:**
+- The tester does not feel talked down to by the flow.
+- The summary and generated outputs retain the important details they entered.
+- The tester believes the wizard could be used as part of a real audit-prep workflow, not just a demo.
+
+#### Required UAT report for each level
+
+For each organization level above, record:
+
+- Tester role and organization profile used
+- Which wizard paths were exercised
+- Which warnings, recommendations, and deep dives appeared
+- Whether the tone felt appropriate for that maturity level
+- Whether Review accurately summarized the profile and gaps
+- Whether Generate produced a believable draft set for that level
+- One thing that felt intentionally helpful
+- One thing that felt mismatched to the organization's level
+
+#### Exit criteria before broad release
+
+- At least one tester completes UAT for each of the three organization levels.
+- No level reports hidden blockers that prevent completion of a realistic path.
+- No level reports repeated guidance that obviously belongs to a different maturity tier.
+- Any mismatch between organization level and wizard tone is logged as a product issue before release.
 
 ### 0.8 E2E Suite — Full Pass
 
