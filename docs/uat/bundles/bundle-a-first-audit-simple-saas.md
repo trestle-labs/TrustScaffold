@@ -33,12 +33,10 @@ Verify:
 
 - Data types: check `Customer PII` and `Authentication secrets`
 - Deployment model: choose one intentionally
-- Add sub-service organizations: `Okta`, `GitHub`, `Rippling`
 
 Verify:
 
-- Vendor role auto-fill works.
-- Manual override clears the auto-fill hint.
+- Data classification appears before the final system description field.
 
 ### Governance
 
@@ -73,9 +71,14 @@ Verify:
 - `GCP`: unchecked
 - `We host our own hardware (on-premises / colocation)`: unchecked
 - Identity provider: `Okta`
+- VCS provider: `GitHub`
+- HRIS provider: `Rippling`
+- Add sub-service organizations: `AWS`, `Okta`, `GitHub`, `Rippling`
 
 Verify:
 
+- Vendor role auto-fill works.
+- Manual override clears the auto-fill hint.
 - No multi-cloud warning.
 - No hybrid warning.
 - AWS-specific controls appear.
@@ -83,8 +86,6 @@ Verify:
 
 ### Operations
 
-- VCS provider: `GitHub`
-- HRIS provider: `Rippling`
 - MFA required: checked
 - Peer review required: checked
 

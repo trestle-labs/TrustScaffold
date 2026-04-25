@@ -68,12 +68,13 @@ export function DashboardHeader({ appVersion, appCommit }: { appVersion: string;
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64 rounded-2xl border border-border bg-white p-2 shadow-panel dark:bg-card">
             <form action={signOut}>
-              <DropdownMenuItem className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm outline-none hover:bg-accent" asChild>
-                <button type="submit" className="w-full">
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </button>
-              </DropdownMenuItem>
+              <button
+                type="submit"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium !text-foreground outline-none transition-colors hover:bg-accent hover:!text-accent-foreground focus-visible:bg-accent focus-visible:!text-accent-foreground dark:!text-card-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
             </form>
           </DropdownMenuContent>
         </DropdownMenu>

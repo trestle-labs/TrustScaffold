@@ -17,7 +17,7 @@ Use it to track which bundled scenarios have been executed, who ran them, when t
 
 | Bundle | Scenario | Maturity profile | Environment profile | Status | Last run | Tester | Result template | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| A | First audit, simple SaaS | Level 1 — First-Time Organization | Single-Cloud SaaS | not-started | — | — | [Bundle A result](./bundles/results/bundle-a-first-audit-simple-saas-result.md) | Lowest-friction supported path |
+| A | First audit, simple SaaS | Level 1 — First-Time Organization | Single-Cloud SaaS | partial | 2026-04-25 | GitHub Copilot | [Bundle A result](./bundles/results/bundle-a-first-audit-simple-saas-result.md) | Generated 13 docs successfully; open UX/doc drift around same-as-company validation and vendor block placement |
 | B | Growing company, privacy contradiction | Level 2 — Growing Organization | Single-Cloud SaaS | not-started | — | — | [Bundle B result](./bundles/results/bundle-b-growing-privacy-contradiction-result.md) | Exercises `Customer PII` without `Privacy` |
 | C | Growing company, multi-cloud expansion | Level 2 — Growing Organization | Multi-Cloud SaaS | not-started | — | — | [Bundle C result](./bundles/results/bundle-c-growing-multi-cloud-result.md) | Cloud-only multi-provider path |
 | D | Growing company, hybrid boundary risk | Level 2 — Growing Organization | Hybrid Cloud + Self-Hosted | not-started | — | — | [Bundle D result](./bundles/results/bundle-d-growing-hybrid-result.md) | Hybrid ownership-boundary path |
@@ -35,7 +35,7 @@ Use this section to track whether each system-profile bundle has been exercised,
 
 | Profile | Cloud shape | IdP | VCS | HRIS | Overlay focus | Status | Last run | Tester | Covered by bundles | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| SP-1 | AWS-only | Okta | GitHub | Rippling | Baseline first audit | not-started | — | — | A | Lowest-friction provider path |
+| SP-1 | AWS-only | Okta | GitHub | Rippling | Baseline first audit | partial | 2026-04-25 | GitHub Copilot | A | AWS/Okta/GitHub/Rippling generated 13 draft documents; open Level 1 wizard UX/doc drift recorded in Bundle A result |
 | SP-2 | Azure-only | Entra ID | Azure DevOps | BambooHR | Growing Azure-first | not-started | — | — | H, J | Also used for HIPAA overlay coverage |
 | SP-3 | GCP-only | Google Workspace | GitLab | Gusto | Growing GCP-first | not-started | — | — | I, K | Also used for PCI overlay coverage |
 | SP-4 | AWS + Azure | Okta | GitHub | Workday | Established multi-cloud | not-started | — | — | E | Mature cloud-only provider path |

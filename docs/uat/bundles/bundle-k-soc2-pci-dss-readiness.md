@@ -27,7 +27,6 @@ Verify:
 - Data types: check `Payment data`, `Customer PII`, and `Authentication secrets`
 - `Protected health information (PHI) is in scope`: unchecked
 - `Cardholder data environment (CDE) is in scope`: checked
-- Add sub-service organizations: `GCP`, `Google Workspace`, `GitLab`, `Gusto`, and the payment processor through a known vendor or `Other`
 
 Verify:
 
@@ -49,6 +48,7 @@ Verify:
 ### Infrastructure And Operations
 
 - Keep the GCP-first provider baseline from SP-3
+- Add sub-service organizations: `GCP`, `Google Workspace`, `GitLab`, `Gusto`, and the payment processor through a known vendor or `Other`
 - MFA required: checked
 - Peer review required: checked
 

@@ -686,7 +686,7 @@ version: {{policy_version}}
 {{/if}}
 
 ## Review Cadence
-Critical vendors are reviewed every {{vendor_review_frequency}}.
+Critical vendors are reviewed {{vendor_review_frequency}}.
 $$,
     '{
       "organization_name": "Example Corp",
@@ -841,21 +841,89 @@ version: {{policy_version}}
 # Acceptable Use and Code of Conduct Policy
 
 ## Statement
-{{organization_name}} expects workforce members to use company systems responsibly, lawfully, and in a manner consistent with company values.
+{{organization_name}} expects workforce members to use company systems responsibly, lawfully, ethically, and in a manner consistent with company values and security obligations.
 
-## Requirements
-- Users must protect credentials and company-issued devices.
-- Company systems may not be used for harassment, unlawful activity, or unauthorized disclosure.
-- Security concerns must be reported to {{security_contact_email}}.
+## Scope
+This policy applies to {{acceptable_use_scope}}. It covers all company systems, including {{primary_product_name}}, {{idp_provider}}, company-issued devices, source code repositories, collaboration tools, ticketing systems, and approved storage locations used to process or access company or customer data.
+
+## Acceptable Use
+- Company systems are provided for authorized business purposes{{#if permits_limited_personal_use}}, with limited incidental personal use permitted only when it does not interfere with work, violate law or policy, or create security, confidentiality, or availability risk{{/if}}.
+- Workforce members must protect credentials, MFA factors, access tokens, and company-issued devices from unauthorized use.
+- Workforce members must use company systems in a professional manner and may not harass, threaten, discriminate, or misuse company communication channels.
+{{#if requires_approved_software}}
+- Only approved software, services, repositories, and storage locations may be used to create, process, transmit, or store company or customer data.
+{{/if}}
+{{#if restricts_company_data_to_approved_systems}}
+- Company and customer data must remain in approved systems and may not be copied into personal accounts, unmanaged devices, or unapproved artificial intelligence, file-sharing, messaging, or storage services.
+{{/if}}
+
+## Prohibited Use
+Workforce members may not use company systems to:
+
+- Perform unlawful activity, harassment, discrimination, retaliation, or other conduct inconsistent with the code of conduct.
+- Attempt to bypass access controls, logging, security monitoring, endpoint protection, or other security safeguards.
+- Share accounts, passwords, MFA factors, API keys, session tokens, or privileged access with another person.
+- Access, disclose, modify, download, or transmit company, customer, employee, or vendor data without authorization and business need.
+- Install unauthorized software, connect unmanaged devices, or introduce malware, unauthorized scanning tools, or unapproved automation into company environments.
+
+## Device and Data Handling
+- Company-issued devices must be protected with screen locks, encryption where supported, and current security updates.
+{{#if has_mdm}}
+- Company-managed devices are enrolled in {{mdm_tool}} or an equivalent management process for baseline configuration, remote lock, and remote wipe support.
+{{else}}
+- {{organization_name}} shall establish a device-management process for enforcing baseline device controls as the program matures.
+{{/if}}
+{{#if has_endpoint_protection}}
+- Endpoint protection is provided through {{endpoint_protection_tool}} or an equivalent protective control.
+{{else}}
+- {{organization_name}} shall establish endpoint protection for company-managed devices as the program matures.
+{{/if}}
+{{#if requires_lost_device_reporting}}
+- Lost, stolen, or suspected-compromised devices must be reported to {{security_report_channel}} within {{lost_device_report_sla_hours}} hours so access can be reviewed and remote lock, wipe, or containment actions can be initiated.
+{{/if}}
+
+## Security Reporting
+Workforce members must promptly report suspected phishing, credential exposure, policy violations, unauthorized access, lost devices, suspicious activity, or other security concerns to {{security_report_channel}}.
+
+## Monitoring and Enforcement
+{{#if monitors_company_systems}}
+Company systems, networks, devices, repositories, and logs may be monitored for security, compliance, operational, and incident-response purposes, subject to applicable law.
+{{else}}
+{{organization_name}} reviews security-relevant activity as needed for incident response, investigation, and compliance purposes, subject to applicable law.
+{{/if}}
+{{#if has_disciplinary_procedures}}
+Violations of this policy may result in disciplinary action up to and including access removal, termination, contract termination, and legal action.
+{{else}}
+{{organization_name}} shall define disciplinary procedures for policy violations and document how violations are reviewed and remediated.
+{{/if}}
 
 ## Acknowledgement
-All personnel acknowledge these expectations during onboarding and during annual policy review cycles.
+{{#if (eq acknowledgement_cadence 'not-yet')}}
+{{organization_name}} shall establish an onboarding and periodic acknowledgement process for this policy.
+{{else}}
+All personnel acknowledge these expectations during onboarding and during {{acknowledgement_cadence}} policy review cycles.
+{{/if}}
 $$,
     '{
       "organization_name": "Example Corp",
       "effective_date": "2026-04-18",
       "policy_version": "v0.1",
-      "security_contact_email": "security@example.com"
+      "primary_product_name": "Example Cloud",
+      "idp_provider": "Okta",
+      "acceptable_use_scope": "employees, contractors, consultants, temporary workers, and any other workforce members with access to company systems",
+      "permits_limited_personal_use": false,
+      "requires_approved_software": true,
+      "restricts_company_data_to_approved_systems": true,
+      "has_mdm": true,
+      "mdm_tool": "Jamf",
+      "has_endpoint_protection": true,
+      "endpoint_protection_tool": "Microsoft Defender for Endpoint",
+      "requires_lost_device_reporting": true,
+      "lost_device_report_sla_hours": 24,
+      "security_report_channel": "security@example.com",
+      "monitors_company_systems": true,
+      "has_disciplinary_procedures": true,
+      "acknowledgement_cadence": "hire-and-annual"
     }'::jsonb,
     true
   ),
@@ -899,7 +967,11 @@ This checklist is generated from the exact infrastructure and operating assumpti
 {{/if}}
 {{#if has_code_of_conduct}}
 - [ ] Code of conduct document (current version).
+{{#if (eq acknowledgement_cadence 'not-yet')}}
+- [ ] Signed acknowledgement forms once the formal acknowledgement cadence is established.
+{{else}}
 - [ ] Signed acknowledgement forms (new-hire acknowledgements and {{acknowledgement_cadence}} renewals).
+{{/if}}
 {{else}}
 - [ ] **GAP**: Document rationale for not maintaining a separate code of conduct.
 {{/if}}
@@ -934,7 +1006,11 @@ This checklist is generated from the exact infrastructure and operating assumpti
 
 ### Training and Competence (CC1.4)
 {{#if security_awareness_training_tool}}
+{{#if (eq training_cadence 'not-yet')}}
+- [ ] Security awareness training implementation plan for {{security_awareness_training_tool}}, including the target completion cadence.
+{{else}}
 - [ ] Training completion records from {{security_awareness_training_tool}} for all employees ({{training_cadence}} cadence).
+{{/if}}
 - [ ] New-hire training completion evidence showing training was completed before system access was granted.
 {{else}}
 - [ ] **GAP**: Implement and track security awareness training program.
@@ -1062,7 +1138,7 @@ This checklist is generated from the exact infrastructure and operating assumpti
 - [ ] **GAP**: Implement vulnerability scanning for infrastructure and application components.
 {{/if}}
 {{#if has_penetration_testing}}
-- [ ] Penetration test report ({{penetration_test_frequency}} cadence) from qualified third party.
+- [ ] Penetration test report from the {{penetration_test_frequency}} testing cycle, provided by a qualified third party.
 - [ ] Remediation evidence for findings identified in the pen test.
 {{else}}
 - [ ] **GAP**: Conduct penetration testing (recommended annually at minimum) and document risk acceptance if deferred.
@@ -1185,7 +1261,7 @@ This checklist is generated from the exact infrastructure and operating assumpti
 {{#if has_subprocessors}}
 {{#each subprocessors}}
 ### {{name}}
-- [ ] Security review package for {{name}} covering {{service_description}}.
+- [ ] Security review package for {{name}}: {{service_description}}
 {{#if has_assurance_report}}
 - [ ] {{assurance_report_type}} report from {{name}} (current period).
 {{#if (eq control_inclusion 'carve-out')}}
@@ -1306,7 +1382,19 @@ version: {{policy_version}}
 
 ## I. Company Overview
 
-{{organization_name}} provides {{system_description}} deployed as a {{deployment_model}} application. This description covers the {{organization_name}} production system and supporting infrastructure for the period under examination.
+{{organization_name}} provides {{primary_product_name}}. {{system_description}}
+
+### Audit Readiness Context
+
+{{#if is_type1}}
+This package is prepared for a **SOC 2 Type I** readiness path, focusing on point-in-time control design and implementation evidence.
+{{/if}}
+{{#if is_type2}}
+This package is prepared for a **SOC 2 Type II** readiness path, focusing on control design and operating effectiveness across the audit period.
+{{/if}}
+{{#if is_audit_type_unsure}}
+This package is prepared for an undecided SOC 2 audit path and is written to support either Type I design readiness or Type II operating-effectiveness evidence once the audit period is confirmed.
+{{/if}}
 
 ### Principal Service Commitments and System Requirements
 
@@ -1717,7 +1805,7 @@ This policy applies to all controls within the SOC 2 trust services criteria bou
 {{#if has_internal_audit_program}}
 {{organization_name}} conducts formal internal audit reviews on a **{{internal_audit_frequency}}** basis.
 {{else}}
-{{organization_name}} shall establish an internal audit review cadence of at least **annual** frequency.
+{{organization_name}} shall establish an internal audit review cadence of at least annually.
 {{/if}}
 
 ### 3.2 Audit Activities
@@ -1745,7 +1833,11 @@ Internal audit activities are conducted by personnel who are independent of the 
 
 ### 4.2 Manual Monitoring
 - Access reviews are performed quarterly.
+{{#if (eq acknowledgement_cadence 'not-yet')}}
+- A formal policy acknowledgement cadence is being established and will be verified once adopted.
+{{else}}
 - Policy acknowledgements are verified per the established cadence ({{acknowledgement_cadence}}).
+{{/if}}
 {{#if has_phishing_simulation}}
 - Phishing simulation results are reviewed {{phishing_simulation_frequency}} to identify awareness gaps.
 {{/if}}
@@ -1909,7 +2001,7 @@ Data deletion requests from customers are handled per the terms of the customer 
 ## 7. Subprocessor Data Handling
 {{#if has_subprocessors}}
 {{#each subprocessors}}
-- **{{name}}**: Data shared ({{data_shared}}) is subject to {{name}}'s retention and disposal procedures as evaluated during vendor review ({{review_cadence}} cadence).
+- **{{name}}**: Data shared ({{data_shared}}) is subject to {{name}}'s retention and disposal procedures as evaluated during {{review_cadence}}.
 {{/each}}
 {{else}}
 No subprocessors with material data access are currently in scope.

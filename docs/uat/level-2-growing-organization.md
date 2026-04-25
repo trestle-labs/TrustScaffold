@@ -60,6 +60,8 @@ This script intentionally exercises contradiction and advanced infrastructure br
 
 ## Stage-by-Stage Script
 
+Wizard order note: after Dashboard Entry and Welcome, run Infrastructure before System Scope. The provider profile is now captured early in Infrastructure, while System Scope focuses on system name, data classification, deployment model, and the final system description.
+
 ### Stage 0 — Dashboard Entry
 
 1. Sign up or sign in as a fresh admin for this scenario.

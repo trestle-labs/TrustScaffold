@@ -28,11 +28,9 @@ Verify:
 - Data types: check `Customer PII`, `Authentication secrets`, and `Support tickets`
 - `Protected health information (PHI) is in scope`: unchecked
 - `Cardholder data environment (CDE) is in scope`: unchecked
-- Add sub-service organizations: `GCP`, `Google Workspace`, `GitLab`, `Gusto`
 
 Verify:
 
-- Vendor role auto-fill works for the baseline providers.
 - PHI and CDE fields are visible as first-class scope fields.
 
 ### TSC Selection
@@ -54,9 +52,13 @@ Verify:
 - `GCP`: checked
 - `We host our own hardware`: unchecked
 - Identity provider: `Google Workspace`
+- VCS provider: `GitLab`
+- HRIS provider: `Gusto`
+- Add sub-service organizations: `GCP`, `Google Workspace`, `GitLab`, `Gusto`
 
 Verify:
 
+- Vendor role auto-fill works for the baseline providers.
 - No multi-cloud warning.
 - No hybrid warning.
 - GCP-specific controls appear.
@@ -64,8 +66,6 @@ Verify:
 
 ### Operations
 
-- VCS provider: `GitLab`
-- HRIS provider: `Gusto`
 - MFA required: checked
 - Peer review required: checked
 

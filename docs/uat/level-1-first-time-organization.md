@@ -60,6 +60,8 @@ Use the wizard's exact option labels where shown below. If a field is listed und
 
 ## Stage-by-Stage Script
 
+Wizard order note: after Dashboard Entry and Welcome, run Infrastructure before System Scope. The provider profile is now captured early in Infrastructure, while System Scope focuses on system name, data classification, deployment model, and the final system description.
+
 ### Stage 0 — Dashboard Entry
 
 1. Sign up with a fresh email.
@@ -93,14 +95,14 @@ Expected outcome:
 - The first-time selection should steer the tone toward "getting started" guidance.
 - If audit type is initially unsure, the recommendation should feel reasonable for a first audit cycle.
 
-### Stage 2 — System Scope
+### Stage 2 — Infrastructure
 
 Enter:
 
-- System name: a concrete product/system name
-- Description: use the SP-1 description seed or another provider-aligned description from [System Profile Library](./system-profiles.md)
-- Data types: include at least one customer-sensitive data type
-- Deployment model: either single-tenant or multi-tenant, but choose one intentionally
+- Cloud provider: `AWS`
+- Identity provider: `Okta`
+- VCS provider: `GitHub`
+- HRIS provider: `Rippling`
 - Add sub-service organizations:
   - `AWS`
   - `Okta`
@@ -125,12 +127,33 @@ For each vendor:
 
 Expected outcome:
 
-- Validation must enforce the minimum description and required data-type selection.
+- No multi-cloud or hybrid warning should appear for this simple deployment.
 - Vendor grouping should help a first-time user choose recognizable vendors quickly.
 - Obvious vendors should auto-fill sensible roles.
+- The stage should remain straightforward and not inject advanced complexity unnecessarily.
+
+Explicitly leave unchecked:
+
+- `Azure`
+- `GCP`
+- `We host our own hardware (on-premises / colocation)`
+
+### Stage 3 — System Scope
+
+Enter:
+
+- System name: a concrete product/system name
+- Data types: include at least one customer-sensitive data type
+- Deployment model: either single-tenant or multi-tenant, but choose one intentionally
+- Description: use the SP-1 description seed or another provider-aligned description from [System Profile Library](./system-profiles.md)
+
+Expected outcome:
+
+- Validation must enforce the minimum description and required data-type selection.
+- Data classification should appear before the final system description field.
 - The step should feel guided rather than technical or opaque.
 
-### Stage 3 — Governance
+### Stage 4 — Governance
 
 Answer:
 
@@ -157,7 +180,7 @@ Expected outcome:
 - The wizard should explain what the questions mean instead of assuming governance literacy.
 - The user should be blocked only by clearly explained required follow-ups, not hidden conditions.
 
-### Stage 4 — TSC Selection
+### Stage 5 — TSC Selection
 
 Answer:
 
@@ -175,25 +198,6 @@ Explicitly leave unchecked:
 - `Confidentiality`
 - `Processing Integrity`
 - `Privacy`
-
-### Stage 5 — Infrastructure
-
-Answer:
-
-- Select one cloud provider, such as `AWS`, and keep it aligned to the system profile you chose
-- Do not enable self-hosted hardware
-- Select a valid IdP, such as `Okta`
-
-Explicitly leave unchecked:
-
-- `Azure`
-- `GCP`
-- `We host our own hardware (on-premises / colocation)`
-
-Expected outcome:
-
-- No multi-cloud or hybrid warning should appear for this simple deployment.
-- The stage should remain straightforward and not inject advanced complexity unnecessarily.
 
 ### Stage 6 — Security Assessment
 
@@ -224,14 +228,12 @@ Expected outcome:
 
 Answer:
 
-- VCS provider: `GitHub`
-- HRIS provider: `Rippling`
 - MFA required: `Yes`
 - Peer review required: `Yes`
 - Onboarding SLA: a realistic value such as `2`
 - Offboarding SLA: a realistic value such as `24`
 
-If you swapped providers using [System Profile Library](./system-profiles.md), keep Operations aligned to the same provider family you used in `System Scope`.
+If you swapped providers using [System Profile Library](./system-profiles.md), keep Operations aligned to the same provider family you used in `Infrastructure`.
 
 Leave blank because the branch should not appear:
 

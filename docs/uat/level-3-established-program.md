@@ -70,6 +70,8 @@ Expected branch behavior:
 
 ## Stage-by-Stage Script
 
+Wizard order note: after Dashboard Entry and Welcome, run Infrastructure before System Scope. The provider profile is now captured early in Infrastructure, while System Scope focuses on system name, data classification, deployment model, and the final system description.
+
 ### Stage 0 — Dashboard Entry
 
 1. Sign in as a fresh admin or dedicated UAT admin.

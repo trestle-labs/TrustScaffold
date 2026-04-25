@@ -28,5 +28,5 @@ export async function signupAction(formData: FormData) {
     redirect(`/signup?error=${encodeURIComponent(error.message)}`);
   }
 
-  redirect('/wizard');
+  redirect('/dashboard');
 }

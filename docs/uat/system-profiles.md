@@ -6,7 +6,7 @@ Each profile below gives you:
 
 - A system type to test
 - A description seed to paste into `System Scope`
-- Exact provider selections for Infrastructure and Operations
+- Exact provider selections for Infrastructure, including cloud, identity, branch-protection guide provider, HRIS provider, and vendor assurance rows
 - A vendor-assurance baseline for the sub-service rows
 - Optional compliance overlays for combined audit or assessment goals
 
@@ -78,7 +78,7 @@ Extra evidence expectations to test in UAT:
 
 Current product support:
 
-- The wizard now includes a first-class `Protected health information (PHI) is in scope` field in `System Scope`. Keep using `Customer PII` where applicable, but do not rely on it as the only healthcare signal.
+- The wizard now includes a first-class `Protected health information (PHI) is in scope` field in `System Scope`. Infrastructure should be completed first so the provider profile is already known before testers classify data scope. Keep using `Customer PII` where applicable, but do not rely on it as the only healthcare signal.
 - Review now shows a HIPAA administrative safeguards preview when PHI is in scope.
 - Generate now includes framework-specific HIPAA administrative safeguards sections in the relevant drafts.
 
@@ -118,7 +118,7 @@ Extra evidence expectations to test in UAT:
 
 Current product support:
 
-- The wizard now includes a first-class `Cardholder data environment (CDE) is in scope` field in `System Scope`. Keep using `Payment data` where applicable, but do not rely on it as the only PCI signal.
+- The wizard now includes a first-class `Cardholder data environment (CDE) is in scope` field in `System Scope`. Infrastructure should be completed first so the provider profile is already known before testers classify data scope. Keep using `Payment data` where applicable, but do not rely on it as the only PCI signal.
 - Review now shows a PCI segmentation preview when the CDE is in scope.
 - Generate now includes framework-specific PCI segmentation responsibilities in the system description.
 

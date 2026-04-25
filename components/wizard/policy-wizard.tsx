@@ -204,7 +204,7 @@ function ControlRow({ control, name, label, gap, recommendation }: {
 }) {
   return (
     <FormField control={control} name={name} render={({ field }) => (
-      <FormItem className="flex items-start gap-3 rounded-xl p-2 transition-colors hover:bg-white/60">
+      <FormItem className="flex items-start gap-3 rounded-xl border border-border bg-white p-3 shadow-sm transition-colors hover:border-primary/30">
         <FormControl>
           <Checkbox checked={field.value} onCheckedChange={(c) => field.onChange(Boolean(c))} className="mt-0.5" />
         </FormControl>
@@ -238,10 +238,11 @@ function ControlRow({ control, name, label, gap, recommendation }: {
 function ReadinessCards({ control, name }: { control: any; name: any }) {
   return (
     <FormField control={control} name={name} render={({ field }) => (
-      <FormItem>
-        <FormLabel className="text-xs text-muted-foreground">Readiness level</FormLabel>
+      <FormItem className="rounded-2xl border border-border bg-white p-3 shadow-sm">
+        <FormLabel className="text-sm font-semibold text-foreground">Readiness level</FormLabel>
+        <FormDescription>Pick the closest current state for this domain before checking individual controls.</FormDescription>
         <FormControl>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="mt-3 grid grid-cols-3 gap-2">
             {[
               { value: 'not-started', label: 'Not Started', desc: 'Nothing in place yet', sel: 'border-slate-400 bg-slate-50 ring-2 ring-slate-300' },
               { value: 'in-progress', label: 'In Progress', desc: 'Partially implemented', sel: 'border-amber-400 bg-amber-50 ring-2 ring-amber-300' },
@@ -276,6 +277,10 @@ function FirstTimerTip({ tip }: { tip: string }) {
   );
 }
 
+function AssessmentSectionLabel({ children }: { children: string }) {
+  return <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{children}</p>;
+}
+
 function RuleWarningCard({ rule }: { rule: WizardWarningRule }) {
   const tones = rule.severity === 'warning'
     ? {
@@ -290,8 +295,9 @@ function RuleWarningCard({ rule }: { rule: WizardWarningRule }) {
       };
 
   return (
-    <div className={`rounded-xl border p-3 ${tones.wrapper}`}>
-      <p className={`text-xs font-semibold ${tones.title}`}>{rule.title}</p>
+    <div className={`rounded-2xl border p-4 ${tones.wrapper}`}>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Attention needed</p>
+      <p className={`mt-1 text-sm font-semibold ${tones.title}`}>{rule.title}</p>
       <p className={`mt-1 text-xs ${tones.body}`}>{rule.recommendation}</p>
     </div>
   );
@@ -302,6 +308,7 @@ function DeepDiveSelectCard({ control, rule }: { control: any; rule: WizardDeepD
   return (
     <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
       <div className="space-y-1">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-700">Follow-up question</p>
         <p className="text-sm font-semibold text-blue-900">{rule.title}</p>
         <p className="text-xs text-blue-800">{rule.description}</p>
         <p className="text-xs text-blue-700">{rule.recommendation}</p>
@@ -463,8 +470,8 @@ function GenerateStep({
 
   const missingFields: { label: string; step: number }[] = [
     ...(!watchedValues.company?.name?.trim() ? [{ label: 'Company name', step: 0 }] : []),
-    ...(!watchedValues.scope?.systemName?.trim() ? [{ label: 'System name', step: 1 }] : []),
-    ...(!watchedValues.scope?.systemDescription?.trim() ? [{ label: 'System description', step: 1 }] : []),
+    ...(!watchedValues.scope?.systemName?.trim() ? [{ label: 'System name', step: 2 }] : []),
+    ...(!watchedValues.scope?.systemDescription?.trim() ? [{ label: 'System description', step: 2 }] : []),
   ];
 
   return (
@@ -523,7 +530,7 @@ function GenerateStep({
             </p>
           )}
         </div>
-        <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
+        <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
           {templates.map((t, i) => {
             const done = isGenerating && i < completedCount;
             const active = isGenerating && i === completedCount;
@@ -532,21 +539,25 @@ function GenerateStep({
                 key={t.name}
                 className={cn(
                   'flex items-center gap-3 px-4 py-2.5 text-sm transition-colors',
-                  done ? 'bg-emerald-50' : active ? 'bg-primary/5' : 'bg-white'
+                  done
+                    ? 'bg-emerald-50 text-emerald-950 dark:bg-emerald-950/45 dark:text-emerald-100'
+                    : active
+                      ? 'bg-primary/10 text-foreground'
+                      : 'bg-card text-card-foreground hover:bg-secondary/40'
                 )}
               >
                 <span className={cn(
                   'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
-                  done ? 'bg-emerald-500 text-white' : active ? 'bg-primary text-primary-foreground animate-pulse' : 'bg-secondary text-muted-foreground'
+                  done ? 'bg-emerald-500 text-white' : active ? 'animate-pulse bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
                 )}>
                   {done ? <Check className="h-3 w-3" /> : i + 1}
                 </span>
-                <span className={cn('flex-1 font-medium', done ? 'text-emerald-800' : active ? 'text-foreground' : 'text-foreground/70')}>
+                <span className={cn('flex-1 font-medium', done ? 'text-emerald-800 dark:text-emerald-100' : active ? 'text-foreground' : 'text-foreground/85')}>
                   {t.name}
                 </span>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button type="button" className="shrink-0 rounded p-0.5 text-muted-foreground/50 transition-colors hover:text-foreground">
+                    <button type="button" aria-label={`Show details for ${t.name}`} className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground">
                       <Info className="h-3.5 w-3.5" />
                     </button>
                   </PopoverTrigger>
@@ -576,18 +587,36 @@ function GenerateStep({
         {isGenerating ? `Compiling ${templates.length} documents…` : `Generate ${templates.length} policy documents`}
       </Button>
 
-      <div className="space-y-3 rounded-2xl border border-border bg-white p-4 text-sm">
+      <div className="space-y-2 rounded-2xl border border-border bg-secondary/25 p-4 text-sm">
+        <p className="font-semibold text-foreground">What happens if you generate again?</p>
+        <div className="grid gap-3 text-xs text-muted-foreground md:grid-cols-3">
+          <div>
+            <p className="font-medium text-foreground">Existing drafts update in place</p>
+            <p className="mt-1">If a draft already exists for a template, TrustScaffold replaces that draft with the latest wizard answers.</p>
+          </div>
+          <div>
+            <p className="font-medium text-foreground">Approved documents stay locked</p>
+            <p className="mt-1">Approved documents are not overwritten by generation. If no draft exists, the next generation creates a new draft version for review.</p>
+          </div>
+          <div>
+            <p className="font-medium text-foreground">A revision is recorded</p>
+            <p className="mt-1">Each compile writes a generated revision so reviewers can trace when the draft was refreshed.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3 rounded-2xl border border-border bg-card p-4 text-sm shadow-sm">
         <p className="font-semibold text-foreground">After generation</p>
         <div className="grid gap-3 text-xs text-muted-foreground sm:grid-cols-3">
-          <div className="space-y-1">
+          <div className="space-y-1 rounded-xl border border-border/70 bg-secondary/25 p-3">
             <p className="font-medium text-foreground">① Review drafts</p>
             <p>Navigate to Generated Docs to review each policy. Admins can approve documents to lock them for export.</p>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1 rounded-xl border border-border/70 bg-secondary/25 p-3">
             <p className="font-medium text-foreground">② Configure export <span className="font-normal">(optional)</span></p>
             <p>Go to <strong>Settings → Save Integration</strong> to connect a GitHub repo or Azure DevOps project. Needs a PAT with repo write access.</p>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1 rounded-xl border border-border/70 bg-secondary/25 p-3">
             <p className="font-medium text-foreground">③ Evidence collection <span className="font-normal">(optional)</span></p>
             <p>Create an Evidence API key in <strong>Settings</strong> and point your Steampipe, Prowler, or CloudQuery pipeline at <code className="rounded bg-secondary px-1">/api/v1/evidence/ingest</code>.</p>
           </div>
@@ -664,14 +693,15 @@ export function PolicyWizard() {
       return;
     }
 
+    const shouldDiscardLocalDraft = organizationId !== organization.id;
+
     setOrganization(organization.id);
 
-    if (organizationId && organizationId !== organization.id) {
+    if (shouldDiscardLocalDraft) {
       reset(organization.id);
       form.reset(defaultWizardValues);
       lastServerSavedSnapshotRef.current = JSON.stringify(defaultWizardValues);
-      hasLoadedPersistedDraft.current = true;
-      return;
+      hasLoadedPersistedDraft.current = false;
     }
 
     if (!hasLoadedPersistedDraft.current) {
@@ -687,8 +717,9 @@ export function PolicyWizard() {
           lastServerSavedSnapshotRef.current = JSON.stringify(result.payload);
           setDraftSyncStatus('saved');
         } else {
-          form.reset(data);
-          lastServerSavedSnapshotRef.current = JSON.stringify(data);
+          const fallbackDraft = shouldDiscardLocalDraft ? defaultWizardValues : data;
+          form.reset(fallbackDraft);
+          lastServerSavedSnapshotRef.current = JSON.stringify(fallbackDraft);
         }
       });
     }
@@ -758,13 +789,13 @@ export function PolicyWizard() {
     }
   }, [currentStep, form, organization, organizationRelationship]);
 
+  const currentWizardData = watchedValues as WizardData;
   const reviewParseResult = useMemo(() => wizardSchema.safeParse(watchedValues), [watchedValues]);
-  const reviewSummary = reviewParseResult.success ? reviewParseResult.data : null;
+  const reviewSummary = reviewParseResult.success ? reviewParseResult.data : currentWizardData;
   const reviewErrors = reviewParseResult.success ? [] : reviewParseResult.error.issues.map((issue) => issue.message);
 
   const assessmentSummary = useMemo(() => computeAssessmentSummary(watchedValues as WizardData), [watchedValues]);
   const stepCompletions = useMemo(() => computeStepCompletions(watchedValues as WizardData, maxStepReached), [watchedValues, maxStepReached]);
-  const currentWizardData = watchedValues as WizardData;
   const activeTscWarningRules = getActiveWizardRules(currentWizardData, 'tsc-selection', 'warning') as WizardWarningRule[];
   const activeInfrastructureWarningRules = getActiveWizardRules(currentWizardData, 'infrastructure', 'warning') as WizardWarningRule[];
   const activeGovernanceBranchingRules = getActiveWizardRules(currentWizardData, 'governance', 'branching');
@@ -859,7 +890,7 @@ export function PolicyWizard() {
       }
 
       markGenerated();
-      toast.success(`Generated ${result.insertedCount} draft policies.`);
+      toast.success(`Generated or updated ${result.insertedCount} draft policies.`);
       router.push('/generated-docs');
       router.refresh();
     });
@@ -1166,7 +1197,7 @@ export function PolicyWizard() {
                 </StepShell>
               ) : null}
 
-              {currentStep === 2 ? (
+              {currentStep === 3 ? (
                 <StepShell
                   title="Governance, People & Training"
                   description="Capture the organizational controls that auditors evaluate for CC1 (Control Environment), CC4 (Monitoring), and CC1.4 (Competence). These questions determine which governance documents and evidence the checklist will generate."
@@ -1360,7 +1391,7 @@ export function PolicyWizard() {
                             ))}
                           </datalist>
                           <FormDescription>
-                            Choose the platform used to deliver and track security awareness training. Recommendations refresh whenever you add or update the sub-service organizations captured in System Scope.
+                            Choose the platform used to deliver and track security awareness training. Recommendations refresh whenever you add or update the sub-service organizations captured in Infrastructure.
                           </FormDescription>
                           {trainingToolSuggestions.recommended.length > 0 && activeTrainingRecommendationRules.length > 0 ? (
                             <div className="space-y-2 rounded-xl border border-blue-200 bg-blue-50 p-3">
@@ -1435,10 +1466,10 @@ export function PolicyWizard() {
                 </StepShell>
               ) : null}
 
-              {currentStep === 1 ? (
+              {currentStep === 2 ? (
                 <StepShell
                   title="System Scope"
-                  description="Define the product boundary, key sub-service organizations, and data flows that the generated policies should describe."
+                  description="Define the product boundary, data flows, and final system-description language that the generated policies should describe."
                 >
                   <div className="grid gap-6">
 
@@ -1456,25 +1487,6 @@ export function PolicyWizard() {
                             This is the formal name that appears throughout every generated policy and your SOC 2 System Description.
                             Use your product&apos;s market name — not your company name.
                             <span className="mt-1 block text-xs text-muted-foreground/70">Example: &ldquo;TrustScaffold Cloud&rdquo; not &ldquo;TrustScaffold Inc.&rdquo;</span>
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* System Description */}
-                    <FormField
-                      control={form.control}
-                      name="scope.systemDescription"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>System description <span className="text-destructive">*</span></FormLabel>
-                          <FormControl>
-                            <Textarea {...field} rows={4} placeholder="e.g. A multi-tenant SaaS platform that enables security teams to generate and manage SOC 2 policy documentation. Processes organization metadata and compliance questionnaire data on behalf of B2B customers." />
-                          </FormControl>
-                          <FormDescription>
-                            Auditors read this verbatim. Include: <strong>what the system does</strong>, <strong>who the users are</strong> (internal staff, B2B customers, consumers), and <strong>what types of data flow through it</strong>.
-                            Keep it to 2–4 sentences — specific but not exhaustive.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -1508,126 +1520,97 @@ export function PolicyWizard() {
                         ) : null}
 
                         {fields.map((subserviceField, index) => (
-                          <div key={subserviceField.id} className="space-y-3 rounded-2xl bg-secondary/50 p-4">
-                            <div className="grid gap-3 md:grid-cols-[1fr_1.6fr_auto] md:items-start">
-                            <FormField
-                              control={form.control}
-                              name={`subservices.${index}.name`}
-                              render={({ field }) => {
-                                const isCustomVendor = customSubserviceVendorIds[subserviceField.id] || Boolean(field.value && !isKnownSubserviceVendor(field.value));
-                                const selectedVendorValue = isCustomVendor ? customSubserviceVendorValue : field.value || '';
-
-                                return (
-                                  <FormItem>
-                                    <FormLabel>Vendor name</FormLabel>
-                                    <FormControl>
-                                      <select
-                                        value={selectedVendorValue}
-                                        onChange={(event) => {
-                                          const nextValue = event.target.value;
-                                          const isCustom = nextValue === customSubserviceVendorValue;
-                                          const vendorFieldPath = `subservices.${index}.name` as const;
-                                          const roleFieldPath = `subservices.${index}.role` as const;
-                                          const currentVendorName = form.getValues(vendorFieldPath) ?? '';
-                                          const currentRole = form.getValues(roleFieldPath) ?? '';
-                                          const previousSuggestedRole = getSuggestedSubserviceRole(currentVendorName);
-                                          const nextVendorName = isCustom ? '' : nextValue;
-                                          const nextSuggestedRole = getSuggestedSubserviceRole(nextVendorName);
-
-                                          setCustomSubserviceVendorIds((previous) => ({
-                                            ...previous,
-                                            [subserviceField.id]: isCustom,
-                                          }));
-
-                                          field.onChange(nextVendorName);
-
-                                          if (!currentRole || currentRole === previousSuggestedRole) {
-                                            setCustomSubserviceRoleIds((previous) => ({
-                                              ...previous,
-                                              [subserviceField.id]: false,
-                                            }));
-                                            setAutoFilledSubserviceRoleIds((previous) => ({
-                                              ...previous,
-                                              [subserviceField.id]: Boolean(nextSuggestedRole),
-                                            }));
-                                            form.setValue(roleFieldPath, nextSuggestedRole, {
-                                              shouldDirty: true,
-                                              shouldTouch: true,
-                                              shouldValidate: true,
-                                            });
-                                          }
-                                        }}
-                                        className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                      >
-                                        <option value="">Select a vendor</option>
-                                        {subserviceVendorGroups.map((group) => (
-                                          <optgroup key={group.label} label={group.label}>
-                                            {group.options.map((option) => (
-                                              <option key={option} value={option}>
-                                                {option}
-                                              </option>
-                                            ))}
-                                          </optgroup>
-                                        ))}
-                                        <option value={customSubserviceVendorValue}>Other</option>
-                                      </select>
-                                    </FormControl>
-                                    {isCustomVendor ? (
-                                      <div className="mt-3">
-                                        <Input
-                                          value={field.value ?? ''}
-                                          onChange={(event) => field.onChange(event.target.value)}
-                                          placeholder="Enter vendor name"
-                                        />
-                                      </div>
-                                    ) : null}
-                                    <FormMessage />
-                                  </FormItem>
-                                );
-                              }}
-                            />
-                            <FormField
-                              control={form.control}
-                              name={`subservices.${index}.description`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Description</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} placeholder="Identity provider used for workforce SSO and MFA" />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name={`subservices.${index}.reviewCadence`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Assurance review cadence</FormLabel>
-                                  <FormControl>
-                                    <select
-                                      {...field}
-                                      className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                    >
-                                      {subserviceReviewCadenceOptions.map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                          {option.label}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <div className="pt-7">
-                              <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                          <div key={subserviceField.id} className="space-y-4 rounded-2xl bg-secondary/50 p-4">
+                            <div className="flex items-start justify-between gap-3 rounded-2xl border border-border/60 bg-white/70 px-4 py-3">
+                              <div className="space-y-1">
+                                <p className="text-sm font-semibold text-foreground">Sub-service organization {index + 1}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Capture who this vendor is, what they do for the system, what data they touch, and what assurance evidence you review.
+                                </p>
+                              </div>
+                              <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} aria-label={`Remove sub-service organization ${index + 1}`}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                            </div>
-                            <div className="grid gap-3 md:grid-cols-2">
+
+                            <div className="grid gap-4 md:grid-cols-3 md:items-start">
+                              <FormField
+                                control={form.control}
+                                name={`subservices.${index}.name`}
+                                render={({ field }) => {
+                                  const isCustomVendor = customSubserviceVendorIds[subserviceField.id] || Boolean(field.value && !isKnownSubserviceVendor(field.value));
+                                  const selectedVendorValue = isCustomVendor ? customSubserviceVendorValue : field.value || '';
+
+                                  return (
+                                    <FormItem className="flex h-full flex-col">
+                                      <FormLabel>Vendor name</FormLabel>
+                                      <FormDescription className="md:min-h-12">Select the provider name auditors expect in your vendor inventory. Use Other if it is not listed.</FormDescription>
+                                      <FormControl className="mt-auto">
+                                        <select
+                                          value={selectedVendorValue}
+                                          onChange={(event) => {
+                                            const nextValue = event.target.value;
+                                            const isCustom = nextValue === customSubserviceVendorValue;
+                                            const vendorFieldPath = `subservices.${index}.name` as const;
+                                            const roleFieldPath = `subservices.${index}.role` as const;
+                                            const currentVendorName = form.getValues(vendorFieldPath) ?? '';
+                                            const currentRole = form.getValues(roleFieldPath) ?? '';
+                                            const previousSuggestedRole = getSuggestedSubserviceRole(currentVendorName);
+                                            const nextVendorName = isCustom ? '' : nextValue;
+                                            const nextSuggestedRole = getSuggestedSubserviceRole(nextVendorName);
+
+                                            setCustomSubserviceVendorIds((previous) => ({
+                                              ...previous,
+                                              [subserviceField.id]: isCustom,
+                                            }));
+
+                                            field.onChange(nextVendorName);
+
+                                            if (!currentRole || currentRole === previousSuggestedRole) {
+                                              setCustomSubserviceRoleIds((previous) => ({
+                                                ...previous,
+                                                [subserviceField.id]: false,
+                                              }));
+                                              setAutoFilledSubserviceRoleIds((previous) => ({
+                                                ...previous,
+                                                [subserviceField.id]: Boolean(nextSuggestedRole),
+                                              }));
+                                              form.setValue(roleFieldPath, nextSuggestedRole, {
+                                                shouldDirty: true,
+                                                shouldTouch: true,
+                                                shouldValidate: true,
+                                              });
+                                            }
+                                          }}
+                                          className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        >
+                                          <option value="">Select a vendor</option>
+                                          {subserviceVendorGroups.map((group) => (
+                                            <optgroup key={group.label} label={group.label}>
+                                              {group.options.map((option) => (
+                                                <option key={option} value={option}>
+                                                  {option}
+                                                </option>
+                                              ))}
+                                            </optgroup>
+                                          ))}
+                                          <option value={customSubserviceVendorValue}>Other</option>
+                                        </select>
+                                      </FormControl>
+                                      {isCustomVendor ? (
+                                        <div className="mt-3">
+                                          <Input
+                                            value={field.value ?? ''}
+                                            onChange={(event) => field.onChange(event.target.value)}
+                                            placeholder="Enter vendor name"
+                                          />
+                                        </div>
+                                      ) : null}
+                                      <FormMessage />
+                                    </FormItem>
+                                  );
+                                }}
+                              />
                               <FormField
                                 control={form.control}
                                 name={`subservices.${index}.role`}
@@ -1637,9 +1620,10 @@ export function PolicyWizard() {
                                   const showAutoFilledHint = autoFilledSubserviceRoleIds[subserviceField.id] && Boolean(field.value) && !isCustomRole;
 
                                   return (
-                                    <FormItem>
-                                      <FormLabel>Role <span className="text-xs text-muted-foreground">(classify what this vendor does for the system)</span></FormLabel>
-                                      <FormControl>
+                                    <FormItem className="flex h-full flex-col">
+                                      <FormLabel>Role</FormLabel>
+                                      <FormDescription className="md:min-h-12">Classify the vendor's job in the system, for example cloud host, identity provider, HRIS, or support platform.</FormDescription>
+                                      <FormControl className="mt-auto">
                                         <select
                                           value={selectedRoleValue}
                                           onChange={(event) => {
@@ -1692,29 +1676,82 @@ export function PolicyWizard() {
                               />
                               <FormField
                                 control={form.control}
-                                name={`subservices.${index}.dataShared`}
+                                name={`subservices.${index}.reviewCadence`}
                                 render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Data shared <span className="text-xs text-muted-foreground">(e.g., PII, credentials, support artifacts)</span></FormLabel>
-                                    <FormControl>
-                                      <Input {...field} placeholder="Workforce identities and MFA metadata" />
+                                  <FormItem className="flex h-full flex-col">
+                                    <FormLabel>Assurance review cadence</FormLabel>
+                                    <FormDescription className="md:min-h-12">How often your team reviews this vendor's assurance evidence, risk posture, or due diligence package.</FormDescription>
+                                    <FormControl className="mt-auto">
+                                      <select
+                                        {...field}
+                                        className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                      >
+                                        {subserviceReviewCadenceOptions.map((option) => (
+                                          <option key={option.value} value={option.value}>
+                                            {option.label}
+                                          </option>
+                                        ))}
+                                      </select>
                                     </FormControl>
+                                    <FormMessage />
                                   </FormItem>
                                 )}
                               />
                             </div>
-                            <div className="grid gap-3 md:grid-cols-3">
+
+                            <div className="grid gap-4 md:grid-cols-2 md:items-start">
+                              <FormField
+                                control={form.control}
+                                name={`subservices.${index}.description`}
+                                render={({ field }) => (
+                                  <FormItem className="flex h-full flex-col">
+                                    <FormLabel>Service description</FormLabel>
+                                    <FormDescription className="md:min-h-10">Describe what this vendor actually does for this system, not the contract summary.</FormDescription>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Identity provider used for workforce SSO and MFA" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name={`subservices.${index}.dataShared`}
+                                render={({ field }) => (
+                                  <FormItem className="flex h-full flex-col">
+                                    <FormLabel>Data shared</FormLabel>
+                                    <FormDescription className="md:min-h-10">List the main data types or artifacts this vendor receives, stores, or can access.</FormDescription>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Workforce identities and MFA metadata" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+
+                            <div className="space-y-4 rounded-2xl border border-border/60 bg-white/70 p-4">
+                              <div className="space-y-1">
+                                <p className="text-sm font-semibold text-foreground">Assurance coverage</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Track whether this vendor gives you a SOC report, ISO certification, or similar evidence, and how their controls are treated in your environment.
+                                </p>
+                              </div>
                               <FormField control={form.control} name={`subservices.${index}.hasAssuranceReport`} render={({ field }) => (
-                                <FormItem className="flex items-center gap-3 pt-6">
-                                  <FormControl><Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(Boolean(checked))} /></FormControl>
-                                  <FormLabel>Has assurance report</FormLabel>
+                                <FormItem className="flex items-start gap-3 rounded-2xl border border-border bg-background p-3">
+                                  <FormControl><Checkbox className="mt-0.5" checked={field.value} onCheckedChange={(checked) => field.onChange(Boolean(checked))} /></FormControl>
+                                  <div className="space-y-1">
+                                    <FormLabel>Vendor provides an assurance report</FormLabel>
+                                    <FormDescription>Turn this on if you review a SOC report, ISO certificate, penetration test summary, or equivalent evidence from this vendor.</FormDescription>
+                                  </div>
                                 </FormItem>
                               )} />
                               {form.watch(`subservices.${index}.hasAssuranceReport`) && (
-                                <>
+                                <div className="grid gap-4 md:grid-cols-2 md:items-start">
                                   <FormField control={form.control} name={`subservices.${index}.assuranceReportType`} render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Report type</FormLabel>
+                                    <FormItem className="flex h-full flex-col">
+                                      <FormLabel>Assurance report type</FormLabel>
+                                      <FormDescription className="md:min-h-10">Choose the primary report or certification you rely on for vendor assurance.</FormDescription>
                                       <FormControl>
                                         <select {...field} className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                                           {assuranceReportTypeOptions.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
@@ -1723,8 +1760,9 @@ export function PolicyWizard() {
                                     </FormItem>
                                   )} />
                                   <FormField control={form.control} name={`subservices.${index}.controlInclusion`} render={({ field }) => (
-                                    <FormItem>
+                                    <FormItem className="flex h-full flex-col">
                                       <FormLabel>Control inclusion method</FormLabel>
+                                      <FormDescription className="md:min-h-10">Explain whether controls are included, carved out, or handled through complementary controls.</FormDescription>
                                       <FormControl>
                                         <select {...field} className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                                           {controlInclusionOptions.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
@@ -1732,7 +1770,7 @@ export function PolicyWizard() {
                                       </FormControl>
                                     </FormItem>
                                   )} />
-                                </>
+                                </div>
                               )}
                             </div>
                           </div>
@@ -1928,6 +1966,25 @@ export function PolicyWizard() {
                       )}
                     />
 
+                    {/* System Description */}
+                    <FormField
+                      control={form.control}
+                      name="scope.systemDescription"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>System description <span className="text-destructive">*</span></FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={4} placeholder="e.g. A multi-tenant SaaS platform that enables security teams to generate and manage SOC 2 policy documentation. Processes organization metadata and compliance questionnaire data on behalf of B2B customers." />
+                          </FormControl>
+                          <FormDescription>
+                            Auditors read this verbatim. Include: <strong>what the system does</strong>, <strong>who the users are</strong> (internal staff, B2B customers, consumers), and <strong>what types of data flow through it</strong>.
+                            Keep it to 2–4 sentences — specific but not exhaustive.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     <AuditorLensCallout
                       criterion="CC2.1"
                       message="The system description you provide here becomes the foundation of your SOC 2 report. Auditors will compare every control to this scope. Be specific about what the system does, not how the company operates."
@@ -1936,7 +1993,7 @@ export function PolicyWizard() {
                 </StepShell>
               ) : null}
 
-              {currentStep === 3 ? (
+              {currentStep === 4 ? (
                 <StepShell
                   title="Compliance Scope"
                   description="Security (CC1–CC9) is always included. Choose additional Trust Services Criteria based on your contractual commitments and the nature of your data — each one adds specific policies and evidence requirements."
@@ -2030,7 +2087,7 @@ export function PolicyWizard() {
                 </StepShell>
               ) : null}
 
-              {currentStep === 4 ? (
+              {currentStep === 1 ? (
                 <StepShell
                   title="Infrastructure Profiling"
                   description="Select the primary hosting model and answer provider-specific questions. This is the branching step that drives infrastructure language in the compiled Markdown."
@@ -2129,6 +2186,43 @@ export function PolicyWizard() {
                         </FormItem>
                       )}
                     />
+
+                    <div className="space-y-4 rounded-2xl bg-secondary/50 p-4">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Provider profile</p>
+                        <p className="mt-1 text-xs text-muted-foreground">Capture the core providers that define this audit path. These choices pre-frame source-control evidence, HR-driven access lifecycle language, and vendor review expectations.</p>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField control={form.control} name="operations.vcsProvider" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Branch-protection guide provider</FormLabel>
+                            <FormControl>
+                              <select {...field} className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                {vcsProviderOptions.map((provider) => (
+                                  <option key={provider} value={provider}>{provider}</option>
+                                ))}
+                              </select>
+                            </FormControl>
+                            <FormDescription>Choose the provider whose branch-protection and peer-review setup guide should appear in Operations.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={form.control} name="operations.hrisProvider" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>HRIS provider</FormLabel>
+                            <FormControl>
+                              <select {...field} className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                {hrisProviderOptions.map((provider) => (
+                                  <option key={provider} value={provider}>{provider}</option>
+                                ))}
+                              </select>
+                            </FormControl>
+                            <FormDescription>Where employee records, onboarding, and offboarding are managed.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                      </div>
+                    </div>
 
                     {watchedCloudProviders.includes('aws') && (
                       <div className="space-y-3 rounded-2xl bg-secondary/50 p-4">
@@ -2388,8 +2482,9 @@ export function PolicyWizard() {
                         onToggle={() => toggleDomain('documentReview')}
                       />
                       {expandedDomains.documentReview && (
-                        <div className="space-y-1 px-4 pb-4">
-                          <p className="mb-3 text-xs text-muted-foreground">
+                        <div className="space-y-3 px-4 pb-4">
+                          <AssessmentSectionLabel>What auditors inspect</AssessmentSectionLabel>
+                          <p className="text-xs text-muted-foreground">
                             Assessors verify that security documentation — policies, procedures, network diagrams, and asset inventories — is accurate, complete, and current.
                             {watchedCloudProviders.includes('aws') ? ' For AWS, this includes VPC diagrams, IAM policy documents, and CloudFormation/Terraform templates.' : ''}
                             {watchedCloudProviders.includes('azure') ? ' For Azure, this includes VNET topology exports, ARM templates, and Entra ID configuration docs.' : ''}
@@ -2399,14 +2494,17 @@ export function PolicyWizard() {
                             <FirstTimerTip tip="Start with a policy inventory spreadsheet listing each policy document, its owner, and last review date. Even a shared Google Sheet counts as an inventory for a first audit." />
                           )}
                           <div className="pb-2 pt-1">
+                            <AssessmentSectionLabel>Current readiness</AssessmentSectionLabel>
                             <ReadinessCards control={form.control} name="securityAssessment.documentReview.readiness" />
                           </div>
+                          <AssessmentSectionLabel>Control checks</AssessmentSectionLabel>
                           <ControlRow control={form.control} name="securityAssessment.documentReview.hasSecurityPolicyInventory" label="A centralized inventory of all security policies exists." gap={domainBoolFields.documentReview[0].gap} recommendation={domainBoolFields.documentReview[0].recommendation} />
                           <ControlRow control={form.control} name="securityAssessment.documentReview.hasNetworkDiagrams" label="Up-to-date network architecture diagrams are maintained." gap={domainBoolFields.documentReview[1].gap} recommendation={domainBoolFields.documentReview[1].recommendation} />
                           <ControlRow control={form.control} name="securityAssessment.documentReview.hasDataFlowDiagrams" label="Data flow diagrams show how customer data traverses systems." gap={domainBoolFields.documentReview[2].gap} recommendation={domainBoolFields.documentReview[2].recommendation} />
                           <ControlRow control={form.control} name="securityAssessment.documentReview.hasAssetInventory" label="A hardware and software asset inventory is maintained." gap={domainBoolFields.documentReview[3].gap} recommendation={domainBoolFields.documentReview[3].recommendation} />
                           <ControlRow control={form.control} name="securityAssessment.documentReview.hasChangeManagementDocs" label="Change management procedures are documented and followed." gap={domainBoolFields.documentReview[4].gap} recommendation={domainBoolFields.documentReview[4].recommendation} />
                           <div className="pt-2">
+                            <AssessmentSectionLabel>Evidence expectations</AssessmentSectionLabel>
                             <AuditorLensCallout criterion="CC2.1" message="Auditors will request the full policy inventory, current network diagrams, data flow diagrams, and asset lists. Missing or outdated documentation is one of the most common audit findings." />
                           </div>
                         </div>
@@ -2422,8 +2520,9 @@ export function PolicyWizard() {
                         onToggle={() => toggleDomain('logReview')}
                       />
                       {expandedDomains.logReview && (
-                        <div className="space-y-1 px-4 pb-4">
-                          <p className="mb-3 text-xs text-muted-foreground">
+                        <div className="space-y-3 px-4 pb-4">
+                          <AssessmentSectionLabel>What auditors inspect</AssessmentSectionLabel>
+                          <p className="text-xs text-muted-foreground">
                             Assessors examine system and application logs for signs of unauthorized access, inadequate controls, and proper retention.
                             {watchedCloudProviders.includes('aws') ? ' For AWS, this includes CloudTrail, VPC Flow Logs, GuardDuty findings, and CloudWatch log groups.' : ''}
                             {watchedCloudProviders.includes('azure') ? ' For Azure, this includes Activity Logs, NSG Flow Logs, Sentinel alerts, and Log Analytics workspaces.' : ''}
@@ -2433,8 +2532,10 @@ export function PolicyWizard() {
                             <FirstTimerTip tip="Enable your cloud provider's built-in audit log first — CloudTrail, Activity Logs, or Cloud Audit Logs are always-on and free. That alone covers authentication and configuration changes without any additional tooling." />
                           )}
                           <div className="pb-2 pt-1">
+                            <AssessmentSectionLabel>Current readiness</AssessmentSectionLabel>
                             <ReadinessCards control={form.control} name="securityAssessment.logReview.readiness" />
                           </div>
+                          <AssessmentSectionLabel>Control checks</AssessmentSectionLabel>
                           <ControlRow control={form.control} name="securityAssessment.logReview.hasCentralizedLogging" label="Logs are aggregated into a centralized platform." gap={domainBoolFields.logReview[0].gap} recommendation={domainBoolFields.logReview[0].recommendation} />
                           {form.watch('securityAssessment.logReview.hasCentralizedLogging') && (
                             <FormField control={form.control} name="securityAssessment.logReview.centralizedLoggingTool" render={({ field }) => (
@@ -2450,6 +2551,7 @@ export function PolicyWizard() {
                           <ControlRow control={form.control} name="securityAssessment.logReview.hasLogRetentionPolicy" label="A formal log retention policy is defined and enforced." gap={domainBoolFields.logReview[4].gap} recommendation={domainBoolFields.logReview[4].recommendation} />
                           <ControlRow control={form.control} name="securityAssessment.logReview.hasAutomatedLogAnalysis" label="Automated log analysis or correlation rules are in place (SIEM alerts)." gap={domainBoolFields.logReview[5].gap} recommendation={domainBoolFields.logReview[5].recommendation} />
                           <div className="pt-2">
+                            <AssessmentSectionLabel>Evidence expectations</AssessmentSectionLabel>
                             <AuditorLensCallout criterion="CC7.2" message="Auditors sample log entries to verify breadth of coverage, then ask to see the retention policy document. They also test that alerts fire on suspicious activity — be ready to demonstrate a detection flow end-to-end." />
                           </div>
                         </div>
@@ -2465,8 +2567,9 @@ export function PolicyWizard() {
                         onToggle={() => toggleDomain('rulesetReview')}
                       />
                       {expandedDomains.rulesetReview && (
-                        <div className="space-y-1 px-4 pb-4">
-                          <p className="mb-3 text-xs text-muted-foreground">
+                        <div className="space-y-3 px-4 pb-4">
+                          <AssessmentSectionLabel>What auditors inspect</AssessmentSectionLabel>
+                          <p className="text-xs text-muted-foreground">
                             Assessors analyze firewall rules, network ACLs, and security group configurations for overly permissive access.
                             {watchedCloudProviders.includes('aws') ? ' For AWS, this includes Security Groups, NACLs, WAF rules, and AWS Network Firewall policies.' : ''}
                             {watchedCloudProviders.includes('azure') ? ' For Azure, this includes NSGs, Azure Firewall rules, and Application Gateway WAF policies.' : ''}
@@ -2476,8 +2579,10 @@ export function PolicyWizard() {
                             <FirstTimerTip tip="Audit your security groups/NSGs for any rules allowing all inbound traffic (0.0.0.0/0 on any port). Removing or restricting those is a fast win — it's also one of the most common findings auditors flag." />
                           )}
                           <div className="pb-2 pt-1">
+                            <AssessmentSectionLabel>Current readiness</AssessmentSectionLabel>
                             <ReadinessCards control={form.control} name="securityAssessment.rulesetReview.readiness" />
                           </div>
+                          <AssessmentSectionLabel>Control checks</AssessmentSectionLabel>
                           <ControlRow control={form.control} name="securityAssessment.rulesetReview.hasFirewallRulesets" label="Firewall or cloud-native firewall rulesets are documented." gap={domainBoolFields.rulesetReview[0].gap} recommendation={domainBoolFields.rulesetReview[0].recommendation} />
                           <ControlRow control={form.control} name="securityAssessment.rulesetReview.hasSecurityGroupRules" label="Security group / NSG rules follow least-privilege principles." gap={domainBoolFields.rulesetReview[1].gap} recommendation={domainBoolFields.rulesetReview[1].recommendation} />
                           <ControlRow control={form.control} name="securityAssessment.rulesetReview.hasNaclRules" label="Network ACL rules are reviewed and documented." gap={domainBoolFields.rulesetReview[2].gap} recommendation={domainBoolFields.rulesetReview[2].recommendation} />
@@ -2492,6 +2597,7 @@ export function PolicyWizard() {
                           )}
                           <ControlRow control={form.control} name="securityAssessment.rulesetReview.hasDefaultDenyPolicy" label="A default-deny (implicit deny) policy is enforced at the network boundary." gap={domainBoolFields.rulesetReview[4].gap} recommendation={domainBoolFields.rulesetReview[4].recommendation} />
                           <div className="pt-2">
+                            <AssessmentSectionLabel>Evidence expectations</AssessmentSectionLabel>
                             <AuditorLensCallout criterion="CC6.6" message="Auditors export your firewall rules and look for any 0.0.0.0/0 ingress, unused rules, or undocumented open ports. They cross-reference rules against your documented justifications for each allowed port and service." />
                           </div>
                         </div>
@@ -2507,8 +2613,9 @@ export function PolicyWizard() {
                         onToggle={() => toggleDomain('configReview')}
                       />
                       {expandedDomains.configReview && (
-                        <div className="space-y-1 px-4 pb-4">
-                          <p className="mb-3 text-xs text-muted-foreground">
+                        <div className="space-y-3 px-4 pb-4">
+                          <AssessmentSectionLabel>What auditors inspect</AssessmentSectionLabel>
+                          <p className="text-xs text-muted-foreground">
                             Assessors verify that systems are configured according to security baselines and hardened against known vulnerabilities.
                             {watchedCloudProviders.includes('aws') ? ' For AWS, this includes AWS Config rules, SSM patch compliance, AMI hardening, and Security Hub benchmarks (CIS/AWS Foundational).' : ''}
                             {watchedCloudProviders.includes('azure') ? ' For Azure, this includes Azure Policy, Defender for Cloud secure score, and CIS benchmarks for Azure.' : ''}
@@ -2518,8 +2625,10 @@ export function PolicyWizard() {
                             <FirstTimerTip tip="Adopt a CIS Benchmark for your primary OS or cloud platform as your baseline. Even documenting 'we follow CIS Level 1 with these 3 exceptions' is significantly better than no documented baseline — auditors understand first-timers." />
                           )}
                           <div className="pb-2 pt-1">
+                            <AssessmentSectionLabel>Current readiness</AssessmentSectionLabel>
                             <ReadinessCards control={form.control} name="securityAssessment.configReview.readiness" />
                           </div>
+                          <AssessmentSectionLabel>Control checks</AssessmentSectionLabel>
                           <ControlRow control={form.control} name="securityAssessment.configReview.hasHardeningBaselines" label="Security hardening baselines (CIS, DISA STIG, vendor guides) are defined." gap={domainBoolFields.configReview[0].gap} recommendation={domainBoolFields.configReview[0].recommendation} />
                           {form.watch('securityAssessment.configReview.hasHardeningBaselines') && (
                             <FormField control={form.control} name="securityAssessment.configReview.hardeningFramework" render={({ field }) => (
@@ -2552,6 +2661,7 @@ export function PolicyWizard() {
                           )}
                           <ControlRow control={form.control} name="securityAssessment.configReview.hasImageBuildPipeline" label="Server/container images are built from hardened base images via a pipeline." gap={domainBoolFields.configReview[3].gap} recommendation={domainBoolFields.configReview[3].recommendation} />
                           <div className="pt-2">
+                            <AssessmentSectionLabel>Evidence expectations</AssessmentSectionLabel>
                             <AuditorLensCallout criterion="CC6.1" message="Auditors sample system configurations against your stated baseline and check patch levels on production instances. They look for deviations without documented exceptions — even a simple exception log shows maturity." />
                           </div>
                         </div>
@@ -2567,8 +2677,9 @@ export function PolicyWizard() {
                         onToggle={() => toggleDomain('networkAnalysis')}
                       />
                       {expandedDomains.networkAnalysis && (
-                        <div className="space-y-1 px-4 pb-4">
-                          <p className="mb-3 text-xs text-muted-foreground">
+                        <div className="space-y-3 px-4 pb-4">
+                          <AssessmentSectionLabel>What auditors inspect</AssessmentSectionLabel>
+                          <p className="text-xs text-muted-foreground">
                             Assessors verify encryption in transit, network segmentation, and the ability to detect anomalous traffic.
                             {watchedCloudProviders.includes('aws') ? ' For AWS, this includes VPC Flow Logs, Transit Gateway attachments, PrivateLink endpoints, and ACM certificate management.' : ''}
                             {watchedCloudProviders.includes('azure') ? ' For Azure, this includes NSG Flow Logs, VNet peering, Private Endpoints, and Azure Key Vault certificate management.' : ''}
@@ -2578,8 +2689,10 @@ export function PolicyWizard() {
                             <FirstTimerTip tip="Enforce HTTPS-only on all endpoints (most cloud load balancers support this in one click) and separate prod and dev into different VPCs or VNets. These two steps address the most common network findings with minimal effort." />
                           )}
                           <div className="pb-2 pt-1">
+                            <AssessmentSectionLabel>Current readiness</AssessmentSectionLabel>
                             <ReadinessCards control={form.control} name="securityAssessment.networkAnalysis.readiness" />
                           </div>
+                          <AssessmentSectionLabel>Control checks</AssessmentSectionLabel>
                           <ControlRow control={form.control} name="securityAssessment.networkAnalysis.hasNetworkSegmentation" label="Network segmentation separates production, staging, and corporate environments." gap={domainBoolFields.networkAnalysis[0].gap} recommendation={domainBoolFields.networkAnalysis[0].recommendation} />
                           <ControlRow control={form.control} name="securityAssessment.networkAnalysis.hasEncryptionInTransit" label="All data in transit is encrypted (TLS 1.2+)." gap={domainBoolFields.networkAnalysis[1].gap} recommendation={domainBoolFields.networkAnalysis[1].recommendation} />
                           {form.watch('securityAssessment.networkAnalysis.hasEncryptionInTransit') && (
@@ -2601,6 +2714,7 @@ export function PolicyWizard() {
                           )}
                           <ControlRow control={form.control} name="securityAssessment.networkAnalysis.hasDnsFiltering" label="DNS filtering or sinkholing is configured to block malicious domains." gap={domainBoolFields.networkAnalysis[3].gap} recommendation={domainBoolFields.networkAnalysis[3].recommendation} />
                           <div className="pt-2">
+                            <AssessmentSectionLabel>Evidence expectations</AssessmentSectionLabel>
                             <AuditorLensCallout criterion="CC6.6" message="Auditors verify TLS is enforced (not just available) and that environments are isolated. They often request certificate management documentation and flow log samples showing normal vs. anomalous traffic patterns." />
                           </div>
                         </div>
@@ -2616,8 +2730,9 @@ export function PolicyWizard() {
                         onToggle={() => toggleDomain('fileIntegrity')}
                       />
                       {expandedDomains.fileIntegrity && (
-                        <div className="space-y-1 px-4 pb-4">
-                          <p className="mb-3 text-xs text-muted-foreground">
+                        <div className="space-y-3 px-4 pb-4">
+                          <AssessmentSectionLabel>What auditors inspect</AssessmentSectionLabel>
+                          <p className="text-xs text-muted-foreground">
                             Assessors verify that critical files — system binaries, configuration files, and application artifacts — are monitored for unauthorized changes using hash verification.
                             {watchedCloudProviders.includes('aws') ? ' For AWS, this includes AWS Config file tracking, SSM Inventory, and artifact signing with AWS Signer.' : ''}
                             {watchedCloudProviders.includes('azure') ? ' For Azure, this includes Defender for Server FIM, Azure Policy guest configuration, and Azure Artifacts signing.' : ''}
@@ -2627,8 +2742,10 @@ export function PolicyWizard() {
                             <FirstTimerTip tip="If you deploy containers, start with image digest pinning in your deployment manifests — it's a quick win that demonstrates artifact integrity. For VMs, cloud-native FIM options (Defender for Server, AWS Config) have low setup overhead." />
                           )}
                           <div className="pb-2 pt-1">
+                            <AssessmentSectionLabel>Current readiness</AssessmentSectionLabel>
                             <ReadinessCards control={form.control} name="securityAssessment.fileIntegrity.readiness" />
                           </div>
+                          <AssessmentSectionLabel>Control checks</AssessmentSectionLabel>
                           <ControlRow control={form.control} name="securityAssessment.fileIntegrity.hasFileIntegrityMonitoring" label="File integrity monitoring (FIM) is deployed on production systems." gap={domainBoolFields.fileIntegrity[0].gap} recommendation={domainBoolFields.fileIntegrity[0].recommendation} />
                           {form.watch('securityAssessment.fileIntegrity.hasFileIntegrityMonitoring') && (
                             <FormField control={form.control} name="securityAssessment.fileIntegrity.fimTool" render={({ field }) => (
@@ -2643,6 +2760,7 @@ export function PolicyWizard() {
                           <ControlRow control={form.control} name="securityAssessment.fileIntegrity.monitorsApplicationBinaries" label="Application binaries and container images are integrity-checked." gap={domainBoolFields.fileIntegrity[3].gap} recommendation={domainBoolFields.fileIntegrity[3].recommendation} />
                           <ControlRow control={form.control} name="securityAssessment.fileIntegrity.hasArtifactSigningOrHashing" label="Deployment artifacts are signed or hash-verified before production use." gap={domainBoolFields.fileIntegrity[4].gap} recommendation={domainBoolFields.fileIntegrity[4].recommendation} />
                           <div className="pt-2">
+                            <AssessmentSectionLabel>Evidence expectations</AssessmentSectionLabel>
                             <AuditorLensCallout criterion="CC7.1" message="Assessors verify FIM coverage matches your asset inventory, that alerts are acted upon, and that integrity baselines are refreshed after authorized changes. They also verify artifact provenance in your CI/CD pipeline." />
                           </div>
                         </div>
@@ -2830,11 +2948,11 @@ export function PolicyWizard() {
                 >
                   <div className="space-y-6">
 
-                    {/* ── Systems & Providers ── */}
+                    {/* ── Operational Tools ── */}
                     <div className="space-y-4 rounded-2xl bg-secondary/50 p-4">
                       <div>
-                        <p className="text-sm font-medium text-foreground">Systems & providers <span className="font-normal text-xs text-muted-foreground">(CC6.3, CC6.4)</span></p>
-                        <p className="mt-1 text-xs text-muted-foreground">These tool names appear verbatim in your generated policy documents and populate the evidence checklist your auditor will follow. Use the actual product name, not a category.</p>
+                        <p className="text-sm font-medium text-foreground">Operational tools <span className="font-normal text-xs text-muted-foreground">(CC6.3, CC6.4)</span></p>
+                        <p className="mt-1 text-xs text-muted-foreground">These tool names appear verbatim in generated policy documents and populate the evidence checklist your auditor will follow. Provider-profile choices now live in Infrastructure.</p>
                       </div>
                       {assessmentSummary.isFirstTimer && (
                         <FirstTimerTip tip="Don't overthink these — just name the actual tools you use today. Auditors verify what's documented matches what's in use, so accuracy matters more than sounding impressive." />
@@ -2842,9 +2960,9 @@ export function PolicyWizard() {
                       <div className="grid gap-4 md:grid-cols-3">
                         <FormField control={form.control} name="operations.versionControlSystem" render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Version control system</FormLabel>
+                            <FormLabel>Source control tool name</FormLabel>
                             <FormControl><Input {...field} placeholder="e.g., GitHub, GitLab, Bitbucket" /></FormControl>
-                            <FormDescription>Where source code changes are tracked and reviewed.</FormDescription>
+                            <FormDescription>The actual product your engineers use to track source-code changes. This value appears in generated policies.</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )} />
@@ -2861,36 +2979,6 @@ export function PolicyWizard() {
                             <FormLabel>On-call / alerting tool</FormLabel>
                             <FormControl><Input {...field} placeholder="e.g., PagerDuty, OpsGenie, Alertmanager" /></FormControl>
                             <FormDescription>Receives production alerts and pages the on-call engineer.</FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                      </div>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <FormField control={form.control} name="operations.vcsProvider" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>VCS provider</FormLabel>
-                            <FormControl>
-                              <select {...field} className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                                {vcsProviderOptions.map((provider) => (
-                                  <option key={provider} value={provider}>{provider}</option>
-                                ))}
-                              </select>
-                            </FormControl>
-                            <FormDescription>Unlocks contextual "Show Me How" guides for branch protection and peer review controls.</FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                        <FormField control={form.control} name="operations.hrisProvider" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>HRIS provider</FormLabel>
-                            <FormControl>
-                              <select {...field} className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                                {hrisProviderOptions.map((provider) => (
-                                  <option key={provider} value={provider}>{provider}</option>
-                                ))}
-                              </select>
-                            </FormControl>
-                            <FormDescription>Where employee records, onboarding, and offboarding are managed.</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )} />
@@ -2984,6 +3072,86 @@ export function PolicyWizard() {
                       <div className="pt-2">
                         <AuditorLensCallout criterion="CC8.1" message="MFA and peer review are among the most frequently sampled controls in a SOC 2 engagement. Auditors request screenshots of IdP authentication policy configuration and VCS branch protection settings — they verify controls are technically enforced, not just stated in policy." />
                       </div>
+                    </div>
+
+                    {/* ── Acceptable Use Policy Inputs ── */}
+                    <div className="space-y-4 rounded-2xl bg-secondary/50 p-4">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Acceptable use policy inputs <span className="font-normal text-xs text-muted-foreground">(CC1.1, CC2.3, CC6.8)</span></p>
+                        <p className="mt-1 text-xs text-muted-foreground">These settings make the Acceptable Use and Code of Conduct Policy specific enough to approve without adding generic questionnaire work on the document review page.</p>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField control={form.control} name="operations.acceptableUseScope" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Who must follow the acceptable use policy?</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} rows={3} placeholder="Employees, contractors, consultants, temporary workers, and any workforce member with access to company systems" />
+                            </FormControl>
+                            <FormDescription>Use role groups rather than names. This becomes the policy scope statement.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={form.control} name="operations.securityReportChannel" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Security concern reporting channel</FormLabel>
+                            <FormControl><Input {...field} placeholder={currentWizardData.company.primaryContactEmail || 'security@example.com'} /></FormControl>
+                            <FormDescription>Where workforce members report policy violations, lost devices, suspected phishing, or security concerns. Leave blank to use the primary contact email.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                      </div>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <ControlRow
+                          control={form.control}
+                          name="operations.requiresApprovedSoftware"
+                          label="Only approved software, services, and storage locations may be used for company data."
+                          gap="Without this rule, customer data can drift into unapproved SaaS tools, personal storage, or unmanaged devices where access and retention controls are not enforced."
+                          recommendation="Maintain an approved tools list in the same place where policies are published, and route exceptions through ticketing or security review."
+                        />
+                        <ControlRow
+                          control={form.control}
+                          name="operations.restrictsCompanyDataToApprovedSystems"
+                          label="Company and customer data must stay in approved systems."
+                          gap="If staff can copy regulated or customer data into unmanaged systems, SOC 2 evidence no longer matches the actual system boundary."
+                          recommendation="State that company data belongs only in approved repositories, ticketing tools, identity systems, storage locations, and communication channels."
+                        />
+                        <ControlRow
+                          control={form.control}
+                          name="operations.permitsLimitedPersonalUse"
+                          label="Limited personal use of company systems is permitted when it does not create security, legal, or business risk."
+                          gap="If personal use is allowed informally but not defined, enforcement becomes subjective and auditors may treat the policy as incomplete."
+                          recommendation="Only enable this if your actual practice permits incidental personal use. Otherwise leave it off and the policy will say company systems are for authorized business purposes."
+                        />
+                        <ControlRow
+                          control={form.control}
+                          name="operations.monitorsCompanySystems"
+                          label="Company systems may be monitored for security, compliance, and operational purposes."
+                          gap="Without a monitoring notice, log review and security investigations may conflict with employee expectations or local policy requirements."
+                          recommendation="Include a clear monitoring notice in the policy and align it with employee handbook language and applicable law."
+                        />
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-[1fr_14rem] md:items-end">
+                        <ControlRow
+                          control={form.control}
+                          name="operations.requiresLostDeviceReporting"
+                          label="Lost or stolen company devices must be reported promptly."
+                          gap="A lost device can expose credentials, cached customer data, or local files. Auditors expect a documented reporting path and response window."
+                          recommendation="Tie lost-device reporting to your MDM or endpoint response process so remote lock, wipe, and access revocation can be evidenced."
+                        />
+                        {form.watch('operations.requiresLostDeviceReporting') ? (
+                          <FormField control={form.control} name="operations.lostDeviceReportSlaHours" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Device report SLA (hours)</FormLabel>
+                              <FormControl>
+                                <Input type="number" min={1} max={168} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} />
+                              </FormControl>
+                              <FormDescription>How quickly users must report a lost or stolen company device.</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )} />
+                        ) : null}
+                      </div>
+                      <AuditorLensCallout criterion="CC1.1" message="Acceptable use policies are usually reviewed as control-environment evidence. The wizard should collect reusable operating facts here; document-specific wording can still be reviewed on the approval page before approval." />
                     </div>
 
                     {/* ── Communication & Risk Management ── */}
@@ -3123,7 +3291,7 @@ export function PolicyWizard() {
                       const auditLabels: Record<string, { label: string; color: string; note: string }> = {
                         type1: { label: 'SOC 2 Type I', color: 'text-emerald-700 bg-emerald-50 border-emerald-200', note: 'Point-in-time design assessment — ideal for organizations establishing their control environment.' },
                         type2: { label: 'SOC 2 Type II', color: 'text-blue-700 bg-blue-50 border-blue-200', note: 'Period-of-time operating effectiveness — the standard required by most enterprise customers.' },
-                        unsure: { label: 'Audit type not yet decided', color: 'text-amber-700 bg-amber-50 border-amber-200', note: 'Generated policies satisfy both Type I and Type II requirements. Revisit this in Step 1.' },
+                        unsure: { label: 'Audit type not yet decided', color: 'text-amber-700 bg-amber-50 border-amber-200', note: 'Generated policies satisfy both Type I and Type II requirements. Revisit this in Welcome.' },
                       };
                       const meta = auditLabels[auditType] ?? auditLabels.unsure;
                       return (
@@ -3213,8 +3381,8 @@ export function PolicyWizard() {
                           <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-base">TSC & infrastructure</CardTitle>
                             <div className="flex gap-3">
-                              <button type="button" onClick={() => jumpToStep(3)} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Edit TSC</button>
-                              <button type="button" onClick={() => jumpToStep(4)} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Edit infra</button>
+                              <button type="button" onClick={() => jumpToStep(4)} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Edit TSC</button>
+                              <button type="button" onClick={() => jumpToStep(1)} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Edit infra</button>
                             </div>
                           </CardHeader>
                           <CardContent className="space-y-2">
@@ -3236,7 +3404,7 @@ export function PolicyWizard() {
                         <Card>
                           <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-base">Governance & training</CardTitle>
-                            <button type="button" onClick={() => jumpToStep(1)} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Edit</button>
+                            <button type="button" onClick={() => jumpToStep(3)} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Edit</button>
                           </CardHeader>
                           <CardContent className="space-y-2">
                             <div className="flex flex-wrap gap-1.5">
@@ -3288,17 +3456,26 @@ export function PolicyWizard() {
                             <button type="button" onClick={() => jumpToStep(7)} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Edit</button>
                           </CardHeader>
                           <CardContent className="space-y-2">
-                            <ReviewRow label="Version control" value={reviewSummary.operations.versionControlSystem} />
-                            <ReviewRow label="VCS provider" value={reviewSummary.operations.vcsProvider} />
+                            <ReviewRow label="Source control tool name" value={reviewSummary.operations.versionControlSystem} />
+                            <ReviewRow label="Branch-protection guide provider" value={reviewSummary.operations.vcsProvider} />
                             <ReviewRow label="Ticketing" value={reviewSummary.operations.ticketingSystem} />
                             <ReviewRow label="On-call tool" value={reviewSummary.operations.onCallTool} />
                             <ReviewRow label="HRIS" value={reviewSummary.operations.hrisProvider} />
                             <ReviewRow label="Termination SLA" value={`${reviewSummary.operations.terminationSlaHours} hours`} />
                             <ReviewRow label="Onboarding SLA" value={`${reviewSummary.operations.onboardingSlaDays} business days`} />
+                            <ReviewRow label="Acceptable use scope" value={reviewSummary.operations.acceptableUseScope} />
+                            <ReviewRow label="Security reporting" value={reviewSummary.operations.securityReportChannel || reviewSummary.company.primaryContactEmail} />
+                            {reviewSummary.operations.requiresLostDeviceReporting ? (
+                              <ReviewRow label="Lost device reporting" value={`${reviewSummary.operations.lostDeviceReportSlaHours} hours`} />
+                            ) : null}
                             <div className="flex flex-wrap gap-1.5 pt-1">
                               {reviewSummary.operations.requiresMfa && <Badge variant="secondary" className="text-xs">MFA required</Badge>}
                               {reviewSummary.operations.requiresPeerReview && <Badge variant="secondary" className="text-xs">Peer review</Badge>}
                               {reviewSummary.operations.requiresCyberInsurance && <Badge variant="secondary" className="text-xs">Cyber insurance</Badge>}
+                              {reviewSummary.operations.requiresApprovedSoftware && <Badge variant="secondary" className="text-xs">Approved tools only</Badge>}
+                              {reviewSummary.operations.restrictsCompanyDataToApprovedSystems && <Badge variant="secondary" className="text-xs">Approved data locations</Badge>}
+                              {reviewSummary.operations.monitorsCompanySystems && <Badge variant="secondary" className="text-xs">System monitoring notice</Badge>}
+                              {reviewSummary.operations.permitsLimitedPersonalUse && <Badge variant="secondary" className="text-xs">Limited personal use</Badge>}
                               {reviewSummary.operations.hasRiskRegister && <Badge variant="secondary" className="text-xs">Risk register</Badge>}
                               {reviewSummary.operations.hasNdaProcess && <Badge variant="secondary" className="text-xs">NDAs</Badge>}
                               {reviewSummary.operations.dataRetentionDefined && <Badge variant="secondary" className="text-xs">Retention schedule</Badge>}

@@ -1,5 +1,29 @@
 import type { WizardData } from '@/lib/wizard/schema';
 
+function formatReviewCadence(cadence: string) {
+  const labels: Record<string, string> = {
+    annual: 'Annual review',
+    'semi-annual': 'Semi-annual review',
+    quarterly: 'Quarterly review',
+  };
+
+  return labels[cadence] ?? cadence;
+}
+
+function formatAssuranceReportType(reportType: string) {
+  const labels: Record<string, string> = {
+    'soc2-type2': 'SOC 2 Type II',
+    'soc2-type1': 'SOC 2 Type I',
+    soc1: 'SOC 1',
+    iso27001: 'ISO 27001',
+    'pentest-letter': 'penetration test letter',
+    other: 'other assurance report',
+    none: 'no assurance report available',
+  };
+
+  return labels[reportType] ?? reportType;
+}
+
 export function buildTemplatePayload(data: WizardData, options?: { workspaceOrganizationName?: string | null }) {
   const cloudProviders = data.infrastructure.cloudProviders ?? [data.infrastructure.type === 'hybrid' ? 'aws' : data.infrastructure.type === 'self-hosted' ? 'aws' : data.infrastructure.type];
   const usesAws = cloudProviders.includes('aws');
@@ -25,6 +49,7 @@ export function buildTemplatePayload(data: WizardData, options?: { workspaceOrga
     approver_name: data.company.primaryContactName,
     executive_sponsor_name: data.company.primaryContactName,
     system_owner_name: data.company.primaryContactName,
+    incident_commander_name: data.company.primaryContactName,
     security_contact_email: data.company.primaryContactEmail,
     privacy_contact_email: data.company.primaryContactEmail,
     deployment_model: data.scope.isMultiTenant ? 'multi-tenant SaaS' : 'single-tenant SaaS',
@@ -83,9 +108,9 @@ export function buildTemplatePayload(data: WizardData, options?: { workspaceOrga
       service_description: subservice.description,
       role: subservice.role || subservice.description,
       data_shared: subservice.dataShared || 'Not specified',
-      review_cadence: subservice.reviewCadence,
+      review_cadence: formatReviewCadence(subservice.reviewCadence),
       has_assurance_report: subservice.hasAssuranceReport,
-      assurance_report_type: subservice.assuranceReportType,
+      assurance_report_type: formatAssuranceReportType(subservice.assuranceReportType),
       control_inclusion: subservice.controlInclusion,
     })),
     data_classifications: data.scope.dataTypesHandled.map((dataType) => ({
@@ -156,6 +181,7 @@ export function buildTemplatePayload(data: WizardData, options?: { workspaceOrga
     target_audit_type: data.company.targetAuditType,
     is_type1: data.company.targetAuditType === 'type1',
     is_type2: data.company.targetAuditType === 'type2',
+    is_audit_type_unsure: data.company.targetAuditType === 'unsure',
     org_age: data.company.orgAge,
 
     // Extended operations fields (CC2.2, CC2.3, CC3.2, CC3.3, C1.1, C1.2)
@@ -165,6 +191,14 @@ export function buildTemplatePayload(data: WizardData, options?: { workspaceOrga
     has_release_note_practice: data.operations.hasReleaseNotePractice,
     has_risk_register: data.operations.hasRiskRegister,
     includes_fraud_risk_in_assessment: data.operations.includesFraudRiskInAssessment,
+    acceptable_use_scope: data.operations.acceptableUseScope || 'employees, contractors, consultants, temporary workers, and any other workforce members with access to company systems',
+    security_report_channel: data.operations.securityReportChannel || data.company.primaryContactEmail,
+    permits_limited_personal_use: data.operations.permitsLimitedPersonalUse,
+    requires_approved_software: data.operations.requiresApprovedSoftware,
+    restricts_company_data_to_approved_systems: data.operations.restrictsCompanyDataToApprovedSystems,
+    requires_lost_device_reporting: data.operations.requiresLostDeviceReporting,
+    lost_device_report_sla_hours: data.operations.lostDeviceReportSlaHours,
+    monitors_company_systems: data.operations.monitorsCompanySystems,
     has_nda_process: data.operations.hasNdaProcess,
     data_retention_defined: data.operations.dataRetentionDefined,
     has_data_disposal_procedure: data.operations.hasDataDisposalProcedure,

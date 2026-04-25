@@ -6,6 +6,10 @@ import { buildTemplatePayload } from '@/lib/wizard/template-payload';
 import { defaultWizardValues, type WizardData } from '@/lib/wizard/schema';
 import { getActiveWizardRules } from '@/lib/wizard/rule-matrix';
 
+type WizardDataOverrides = {
+  [K in keyof WizardData]?: WizardData[K] extends unknown[] ? WizardData[K] : Partial<WizardData[K]>;
+};
+
 function assert(condition: boolean, message: string): asserts condition {
   if (!condition) {
     throw new Error(message);
@@ -16,7 +20,7 @@ function assertIncludes(haystack: string, needle: string, message: string) {
   assert(haystack.includes(needle), `${message}: expected output to include "${needle}"`);
 }
 
-function makeWizardData(overrides: Partial<WizardData>): WizardData {
+function makeWizardData(overrides: WizardDataOverrides): WizardData {
   return {
     ...defaultWizardValues,
     company: { ...defaultWizardValues.company, ...overrides.company },
@@ -89,7 +93,7 @@ run('Bundle J smoke path surfaces PHI review state and generated PHI language', 
     },
   });
 
-  const rules = getActiveWizardRules(data);
+  const rules = getActiveWizardRules(data, 'review');
   assert(!rules.some((rule) => rule.id === 'review-privacy-scope-warning'), 'PHI path should not show privacy warning when Privacy TSC is selected');
   assert(data.scope.containsPhi, 'PHI field should remain true for the review source data');
   assert(!data.scope.hasCardholderDataEnvironment, 'CDE field should remain false for the review source data');
@@ -128,7 +132,7 @@ run('Bundle K smoke path surfaces CDE review state and generated CDE language', 
     },
   });
 
-  const rules = getActiveWizardRules(data);
+  const rules = getActiveWizardRules(data, 'review');
   assert(!rules.some((rule) => rule.id === 'review-cde-confidentiality-warning'), 'CDE path should not show confidentiality warning when Confidentiality TSC is selected');
   assert(!data.scope.containsPhi, 'PHI field should remain false for the review source data');
   assert(data.scope.hasCardholderDataEnvironment, 'CDE field should remain true for the review source data');

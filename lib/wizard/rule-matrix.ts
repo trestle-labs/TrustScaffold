@@ -2,10 +2,10 @@ import type { WizardData } from './schema';
 
 export const wizardStepIds = [
   'welcome',
+  'infrastructure',
   'system-scope',
   'governance',
   'tsc-selection',
-  'infrastructure',
   'security-assessment',
   'security-tooling',
   'operations',
@@ -100,10 +100,10 @@ export const wizardBaseValidationFieldsByStep: Record<WizardStepId, WizardFieldP
   'system-scope': ['scope.systemName', 'scope.systemDescription', 'scope.dataTypesHandled'],
   governance: ['governance.acknowledgementCadence', 'training.securityAwarenessTrainingTool', 'training.trainingCadence'],
   'tsc-selection': ['tscSelections.availability', 'tscSelections.confidentiality', 'tscSelections.processingIntegrity', 'tscSelections.privacy'],
-  infrastructure: ['infrastructure.cloudProviders', 'infrastructure.type', 'infrastructure.idpProvider'],
+  infrastructure: ['infrastructure.cloudProviders', 'infrastructure.type', 'infrastructure.idpProvider', 'operations.vcsProvider', 'operations.hrisProvider'],
   'security-assessment': ['securityAssessment.documentReview.readiness', 'securityAssessment.logReview.readiness', 'securityAssessment.rulesetReview.readiness', 'securityAssessment.configReview.readiness', 'securityAssessment.networkAnalysis.readiness', 'securityAssessment.fileIntegrity.readiness'],
   'security-tooling': ['securityTooling.penetrationTestFrequency'],
-  operations: ['operations.ticketingSystem', 'operations.versionControlSystem', 'operations.onCallTool', 'operations.vcsProvider', 'operations.hrisProvider', 'operations.terminationSlaHours', 'operations.onboardingSlaDays', 'operations.policyPublicationMethod'],
+  operations: ['operations.ticketingSystem', 'operations.versionControlSystem', 'operations.onCallTool', 'operations.terminationSlaHours', 'operations.onboardingSlaDays', 'operations.policyPublicationMethod'],
   review: [],
   generate: [],
 };

@@ -31,7 +31,7 @@ That file gives you:
 
 - Ready-to-run provider packs such as `AWS + Okta + GitHub + Rippling`
 - Description seeds for the `System Scope` step
-- Vendor assurance defaults including review cadence, report type, and control treatment
+- Provider-profile selections and vendor assurance defaults for the `Infrastructure` step, including review cadence, report type, and control treatment
 - A coverage catalog for every supported IdP, VCS, and HRIS option currently exposed in the wizard
 - Compliance overlays for combined motions such as `SOC 2 + HIPAA` and `SOC 2 + PCI-DSS`
 
@@ -133,6 +133,21 @@ These scripts are intended to be close to 1:1 with the current wizard implementa
 - They explicitly cover both multi-cloud and hybrid infrastructure branches where relevant.
 - They now pair with [System Profile Library](./system-profiles.md) when exact provider combinations, vendor descriptions, or assurance-review defaults matter.
 
+Current wizard order:
+
+1. Welcome
+2. Infrastructure
+3. System Scope
+4. Governance
+5. TSC Selection
+6. Security Assessment
+7. Security Tooling
+8. Operations
+9. Review
+10. Generate
+
+Infrastructure now captures the provider profile before the rest of the questionnaire: cloud providers, identity provider, branch-protection guide provider, HRIS provider, and provider-specific infrastructure controls. System Scope is reserved for the in-scope system name, data classification including PHI/CDE flags, deployment model, and final system-description prose. Operations captures the operational tools and process SLAs that support the selected providers.
+
 They are still manual UAT scripts, not generated snapshots of the form schema, so they should be reviewed whenever new wizard fields, option labels, or branching rules are added.
 
 ## Common Preflight
@@ -177,10 +192,10 @@ For every UAT run, capture:
 ### Stage Results
 - Dashboard entry:
 - Welcome & onboarding:
+- Infrastructure:
 - System Scope:
 - Governance:
 - TSC Selection:
-- Infrastructure:
 - Security Assessment:
 - Security Tooling:
 - Operations:

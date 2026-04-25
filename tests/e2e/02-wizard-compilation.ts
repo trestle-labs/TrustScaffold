@@ -18,6 +18,10 @@ import { buildTemplatePayload } from '@/lib/wizard/template-payload';
 import { defaultWizardValues, type WizardData } from '@/lib/wizard/schema';
 import { getActiveWizardRules } from '@/lib/wizard/rule-matrix';
 
+type WizardDataOverrides = {
+  [K in keyof WizardData]?: WizardData[K] extends unknown[] ? WizardData[K] : Partial<WizardData[K]>;
+};
+
 // ── 4.1 Idempotency — Unique Constraint ─────────────────────────────────────
 
 suite('4.1 Idempotency — Double-Click Guard');
@@ -136,13 +140,13 @@ test('Security-only scope returns templates mapped to CC criteria', async () => 
 
 suite('4.4 Full TSC Scope');
 
-test('All 5 TSC categories cover all 16 templates', async () => {
+test('All 5 TSC categories cover all 18 templates', async () => {
   const svc = serviceClient();
   const { data, count } = await svc
     .from('templates')
     .select('id', { count: 'exact' });
 
-  assertEqual(count, 16, 'total template count');
+  assertEqual(count, 18, 'total template count');
 });
 
 // ── 4.6 DC 200 System Description Completeness ──────────────────────────────
@@ -227,7 +231,7 @@ test('Approved doc has approved revision', async () => {
 
 suite('4.9 Regulated Scope Smoke Paths');
 
-function makeWizardData(overrides: Partial<WizardData>): WizardData {
+function makeWizardData(overrides: WizardDataOverrides): WizardData {
   return {
     ...defaultWizardValues,
     company: { ...defaultWizardValues.company, ...overrides.company },
@@ -286,7 +290,7 @@ test('Bundle J smoke path surfaces PHI review state and generates explicit PHI l
     },
   });
 
-  const rules = getActiveWizardRules(data);
+  const rules = getActiveWizardRules(data, 'review');
   assert(!rules.some((rule) => rule.id === 'review-privacy-scope-warning'), 'PHI path should not show privacy warning when Privacy TSC is selected');
   assertEqual(data.scope.containsPhi, true, 'review source preserves PHI scope state');
   assertEqual(data.scope.hasCardholderDataEnvironment, false, 'review source preserves CDE scope state');
@@ -339,7 +343,7 @@ test('Bundle K smoke path surfaces CDE review state and generates explicit CDE l
     },
   });
 
-  const rules = getActiveWizardRules(data);
+  const rules = getActiveWizardRules(data, 'review');
   assert(!rules.some((rule) => rule.id === 'review-cde-confidentiality-warning'), 'CDE path should not show confidentiality warning when Confidentiality TSC is selected');
   assertEqual(data.scope.containsPhi, false, 'review source preserves PHI scope state');
   assertEqual(data.scope.hasCardholderDataEnvironment, true, 'review source preserves CDE scope state');
@@ -350,6 +354,61 @@ test('Bundle K smoke path surfaces CDE review state and generates explicit CDE l
 
   assertIncludes(renderedSystem, 'cardholder data environment (CDE) is explicitly defined', 'system description CDE language');
   assertIncludes(renderedClassification, 'operates an in-scope cardholder data environment (CDE)', 'data classification CDE language');
+});
+
+test('Acceptable use policy is completed from wizard operational inputs', async () => {
+  const svc = serviceClient();
+  const { data: acceptableUseTemplate } = await svc
+    .from('templates')
+    .select('slug, markdown_template')
+    .eq('slug', 'acceptable-use-code-of-conduct-policy')
+    .single();
+
+  assert(!!acceptableUseTemplate, 'acceptable-use-code-of-conduct-policy template must exist');
+
+  const data = makeWizardData({
+    company: {
+      name: 'PolicyCo',
+      primaryContactEmail: 'security@policyco.example',
+    },
+    scope: {
+      systemName: 'PolicyCo Cloud',
+      systemDescription: 'a multi-tenant SaaS platform that stores customer compliance records and identity metadata',
+      dataTypesHandled: ['Customer PII', 'Authentication secrets'],
+    },
+    infrastructure: {
+      idpProvider: 'Okta',
+    },
+    securityTooling: {
+      hasMdm: true,
+      mdmTool: 'Kandji',
+      endpointProtectionTool: 'Microsoft Defender for Endpoint',
+    },
+    governance: {
+      hasDisciplinaryProcedures: true,
+      acknowledgementCadence: 'hire-and-annual',
+    },
+    operations: {
+      acceptableUseScope: 'employees, contractors, and temporary workers with access to company systems',
+      securityReportChannel: 'security@policyco.example',
+      permitsLimitedPersonalUse: false,
+      requiresApprovedSoftware: true,
+      restrictsCompanyDataToApprovedSystems: true,
+      requiresLostDeviceReporting: true,
+      lostDeviceReportSlaHours: 12,
+      monitorsCompanySystems: true,
+    },
+  });
+
+  const payload = buildTemplatePayload(data, { workspaceOrganizationName: data.company.name });
+  const rendered = renderTemplate(acceptableUseTemplate!.markdown_template, payload, 'acceptable-use-code-of-conduct-policy');
+
+  assertIncludes(rendered, 'employees, contractors, and temporary workers with access to company systems', 'acceptable use scope from wizard');
+  assertIncludes(rendered, 'Only approved software, services, repositories, and storage locations', 'approved tool rule from wizard');
+  assertIncludes(rendered, 'reported to security@policyco.example within 12 hours', 'lost device reporting channel and SLA');
+  assertIncludes(rendered, 'Company-managed devices are enrolled in Kandji', 'MDM tool from security tooling');
+  assertIncludes(rendered, 'Endpoint protection is provided through Microsoft Defender for Endpoint', 'endpoint tool from security tooling');
+  assertIncludes(rendered, 'during hire-and-annual policy review cycles', 'acknowledgement cadence from governance');
 });
 
 // ── Run ──────────────────────────────────────────────────────────────────────

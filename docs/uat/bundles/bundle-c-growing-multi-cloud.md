@@ -32,6 +32,7 @@ Validate a partially mature organization with a cloud-only multi-provider footpr
 - `GCP`: unchecked
 - `We host our own hardware`: unchecked
 - Identity provider: `Entra ID`
+- VCS provider: `GitHub` or `Azure DevOps`
 
 Verify:
 
@@ -42,7 +43,6 @@ Verify:
 
 ### Operations
 
-- VCS provider: `GitHub` or `Azure DevOps`
 - MFA required: unchecked
 - Peer review required: unchecked
 

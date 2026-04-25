@@ -1,16 +1,12 @@
 import Link from 'next/link';
-import ReactMarkdown from 'react-markdown';
 
 import { approveGeneratedDocAction, archiveGeneratedDocAction, regenerateDocAction } from '@/app/(dashboard)/generated-docs/actions';
+import { MarkdownDocument } from '@/components/documents/markdown-document';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-
-function stripFrontmatter(markdown: string) {
-  return markdown.replace(/^---\n[\s\S]*?\n---\n?/, '');
-}
 
 export default async function GeneratedDocDetailPage({
   params,
@@ -46,7 +42,6 @@ export default async function GeneratedDocDetailPage({
   const canApprove = ['admin', 'approver'].includes(context.organization.role) && doc.status !== 'approved';
   const canArchive = context.organization.role === 'admin' && doc.status !== 'archived';
   const canRegenerate = ['admin', 'editor'].includes(context.organization.role);
-  const renderedMarkdown = stripFrontmatter(doc.content_markdown);
 
   return (
     <div className="space-y-6">
@@ -93,10 +88,22 @@ export default async function GeneratedDocDetailPage({
         <CardContent className="space-y-4 text-sm text-muted-foreground">
           {successMessage ? <p className="rounded-2xl bg-primary/10 px-4 py-3 text-primary">{successMessage}</p> : null}
           {errorMessage ? <p className="rounded-2xl bg-destructive/10 px-4 py-3 text-destructive">{errorMessage}</p> : null}
-          <div className="rounded-3xl border border-border bg-white p-6 text-foreground shadow-sm">
-            <article className="prose max-w-none prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground prose-code:text-foreground">
-              <ReactMarkdown>{renderedMarkdown}</ReactMarkdown>
-            </article>
+          <div className="grid gap-3 lg:grid-cols-3">
+            <div className="rounded-2xl border border-border bg-secondary/25 p-4">
+              <p className="font-semibold text-foreground">Approve</p>
+              <p className="mt-1 text-xs">Locks this draft as approved for export and writes an approved revision. Admins and approvers can approve documents.</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-secondary/25 p-4">
+              <p className="font-semibold text-foreground">Regenerate</p>
+              <p className="mt-1 text-xs">Re-renders this document from the wizard payload stored on this document. Use Generate from the wizard to refresh all drafts from the latest wizard answers.</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-secondary/25 p-4">
+              <p className="font-semibold text-foreground">Archive</p>
+              <p className="mt-1 text-xs">Moves this document out of the active list. Admins can archive drafts or approved documents when they should no longer be exported.</p>
+            </div>
+          </div>
+          <div className="rounded-3xl border border-border bg-card p-6 text-foreground shadow-sm md:p-8">
+            <MarkdownDocument markdown={doc.content_markdown} />
           </div>
         </CardContent>
       </Card>

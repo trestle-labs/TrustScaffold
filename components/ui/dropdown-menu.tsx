@@ -14,7 +14,7 @@ const StyledDropdownMenuContent = ({ className, sideOffset = 8, ...props }: Reac
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuContent
       sideOffset={sideOffset}
-      className={cn('z-50 min-w-[12rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-border bg-white p-1 text-slate-900 shadow-panel', className)}
+      className={cn('z-50 min-w-[12rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-border bg-white p-1 text-slate-900 shadow-panel dark:bg-card dark:text-card-foreground', className)}
       {...props}
     />
   </DropdownMenuPrimitive.Portal>
@@ -22,7 +22,7 @@ const StyledDropdownMenuContent = ({ className, sideOffset = 8, ...props }: Reac
 
 const StyledDropdownMenuItem = ({ className, ...props }: React.ComponentProps<typeof DropdownMenuItem>) => (
   <DropdownMenuItem
-    className={cn('flex cursor-pointer select-none items-center rounded-lg px-2 py-2 text-sm outline-none transition-colors focus:bg-accent data-[disabled]:pointer-events-none data-[disabled]:opacity-50', className)}
+    className={cn('flex cursor-pointer select-none items-center rounded-lg px-2 py-2 text-sm text-foreground outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50', className)}
     {...props}
   />
 );

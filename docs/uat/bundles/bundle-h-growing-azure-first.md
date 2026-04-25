@@ -28,11 +28,9 @@ Verify:
 - Data types: check `Customer PII`, `Authentication secrets`, and `Product telemetry`
 - `Protected health information (PHI) is in scope`: unchecked
 - `Cardholder data environment (CDE) is in scope`: unchecked
-- Add sub-service organizations: `Azure`, `Entra ID`, `Azure DevOps`, `BambooHR`
 
 Verify:
 
-- Vendor role auto-fill works for the baseline providers.
 - PHI and CDE fields are visible as first-class scope fields.
 
 ### Governance
@@ -67,9 +65,13 @@ Verify:
 - `GCP`: unchecked
 - `We host our own hardware`: unchecked
 - Identity provider: `Entra ID`
+- VCS provider: `Azure DevOps`
+- HRIS provider: `BambooHR`
+- Add sub-service organizations: `Azure`, `Entra ID`, `Azure DevOps`, `BambooHR`
 
 Verify:
 
+- Vendor role auto-fill works for the baseline providers.
 - No multi-cloud warning.
 - No hybrid warning.
 - Azure-specific controls appear.
@@ -77,8 +79,6 @@ Verify:
 
 ### Operations
 
-- VCS provider: `Azure DevOps`
-- HRIS provider: `BambooHR`
 - MFA required: checked
 - Peer review required: checked
 

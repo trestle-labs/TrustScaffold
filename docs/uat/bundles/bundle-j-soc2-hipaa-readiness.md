@@ -28,7 +28,6 @@ Verify:
 - Data types: check `Customer PII`, `Employee data`, `Support tickets`, and `Authentication secrets`
 - `Protected health information (PHI) is in scope`: checked
 - `Cardholder data environment (CDE) is in scope`: unchecked
-- Add sub-service organizations: `Azure`, `Entra ID`, `Azure DevOps`, `BambooHR`, and one healthcare-adjacent processor if available via `Other`
 
 Verify:
 
@@ -51,6 +50,7 @@ Verify:
 ### Infrastructure And Operations
 
 - Keep the Azure-first provider baseline from SP-2
+- Add sub-service organizations: `Azure`, `Entra ID`, `Azure DevOps`, `BambooHR`, and one healthcare-adjacent processor if available via `Other`
 - MFA required: checked
 - Peer review required: checked
 

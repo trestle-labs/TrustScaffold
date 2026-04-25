@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import ReactMarkdown from 'react-markdown';
 
+import { MarkdownDocument } from '@/components/documents/markdown-document';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getCriteriaByCategory, TSC_CRITERIA, type TscCriterion } from '@/lib/tsc-criteria';
@@ -537,9 +537,9 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
                               <Badge variant="secondary">{rev.template_name}</Badge>
                               <span className="text-xs text-slate-500">{rev.doc_file_name}</span>
                             </div>
-                            <article className="prose prose-sm max-w-none rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                              <ReactMarkdown>{rev.content_markdown}</ReactMarkdown>
-                            </article>
+                            <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                              <MarkdownDocument markdown={rev.content_markdown} />
+                            </div>
                           </div>
                         ))}
                       </div>

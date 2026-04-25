@@ -6,7 +6,16 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { defaultWizardValues, type WizardData } from '@/lib/wizard/schema';
 
 function mergeWizardData(data: Partial<WizardData> | undefined): WizardData {
-  const defaultSubservice = defaultWizardValues.subservices[0];
+  const defaultSubservice: WizardData['subservices'][number] = {
+    name: '',
+    description: '',
+    role: '',
+    dataShared: '',
+    reviewCadence: 'annual',
+    hasAssuranceReport: false,
+    assuranceReportType: 'none',
+    controlInclusion: 'carve-out',
+  };
 
   return {
     ...defaultWizardValues,
@@ -102,7 +111,7 @@ export const useWizardStore = create<WizardStore>()(
       hasHydrated: false,
       setHydrated: (value) => set({ hasHydrated: value }),
       setOrganization: (organizationId) => {
-        if (get().organizationId && get().organizationId !== organizationId) {
+        if (get().organizationId !== organizationId) {
           set({ organizationId, currentStep: 0, data: defaultWizardValues, lastGeneratedAt: null });
           return;
         }
@@ -122,7 +131,7 @@ export const useWizardStore = create<WizardStore>()(
     }),
     {
       name: 'trustscaffold-wizard',
-      version: 7,
+      version: 8,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         organizationId: state.organizationId,

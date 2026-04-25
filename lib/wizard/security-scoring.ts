@@ -210,8 +210,8 @@ export function computeStepCompletions(data: WizardData, highWaterStep = 0): Ste
   const tscStatus: StepCompletion['status'] = tscFilled > 0 ? 'complete' : 'partial';
 
   const inf = data.infrastructure;
-  const infraFilled = (inf.cloudProviders.length > 0 ? 1 : 0) + (inf.type ? 1 : 0) + (inf.idpProvider ? 1 : 0);
-  const infraTotal = 3;
+  const infraFilled = (inf.cloudProviders.length > 0 ? 1 : 0) + (inf.type ? 1 : 0) + (inf.idpProvider ? 1 : 0) + [data.operations.vcsProvider, data.operations.hrisProvider].filter(Boolean).length;
+  const infraTotal = 5;
 
   const sa = data.securityAssessment;
   const saStarted = [sa.documentReview.readiness, sa.logReview.readiness, sa.rulesetReview.readiness, sa.configReview.readiness, sa.networkAnalysis.readiness, sa.fileIntegrity.readiness].filter((r) => r !== 'not-started').length;
@@ -248,10 +248,10 @@ export function computeStepCompletions(data: WizardData, highWaterStep = 0): Ste
 
   return [
     { step: 0, label: 'Welcome',             status: textStatus(companyFilled, companyTotal, 0) },
-    { step: 1, label: 'Governance',           status: choiceStatus(govEngaged, 1) },
+    { step: 1, label: 'Infrastructure',       status: textStatus(infraFilled, infraTotal, 1) },
     { step: 2, label: 'System Scope',         status: textStatus(scopeFilled, scopeTotal, 2) },
-    { step: 3, label: 'TSC Selection',        status: highWaterStep >= 3 ? tscStatus : 'empty' },
-    { step: 4, label: 'Infrastructure',       status: textStatus(infraFilled, infraTotal, 4) },
+    { step: 3, label: 'Governance',           status: choiceStatus(govEngaged, 3) },
+    { step: 4, label: 'TSC Selection',        status: highWaterStep >= 4 ? tscStatus : 'empty' },
     { step: 5, label: 'Security Assessment',  status: choiceStatus(saStarted, 5) },
     { step: 6, label: 'Security Tooling',     status: choiceStatus(toolEngaged, 6) },
     { step: 7, label: 'Operations',           status: textStatus(opsFilled, opsTotal, 7) },
