@@ -9,21 +9,27 @@ This matrix shows baseline template coverage before company-specific facts are i
 | CC3 | Risk Assessment (COSO principles 6-9) | System Description (DC 200)<br>Risk Management Policy<br>Vendor Management Policy<br>SOC 2 Evidence Checklist | Reviewer to confirm adequacy and engagement-specific fit. |
 | CC4 | Monitoring Activities (COSO principles 16-17) | System Description (DC 200)<br>SOC 2 Evidence Checklist<br>Internal Audit and Monitoring Policy | Reviewer to confirm adequacy and engagement-specific fit. |
 | CC5 | Control Activities (COSO principles 10-12) | System Description (DC 200)<br>Information Security Policy<br>SOC 2 Evidence Checklist | Reviewer to confirm adequacy and engagement-specific fit. |
-| CC6 | Logical and Physical Access Controls | System Description (DC 200)<br>Information Security Policy<br>Access Control and On/Offboarding Policy<br>Physical Security Policy<br>SOC 2 Evidence Checklist<br>Data Retention and Disposal Policy | Reviewer to confirm adequacy and engagement-specific fit. |
-| CC7 | System Operations | System Description (DC 200)<br>Information Security Policy<br>Incident Response Plan<br>SOC 2 Evidence Checklist | Reviewer to confirm adequacy and engagement-specific fit. |
+| CC6 | Logical and Physical Access Controls | System Description (DC 200)<br>Information Security Policy<br>Access Control and On/Offboarding Policy<br>Physical Security Policy<br>SOC 2 Evidence Checklist<br>Data Retention and Disposal Policy<br>Asset Management and Cryptographic Inventory | Reviewer to confirm adequacy and engagement-specific fit. |
+| CC7 | System Operations | System Description (DC 200)<br>Information Security Policy<br>Incident Response Plan<br>SOC 2 Evidence Checklist<br>Asset Management and Cryptographic Inventory | Reviewer to confirm adequacy and engagement-specific fit. |
 | CC8 | Change Management | System Description (DC 200)<br>Information Security Policy<br>Change Management Policy<br>Secure Software Development Life Cycle Policy<br>SOC 2 Evidence Checklist | Reviewer to confirm adequacy and engagement-specific fit. |
 | CC9 | Risk Mitigation | System Description (DC 200)<br>Information Security Policy<br>Risk Management Policy<br>Vendor Management Policy<br>SOC 2 Evidence Checklist<br>Data Retention and Disposal Policy | Reviewer to confirm adequacy and engagement-specific fit. |
 | A1 | Availability | Business Continuity and Disaster Recovery Plan<br>Backup and Recovery Policy | Reviewer to confirm adequacy and engagement-specific fit. |
-| C1 | Confidentiality | Data Classification and Handling Policy<br>Encryption Policy | Reviewer to confirm adequacy and engagement-specific fit. |
+| C1 | Confidentiality | Data Classification and Handling Policy<br>Encryption Policy<br>Asset Management and Cryptographic Inventory | Reviewer to confirm adequacy and engagement-specific fit. |
 | PI1 | Processing Integrity | Processing Integrity Policy | Reviewer to confirm adequacy and engagement-specific fit. |
-| P1 | Privacy: Notice | Privacy Notice and Consent Policy | Reviewer to confirm adequacy and engagement-specific fit. |
-| P2 | Privacy: Choice and Consent | Privacy Notice and Consent Policy | Reviewer to confirm adequacy and engagement-specific fit. |
-| P3 | Privacy: Collection | Privacy Notice and Consent Policy | Reviewer to confirm adequacy and engagement-specific fit. |
-| P4 | Privacy: Use, Retention, and Disposal | Privacy Notice and Consent Policy | Reviewer to confirm adequacy and engagement-specific fit. |
-| P5 | Privacy: Access | Privacy Notice and Consent Policy | Reviewer to confirm adequacy and engagement-specific fit. |
-| P6 | Privacy: Disclosure and Notification | Privacy Notice and Consent Policy | Reviewer to confirm adequacy and engagement-specific fit. |
-| P7 | Privacy: Data Quality | Privacy Notice and Consent Policy | Reviewer to confirm adequacy and engagement-specific fit. |
-| P8 | Privacy: Monitoring and Enforcement | Privacy Notice and Consent Policy | Reviewer to confirm adequacy and engagement-specific fit. |
+| P1 | Privacy: Notice | Privacy Notice and Consent Policy<br>Data Protection Impact Assessment | Reviewer to confirm adequacy and engagement-specific fit. |
+| P2 | Privacy: Choice and Consent | Privacy Notice and Consent Policy<br>Data Protection Impact Assessment | Reviewer to confirm adequacy and engagement-specific fit. |
+| P3 | Privacy: Collection | Privacy Notice and Consent Policy<br>Data Protection Impact Assessment | Reviewer to confirm adequacy and engagement-specific fit. |
+| P4 | Privacy: Use, Retention, and Disposal | Privacy Notice and Consent Policy<br>Data Protection Impact Assessment | Reviewer to confirm adequacy and engagement-specific fit. |
+| P5 | Privacy: Access | Privacy Notice and Consent Policy<br>Data Protection Impact Assessment | Reviewer to confirm adequacy and engagement-specific fit. |
+| P6 | Privacy: Disclosure and Notification | Privacy Notice and Consent Policy<br>Data Protection Impact Assessment | Reviewer to confirm adequacy and engagement-specific fit. |
+| P7 | Privacy: Data Quality | Privacy Notice and Consent Policy<br>Data Protection Impact Assessment | Reviewer to confirm adequacy and engagement-specific fit. |
+| P8 | Privacy: Monitoring and Enforcement | Privacy Notice and Consent Policy<br>Data Protection Impact Assessment | Reviewer to confirm adequacy and engagement-specific fit. |
+| COMMON | Universal common-control foundation | Asset Management and Cryptographic Inventory | Reviewer to confirm adequacy and engagement-specific fit. |
+| ISO27001 | ISO 27001 high-water-mark requirements | ISO 27001 Statement of Applicability<br>Legal and Regulatory Registry<br>Asset Management and Cryptographic Inventory | Reviewer to confirm adequacy and engagement-specific fit. |
+| HIPAA | HIPAA high-water-mark requirements | Business Associate Agreement Template<br>PHI Data Flow and Inventory Map<br>Legal and Regulatory Registry | Reviewer to confirm adequacy and engagement-specific fit. |
+| PCI | PCI-DSS high-water-mark requirements | Tokenization and Cardholder Data Policy<br>Quarterly Vulnerability Scanning SOP<br>Legal and Regulatory Registry<br>Asset Management and Cryptographic Inventory | Reviewer to confirm adequacy and engagement-specific fit. |
+| GDPR | GDPR / privacy high-water-mark requirements | Legal and Regulatory Registry<br>Data Protection Impact Assessment | Reviewer to confirm adequacy and engagement-specific fit. |
+| CCPA | CCPA / CPRA privacy high-water-mark requirements | Legal and Regulatory Registry | Reviewer to confirm adequacy and engagement-specific fit. |
 
 ## COSO Mapping For Common Criteria
 

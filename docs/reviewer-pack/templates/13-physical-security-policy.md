@@ -2,6 +2,8 @@
 
 > Baseline reviewer copy. Handlebars placeholders such as `{{organization_name}}` are intentionally preserved so this can be reviewed before organization-specific answers are inserted.
 
+<!-- Mapping: CC6.1, CC6.2, CC6.3, CC6.4, CC6.5, CC6.6, CC6.7, CC6.8 -->
+
 | Field | Value |
 | --- | --- |
 | Template slug | `physical-security-policy` |
@@ -23,7 +25,14 @@ effective_date: {{effective_date}}
 version: {{policy_version}}
 ---
 
+<!-- Mapping: CC6 -->
+
 # Physical Security Policy
+
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
 
 ## Purpose
 {{organization_name}} protects offices, devices, and physical assets from unauthorized access and damage.

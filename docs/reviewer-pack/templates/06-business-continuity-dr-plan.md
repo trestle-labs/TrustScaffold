@@ -2,6 +2,8 @@
 
 > Baseline reviewer copy. Handlebars placeholders such as `{{organization_name}}` are intentionally preserved so this can be reviewed before organization-specific answers are inserted.
 
+<!-- Mapping: A1.1, A1.2, A1.3 -->
+
 | Field | Value |
 | --- | --- |
 | Template slug | `business-continuity-dr-plan` |
@@ -23,7 +25,14 @@ effective_date: {{effective_date}}
 version: {{policy_version}}
 ---
 
+<!-- Mapping: A1 -->
+
 # Business Continuity and Disaster Recovery Plan
+
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
 
 ## Objective
 {{organization_name}} maintains continuity and recovery plans for services that support {{primary_product_name}}.

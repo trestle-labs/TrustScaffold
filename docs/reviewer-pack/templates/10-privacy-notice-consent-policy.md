@@ -2,6 +2,8 @@
 
 > Baseline reviewer copy. Handlebars placeholders such as `{{organization_name}}` are intentionally preserved so this can be reviewed before organization-specific answers are inserted.
 
+<!-- Mapping: P1.1, P2.1, P3.1, P3.2, P4.1, P4.2, P4.3, P5.1, P5.2, P6.1, P6.2, P6.3, P6.4, P6.5, P6.6, P6.7, P7.1, P8.1 -->
+
 | Field | Value |
 | --- | --- |
 | Template slug | `privacy-notice-consent-policy` |
@@ -30,7 +32,14 @@ effective_date: {{effective_date}}
 version: {{policy_version}}
 ---
 
+<!-- Mapping: P1, P2, P3, P4, P5, P6, P7, P8 -->
+
 # Privacy Notice and Consent Policy
+
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
 
 ## Purpose
 {{organization_name}} communicates how personal information is collected, used, retained, and disclosed in connection with {{primary_product_name}}.

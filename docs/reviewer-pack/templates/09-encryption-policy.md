@@ -2,6 +2,8 @@
 
 > Baseline reviewer copy. Handlebars placeholders such as `{{organization_name}}` are intentionally preserved so this can be reviewed before organization-specific answers are inserted.
 
+<!-- Mapping: C1.1, C1.2 -->
+
 | Field | Value |
 | --- | --- |
 | Template slug | `encryption-policy` |
@@ -23,7 +25,14 @@ effective_date: {{effective_date}}
 version: {{policy_version}}
 ---
 
+<!-- Mapping: C1 -->
+
 # Encryption Policy
+
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
 
 ## Objective
 {{organization_name}} protects sensitive data through approved encryption controls and key management processes.

@@ -2,6 +2,8 @@
 
 > Baseline reviewer copy. Handlebars placeholders such as `{{organization_name}}` are intentionally preserved so this can be reviewed before organization-specific answers are inserted.
 
+<!-- Mapping: CC3.1, CC3.2, CC3.3, CC3.4, CC9.1, CC9.2 -->
+
 | Field | Value |
 | --- | --- |
 | Template slug | `vendor-management-policy` |
@@ -24,7 +26,14 @@ effective_date: {{effective_date}}
 version: {{policy_version}}
 ---
 
+<!-- Mapping: CC3, CC9 -->
+
 # Vendor Management Policy
+
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
 
 ## Purpose
 {{organization_name}} evaluates vendors before onboarding and monitors ongoing vendor risk based on the services provided.

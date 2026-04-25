@@ -138,11 +138,15 @@ export function expandCriteriaCodes(codes: string[]): string[] {
   const expanded = new Set<string>();
 
   for (const code of codes) {
+    let matched = false;
     for (const criterion of TSC_CRITERIA) {
       if (criterion.code.startsWith(code)) {
+        matched = true;
         expanded.add(criterion.code);
       }
     }
+
+    if (!matched) expanded.add(code);
   }
 
   return [...expanded].sort();

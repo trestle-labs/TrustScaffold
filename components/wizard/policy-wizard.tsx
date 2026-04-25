@@ -444,7 +444,7 @@ function GenerateStep({
   onGenerate: () => void;
   onNavigateToStep: (step: number) => void;
 }) {
-  const templates = getExpectedTemplates(watchedValues.tscSelections);
+  const templates = getExpectedTemplates(watchedValues);
   const generateWarnings = getActiveWizardRules(watchedValues, 'generate', 'warning') as WizardWarningRule[];
   const [completedCount, setCompletedCount] = React.useState(0);
 
@@ -1076,6 +1076,55 @@ export function PolicyWizard() {
                         </FormItem>
                       )}
                     />
+                    <div className="md:col-span-2 space-y-3 rounded-2xl border border-border bg-secondary/30 p-4">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-foreground">Website privacy and regulatory signals</p>
+                        <p className="text-xs text-muted-foreground">These answers determine whether GDPR/UK GDPR, CCPA/CPRA, cookie consent, children&apos;s privacy, DSAR, and public privacy-notice language should be included in the generated pack.</p>
+                      </div>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {[
+                          ['company.websiteCollectsPersonalData', 'Website collects personal data', 'Contact forms, newsletter signup, account signup, demo requests, chat, analytics identifiers, or similar website data capture.'],
+                          ['company.websiteUsesCookiesAnalytics', 'Website uses cookies or analytics', 'Analytics, ads, retargeting pixels, session replay, preference cookies, or other browser/device tracking.'],
+                          ['company.websiteTargetsEuOrUkResidents', 'EU/UK visitors or customers are in scope', 'The website markets to, sells to, monitors, or intentionally supports EU or UK residents.'],
+                          ['company.websiteTargetsCaliforniaResidents', 'California residents are in scope', 'The website serves California consumers, customers, employees, prospects, or other California residents.'],
+                          ['company.websiteAllowsChildrenUnder13', 'Children under 13 may use the site', 'The site or service is directed to children or knowingly collects data from children under 13.'],
+                          ['company.websiteSellsOrSharesPersonalInformation', 'Personal information is sold or shared', 'Advertising, cross-context behavioral advertising, data broker transfer, or similar sale/share activity may occur.'],
+                          ['company.websiteHasPrivacyNotice', 'Public privacy notice exists', 'A privacy notice is published and reasonably discoverable from the website.'],
+                          ['company.websiteHasCookieBanner', 'Cookie banner or consent tool exists', 'A consent banner, preference center, or opt-out mechanism is available where needed.'],
+                        ].map(([name, label, description]) => (
+                          <FormField
+                            key={name}
+                            control={form.control}
+                            name={name as FieldPath<WizardData>}
+                            render={({ field }) => (
+                              <FormItem className="flex items-start gap-3 rounded-xl border border-border bg-white p-3">
+                                <FormControl>
+                                  <Checkbox className="mt-0.5" checked={Boolean(field.value)} onCheckedChange={(checked) => field.onChange(Boolean(checked))} />
+                                </FormControl>
+                                <div className="space-y-1">
+                                  <FormLabel className="text-sm font-medium leading-none">{label}</FormLabel>
+                                  <FormDescription className="text-xs">{description}</FormDescription>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        ))}
+                      </div>
+                      <FormField
+                        control={form.control}
+                        name="company.dsarRequestChannel"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Privacy / DSAR request channel</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder={form.watch('company.primaryContactEmail') || 'privacy@example.com'} />
+                            </FormControl>
+                            <FormDescription>Used for data subject access, deletion, correction, opt-out, and privacy complaint workflows.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                     <FormField
                       control={form.control}
                       name="company.primaryContactName"
@@ -3330,6 +3379,13 @@ export function PolicyWizard() {
                               <ReviewRow label="Workspace org" value={organization.name} />
                             ) : null}
                             <ReviewRow label="Website" value={reviewSummary.company.website} />
+                            <ReviewRow label="Website collects personal data" value={reviewSummary.company.websiteCollectsPersonalData ? 'Yes' : 'No'} />
+                            <ReviewRow label="Cookies / analytics" value={reviewSummary.company.websiteUsesCookiesAnalytics ? 'Yes' : 'No'} />
+                            <ReviewRow label="EU/UK exposure" value={reviewSummary.company.websiteTargetsEuOrUkResidents ? 'Yes' : 'No'} />
+                            <ReviewRow label="California exposure" value={reviewSummary.company.websiteTargetsCaliforniaResidents ? 'Yes' : 'No'} />
+                            <ReviewRow label="Privacy notice" value={reviewSummary.company.websiteHasPrivacyNotice ? 'Published' : 'Not documented'} />
+                            <ReviewRow label="Cookie consent" value={reviewSummary.company.websiteHasCookieBanner ? 'Available' : 'Not documented'} />
+                            <ReviewRow label="DSAR channel" value={reviewSummary.company.dsarRequestChannel || reviewSummary.company.primaryContactEmail} />
                             <ReviewRow label="Contact name" value={reviewSummary.company.primaryContactName} />
                             <ReviewRow label="Contact email" value={reviewSummary.company.primaryContactEmail} />
                             <ReviewRow label="Industry" value={reviewSummary.company.industry} />

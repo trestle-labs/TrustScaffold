@@ -26,6 +26,12 @@ Use this checklist to review the baseline template set before organization-speci
 | P6 | Privacy: Disclosure and Notification | ☐ Covered ☐ Partial ☐ Missing ☐ N/A |  |
 | P7 | Privacy: Data Quality | ☐ Covered ☐ Partial ☐ Missing ☐ N/A |  |
 | P8 | Privacy: Monitoring and Enforcement | ☐ Covered ☐ Partial ☐ Missing ☐ N/A |  |
+| COMMON | Universal common-control foundation | ☐ Covered ☐ Partial ☐ Missing ☐ N/A |  |
+| ISO27001 | ISO 27001 high-water-mark requirements | ☐ Covered ☐ Partial ☐ Missing ☐ N/A |  |
+| HIPAA | HIPAA high-water-mark requirements | ☐ Covered ☐ Partial ☐ Missing ☐ N/A |  |
+| PCI | PCI-DSS high-water-mark requirements | ☐ Covered ☐ Partial ☐ Missing ☐ N/A |  |
+| GDPR | GDPR / privacy high-water-mark requirements | ☐ Covered ☐ Partial ☐ Missing ☐ N/A |  |
+| CCPA | CCPA / CPRA privacy high-water-mark requirements | ☐ Covered ☐ Partial ☐ Missing ☐ N/A |  |
 
 ## Template-Level Review
 
@@ -50,6 +56,14 @@ Use this checklist to review the baseline template set before organization-speci
 | Internal Audit and Monitoring Policy | ☐ Ready ☐ Needs edits ☐ Not needed |  |
 | Data Retention and Disposal Policy | ☐ Ready ☐ Needs edits ☐ Not needed |  |
 | Processing Integrity Policy | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| Business Associate Agreement Template | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| PHI Data Flow and Inventory Map | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| Tokenization and Cardholder Data Policy | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| Quarterly Vulnerability Scanning SOP | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| ISO 27001 Statement of Applicability | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| Legal and Regulatory Registry | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| Data Protection Impact Assessment | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| Asset Management and Cryptographic Inventory | ☐ Ready ☐ Needs edits ☐ Not needed |  |
 
 ## Cross-Cutting Questions
 

@@ -2,6 +2,8 @@
 
 > Baseline reviewer copy. Handlebars placeholders such as `{{organization_name}}` are intentionally preserved so this can be reviewed before organization-specific answers are inserted.
 
+<!-- Mapping: CC6.1, CC6.2, CC6.3, CC6.4, CC6.5, CC6.6, CC6.7, CC6.8, CC9.1, CC9.2 -->
+
 | Field | Value |
 | --- | --- |
 | Template slug | `data-retention-disposal-policy` |
@@ -27,6 +29,11 @@ version: {{policy_version}}
 > This document is a starting-point compliance template and must be reviewed by {{approver_name}} before adoption.
 
 # Data Retention and Disposal Policy
+
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
 
 ## 1. Purpose
 

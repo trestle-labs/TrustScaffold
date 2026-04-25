@@ -2,6 +2,8 @@
 
 > Baseline reviewer copy. Handlebars placeholders such as `{{organization_name}}` are intentionally preserved so this can be reviewed before organization-specific answers are inserted.
 
+<!-- Mapping: A1.1, A1.2, A1.3 -->
+
 | Field | Value |
 | --- | --- |
 | Template slug | `backup-recovery-policy` |
@@ -23,7 +25,14 @@ effective_date: {{effective_date}}
 version: {{policy_version}}
 ---
 
+<!-- Mapping: A1 -->
+
 # Backup and Recovery Policy
+
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
 
 ## Purpose
 {{organization_name}} performs backups for critical systems and validates that backup data can be restored within business requirements.

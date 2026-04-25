@@ -2,6 +2,8 @@
 
 > Baseline reviewer copy. Handlebars placeholders such as `{{organization_name}}` are intentionally preserved so this can be reviewed before organization-specific answers are inserted.
 
+<!-- Mapping: CC1.1, CC1.2, CC1.3, CC1.4, CC1.5, CC2.1, CC2.2, CC2.3 -->
+
 | Field | Value |
 | --- | --- |
 | Template slug | `acceptable-use-code-of-conduct-policy` |
@@ -24,7 +26,14 @@ effective_date: {{effective_date}}
 version: {{policy_version}}
 ---
 
+<!-- Mapping: CC1, CC2 -->
+
 # Acceptable Use and Code of Conduct Policy
+
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
 
 ## Statement
 {{organization_name}} expects workforce members to use company systems responsibly, lawfully, ethically, and in a manner consistent with company values and security obligations.

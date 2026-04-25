@@ -2,6 +2,8 @@
 
 > Baseline reviewer copy. Handlebars placeholders such as `{{organization_name}}` are intentionally preserved so this can be reviewed before organization-specific answers are inserted.
 
+<!-- Mapping: PI1.1, PI1.2, PI1.3, PI1.4, PI1.5 -->
+
 | Field | Value |
 | --- | --- |
 | Template slug | `processing-integrity-policy` |
@@ -23,7 +25,14 @@ effective_date: {{effective_date}}
 version: {{policy_version}}
 ---
 
+<!-- Mapping: PI1 -->
+
 # Processing Integrity Policy
+
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
 
 ## Purpose
 {{organization_name}} maintains processing controls so {{primary_product_name}} transactions, workflows, reports, and customer-facing outputs are complete, valid, accurate, timely, and authorized.
@@ -47,6 +56,13 @@ This policy applies to production processing for {{primary_product_name}}, inclu
 - High-risk workflows are reconciled against source records, downstream outputs, or control totals at a cadence appropriate to the workflow criticality.
 - Processing exceptions are captured in {{ticketing_system}}, assigned an owner, prioritized by customer and compliance impact, and resolved within {{processing_exception_sla}} or documented with an approved exception.
 - Failed or partially completed jobs are reviewed to determine customer impact, data correction needs, and notification obligations.
+
+## Procedural Annex: Data Validation and Error Handling
+- Procedures for {{primary_product_name}} data validation document the workflow owner, approved input sources, required fields, authorization checks, validation logic, and expected outputs for each material processing workflow.
+- Data integrity checks include {{data_integrity_checks}}.
+- Validation logic includes {{validation_logic}} and is tested before release through the Change Management Policy.
+- Exception queues, failed jobs, reconciliation differences, and manual corrections are reviewed by {{processing_integrity_owner}} or a delegate and linked to tickets in {{ticketing_system}}.
+- Corrections preserve the original record, correction rationale, approver, timestamp, and evidence of downstream output review when customer-facing data or reports are affected.
 
 ## Monitoring and Evidence
 - Processing integrity monitoring is reviewed {{processing_integrity_review_frequency}} by {{processing_integrity_owner}} or a delegate.

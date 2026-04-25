@@ -6,6 +6,8 @@ Primary implementation surface: [components/wizard/policy-wizard.tsx](components
 
 Typed rule source of truth: [lib/wizard/rule-matrix.ts](../lib/wizard/rule-matrix.ts)
 
+Document generation requirements: [docs/DOCUMENT_GENERATION_REQUIREMENTS.md](DOCUMENT_GENERATION_REQUIREMENTS.md)
+
 ## Why This Exists
 
 The wizard already behaves like a state machine, but most of the branching is encoded inline through `form.watch(...)`, conditional rendering, and a few cross-step auto-fill rules. That is workable while the flow is small. It gets risky once we add more answer-driven deep dives, because the user-visible behavior can drift away from docs and test coverage.
@@ -222,6 +224,8 @@ The machine-readable source of truth now lives in [lib/wizard/rule-matrix.ts](..
 ### Branches
 - Current hard stop separates blocking validation issues from non-blocking quality warnings.
 - Template count changes with TSC selection.
+- Expected generated documents are defined by [lib/wizard/document-generation-rules.ts](../lib/wizard/document-generation-rules.ts) and summarized in [DOCUMENT_GENERATION_REQUIREMENTS.md](DOCUMENT_GENERATION_REQUIREMENTS.md).
+- The actual compile action computes selected criteria from `selectedCriteriaCodes(data)` and generates active templates whose `criteria_mapped` overlap those criteria.
 
 ### Improvement opportunities
 - Example warnings:

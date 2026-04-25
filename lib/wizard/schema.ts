@@ -51,6 +51,15 @@ export const wizardSchema = z.object({
     orgAge: orgAgeSchema,
     complianceMaturity: complianceMaturitySchema,
     targetAuditType: targetAuditTypeSchema,
+    websiteCollectsPersonalData: z.boolean(),
+    websiteUsesCookiesAnalytics: z.boolean(),
+    websiteTargetsEuOrUkResidents: z.boolean(),
+    websiteTargetsCaliforniaResidents: z.boolean(),
+    websiteAllowsChildrenUnder13: z.boolean(),
+    websiteHasPrivacyNotice: z.boolean(),
+    websiteHasCookieBanner: z.boolean(),
+    websiteSellsOrSharesPersonalInformation: z.boolean(),
+    dsarRequestChannel: z.string().trim().default(''),
   }),
   governance: z.object({
     hasEmployeeHandbook: z.boolean(),
@@ -248,6 +257,15 @@ export const defaultWizardValues: WizardData = {
     orgAge: '<1' as const,
     complianceMaturity: 'first-time' as const,
     targetAuditType: 'unsure' as const,
+    websiteCollectsPersonalData: false,
+    websiteUsesCookiesAnalytics: false,
+    websiteTargetsEuOrUkResidents: false,
+    websiteTargetsCaliforniaResidents: false,
+    websiteAllowsChildrenUnder13: false,
+    websiteHasPrivacyNotice: false,
+    websiteHasCookieBanner: false,
+    websiteSellsOrSharesPersonalInformation: false,
+    dsarRequestChannel: '',
   },
   governance: {
     hasEmployeeHandbook: false,
@@ -511,8 +529,8 @@ export const tscOptions = [
       'Customers rely on your output data to make business-critical decisions',
       'Errors in your system\'s output could cause material financial or operational harm',
     ],
-    templateAdditions: 0,
-    templateNames: ['Covered via System Description (DC 200) scope statement'],
+    templateAdditions: 1,
+    templateNames: ['Processing Integrity Policy'],
   },
   {
     key: 'privacy',
@@ -664,6 +682,9 @@ export function selectedTscLabels(data: WizardData) {
 export function selectedCriteriaCodes(data: WizardData) {
   const criteria = new Set<string>(['CC1', 'CC2', 'CC3', 'CC4', 'CC5', 'CC6', 'CC7', 'CC8', 'CC9']);
 
+  criteria.add('COMMON');
+  criteria.add('ISO27001');
+
   if (data.tscSelections.availability) {
     criteria.add('A1');
   }
@@ -675,6 +696,19 @@ export function selectedCriteriaCodes(data: WizardData) {
   }
   if (data.tscSelections.privacy) {
     ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8'].forEach((code) => criteria.add(code));
+    criteria.add('GDPR');
+  }
+  if (data.company.websiteTargetsEuOrUkResidents || data.company.websiteUsesCookiesAnalytics) {
+    criteria.add('GDPR');
+  }
+  if (data.company.websiteTargetsCaliforniaResidents || data.company.websiteSellsOrSharesPersonalInformation) {
+    criteria.add('CCPA');
+  }
+  if (data.scope.containsPhi) {
+    criteria.add('HIPAA');
+  }
+  if (data.scope.hasCardholderDataEnvironment) {
+    criteria.add('PCI');
   }
 
   return [...criteria];

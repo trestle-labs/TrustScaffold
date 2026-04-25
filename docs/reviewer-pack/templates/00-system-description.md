@@ -2,6 +2,8 @@
 
 > Baseline reviewer copy. Handlebars placeholders such as `{{organization_name}}` are intentionally preserved so this can be reviewed before organization-specific answers are inserted.
 
+<!-- Mapping: CC1.1, CC1.2, CC1.3, CC1.4, CC1.5, CC2.1, CC2.2, CC2.3, CC3.1, CC3.2, CC3.3, CC3.4, CC4.1, CC4.2, CC5.1, CC5.2, CC5.3, CC6.1, CC6.2, CC6.3, CC6.4, CC6.5, CC6.6, CC6.7, CC6.8, CC7.1, CC7.2, CC7.3, CC7.4, CC7.5, CC8.1, CC9.1, CC9.2 -->
+
 | Field | Value |
 | --- | --- |
 | Template slug | `system-description` |
@@ -31,17 +33,30 @@ effective_date: {{effective_date}}
 version: {{policy_version}}
 ---
 
+<!-- Mapping: CC1, CC2, CC3, CC4, CC5, CC6, CC7, CC8, CC9 -->
+
 # System Description
+
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
+
+> Audit readiness warning: auditors will expect current data-flow diagrams or a procedural annex showing system boundaries, data ingress, processing paths, storage locations, third-party transfers, and data egress. If these diagrams are missing or stale, the System Description may be rejected as incomplete.
 
 ## I. Company Overview
 
-{{organization_name}} provides {{primary_product_name}}. {{system_description}}{{#if industry}} {{organization_name}} operates in the {{industry}} industry.{{/if}}
+{{organization_name}} provides {{primary_product_name}}. {{system_description}}
 
+### Audit Readiness Context
+
+{{#if is_type1}}
+This package is prepared for a **SOC 2 Type I** readiness path, focusing on point-in-time control design and implementation evidence.
+{{/if}}
 {{#if is_type2}}
-This package is prepared for a **SOC 2 Type II** audit path. This description covers the design and operating effectiveness of controls over the audit period under examination.
-{{else if is_type1}}
-This package is prepared for a **SOC 2 Type I** audit path. This description covers the design and implementation of controls as of the effective date.
-{{else}}
+This package is prepared for a **SOC 2 Type II** readiness path, focusing on control design and operating effectiveness across the audit period.
+{{/if}}
+{{#if is_audit_type_unsure}}
 This package is prepared for an undecided SOC 2 audit path and is written to support either Type I design readiness or Type II operating-effectiveness evidence once the audit period is confirmed.
 {{/if}}
 
@@ -154,17 +169,43 @@ This package is prepared for an undecided SOC 2 audit path and is written to sup
 ## IV. People
 
 ### Organizational Structure
+{{#if has_org_chart}}
+{{organization_name}} maintains a current organizational chart (updated {{org_chart_maintenance}}).
+{{/if}}
+{{#if has_dedicated_security_officer}}
+A designated {{security_officer_title}} owns the information security program and reports to executive leadership.
+{{/if}}
+{{#if has_board_or_advisory}}
+A board of directors or advisory board provides governance oversight, meeting {{board_meeting_frequency}} to review risk assessments and control effectiveness.
+{{/if}}
+
 {{organization_name}} maintains the following functional roles relevant to the system:
 - **Executive Leadership**: Responsible for setting security policy, risk appetite, and organizational commitments.
+{{#if has_dedicated_security_officer}}
+- **{{security_officer_title}}**: Designated owner of the information security program.
+{{/if}}
 - **Engineering**: Responsible for developing, testing, and deploying the system.
 - **Security/Compliance**: Responsible for security operations, incident response, and compliance monitoring.
 - **Human Resources**: Responsible for onboarding, offboarding, and personnel management via {{hris_provider}}.
 
 ### Personnel Controls
 - Background checks are conducted for new hires.
+{{#if has_employee_handbook}}
+- An employee handbook and {{#if has_code_of_conduct}}code of conduct are{{else}}policies are{{/if}} acknowledged by employees ({{acknowledgement_cadence}}).
+{{/if}}
+{{#if security_awareness_training_tool}}
+- Security awareness training is delivered via {{security_awareness_training_tool}} ({{training_cadence}} cadence).
+{{else}}
 - Security awareness training is completed during onboarding and renewed annually.
+{{/if}}
+{{#if has_phishing_simulation}}
+- Simulated phishing campaigns are conducted {{phishing_simulation_frequency}} to measure and improve awareness.
+{{/if}}
 - Access provisioning is completed within {{onboarding_sla_days}} business days of hire.
 - Access revocation is completed within {{termination_sla_hours}} hours of termination.
+{{#if has_performance_reviews_linked_to_controls}}
+- Performance reviews include accountability for internal control responsibilities.
+{{/if}}
 
 ## V. Procedures
 
@@ -181,13 +222,50 @@ This package is prepared for an undecided SOC 2 audit path and is written to sup
 - Post-incident reviews are conducted and documented.
 
 ### Risk Management (CC3.1–CC3.4)
+{{#if has_risk_register}}
 - {{organization_name}} maintains a risk register that is reviewed periodically.
+{{else}}
+- {{organization_name}} conducts periodic risk assessments.
+{{/if}}
 - Risk assessments consider changes to infrastructure, personnel, and regulatory requirements.
+{{#if includes_fraud_risk_in_assessment}}
+- Fraud risk, including management override and intentional manipulation of data, is included in the risk assessment process.
+{{/if}}
 
 ### Monitoring Activities (CC4.1–CC4.2)
+{{#if has_internal_audit_program}}
+- {{organization_name}} maintains an internal audit program with {{internal_audit_frequency}} reviews of control effectiveness.
+- Deficiencies identified through monitoring are tracked to remediation.
+{{/if}}
 - Security monitoring covers infrastructure, application, and access events.
+{{#if has_siem}}
+- Centralized security monitoring is provided by {{siem_tool}}.
+{{/if}}
+{{#if has_monitoring_tool}}
+- Infrastructure monitoring and capacity alerting is provided by {{monitoring_tool}}.
+{{/if}}
 - Alerts are routed to the appropriate team via {{on_call_tool}}.
 - Monitoring coverage is reviewed at least annually.
+
+### Security Tooling
+{{#if has_endpoint_protection}}
+- Endpoint protection is deployed on company devices via {{endpoint_protection_tool}}.
+{{/if}}
+{{#if has_mdm}}
+- Mobile device management is enforced via {{mdm_tool}}.
+{{/if}}
+{{#if has_ids_ips}}
+- Intrusion detection/prevention systems are deployed.
+{{/if}}
+{{#if has_waf}}
+- A web application firewall protects public-facing applications.
+{{/if}}
+{{#if has_vulnerability_scanning}}
+- Vulnerability scanning is performed using {{vulnerability_scanning_tool}}.
+{{/if}}
+{{#if has_penetration_testing}}
+- Penetration testing is conducted {{penetration_test_frequency}} by qualified testers.
+{{/if}}
 
 ## VI. Data
 
@@ -195,7 +273,7 @@ This package is prepared for an undecided SOC 2 audit path and is written to sup
 {{#if data_classifications}}
 {{organization_name}} classifies data into the following categories:
 {{#each data_classifications}}
-- **{{name}}**: {{description}}
+- **{{label}}**: {{description}}
 {{/each}}
 {{else}}
 {{organization_name}} classifies data into standard categories (Public, Internal, Confidential, Restricted) as defined in the Data Classification and Handling Policy.
@@ -225,13 +303,21 @@ This package is prepared for an undecided SOC 2 audit path and is written to sup
 {{#if has_subprocessors}}
 The following subservice organizations are included in the system boundary:
 
-| Vendor | Role | Data Shared |
-|--------|------|-------------|
+| Vendor | Role | Data Shared | Assurance | Inclusion |
+|--------|------|-------------|-----------|-----------|
 {{#each subprocessors}}
-| {{name}} | {{role}} | {{data_shared}} |
+| {{name}} | {{role}} | {{data_shared}} | {{#if has_assurance_report}}{{assurance_report_type}}{{else}}None{{/if}} | {{#if has_assurance_report}}{{control_inclusion}}{{else}}N/A{{/if}} |
 {{/each}}
 
-Complementary subservice organization controls (CSOCs) are evaluated as part of {{organization_name}}'s vendor management program.
+{{#each subprocessors}}
+{{#if has_assurance_report}}
+{{#if (eq control_inclusion 'carve-out')}}
+For {{name}}, controls are presented on a carve-out basis. {{organization_name}} has implemented the complementary subservice organization controls (CSOCs) required by the carve-out.
+{{else}}
+For {{name}}, controls are tested inclusively within the vendor's assurance report.
+{{/if}}
+{{/if}}
+{{/each}}
 {{else}}
 No subservice organizations with material system access are currently in scope.
 {{/if}}

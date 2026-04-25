@@ -2,6 +2,8 @@
 
 > Baseline reviewer copy. Handlebars placeholders such as `{{organization_name}}` are intentionally preserved so this can be reviewed before organization-specific answers are inserted.
 
+<!-- Mapping: CC8.1 -->
+
 | Field | Value |
 | --- | --- |
 | Template slug | `secure-sdlc-policy` |
@@ -23,7 +25,14 @@ effective_date: {{effective_date}}
 version: {{policy_version}}
 ---
 
+<!-- Mapping: CC8 -->
+
 # Secure Software Development Life Cycle Policy
+
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
 
 ## Objective
 {{organization_name}} integrates security controls into design, development, testing, and release workflows.

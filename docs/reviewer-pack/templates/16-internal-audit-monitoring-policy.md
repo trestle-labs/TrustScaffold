@@ -2,6 +2,8 @@
 
 > Baseline reviewer copy. Handlebars placeholders such as `{{organization_name}}` are intentionally preserved so this can be reviewed before organization-specific answers are inserted.
 
+<!-- Mapping: CC2.1, CC2.2, CC2.3, CC4.1, CC4.2 -->
+
 | Field | Value |
 | --- | --- |
 | Template slug | `internal-audit-monitoring-policy` |
@@ -28,6 +30,11 @@ version: {{policy_version}}
 
 # Internal Audit and Monitoring Policy
 
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
+
 ## 1. Purpose
 
 This policy establishes {{organization_name}}'s internal audit program and ongoing monitoring activities to evaluate the design and operating effectiveness of internal controls, as required by AICPA Trust Services Criteria CC2.1, CC4.1, and CC4.2.
@@ -49,6 +56,7 @@ This policy applies to all controls within the SOC 2 trust services criteria bou
 {{else}}
 {{organization_name}} shall establish an internal audit review cadence of at least annually.
 {{/if}}
+The selected internal audit cadence must be documented as monthly, quarterly, or annually, and annual is the minimum acceptable cadence for SOC 2 readiness.
 
 ### 3.2 Audit Activities
 Internal audit reviews shall include, at minimum:
@@ -64,6 +72,17 @@ Internal audit activities are conducted by personnel who are independent of the 
 
 ## 4. Ongoing Monitoring
 
+### 4.0 Monitoring Frequency Selection
+Management reviews control-monitoring results on a **{{control_monitoring_frequency}}** basis. The selected frequency is documented in the audit plan and must be one of monthly, quarterly, or annually.
+
+| Monitoring Area | Minimum Frequency | Evidence |
+| --- | --- | --- |
+| Access review completion | Quarterly | Completed access review records and remediation tickets |
+| Change-management sampling | {{control_monitoring_frequency}} | Sampled change tickets, peer reviews, approvals, and deployment records |
+| Incident-response records | {{control_monitoring_frequency}} | Incident tickets, severity classifications, post-incident reviews, and corrective actions |
+| Vendor assurance review status | At least annually | Current assurance reports, review notes, and follow-up tickets |
+| Risk register and treatment plans | {{control_monitoring_frequency}} | Updated risk register entries and treatment-plan status |
+
 ### 4.1 Automated Monitoring
 {{#if has_siem}}
 - Security events are monitored centrally via {{siem_tool}}.
@@ -78,11 +97,7 @@ Internal audit activities are conducted by personnel who are independent of the 
 {{#if (eq acknowledgement_cadence 'not-yet')}}
 - A formal policy acknowledgement cadence is being established and will be verified once adopted.
 {{else}}
-{{#if (eq acknowledgement_cadence 'not-yet')}}
-- A formal policy acknowledgement cadence is being established and will be verified once adopted.
-{{else}}
 - Policy acknowledgements are verified per the established cadence ({{acknowledgement_cadence}}).
-{{/if}}
 {{/if}}
 {{#if has_phishing_simulation}}
 - Phishing simulation results are reviewed {{phishing_simulation_frequency}} to identify awareness gaps.

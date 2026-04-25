@@ -59,15 +59,21 @@ function criteriaDescription(code: string) {
     P6: 'Privacy: Disclosure and Notification',
     P7: 'Privacy: Data Quality',
     P8: 'Privacy: Monitoring and Enforcement',
+    COMMON: 'Universal common-control foundation',
+    ISO27001: 'ISO 27001 high-water-mark requirements',
+    HIPAA: 'HIPAA high-water-mark requirements',
+    PCI: 'PCI-DSS high-water-mark requirements',
+    GDPR: 'GDPR / privacy high-water-mark requirements',
+    CCPA: 'CCPA / CPRA privacy high-water-mark requirements',
   };
 
   return descriptions[code] ?? code;
 }
 
 function sortedCriteria(templates: TemplateRow[]) {
-  const order = ['CC1', 'CC2', 'CC3', 'CC4', 'CC5', 'CC6', 'CC7', 'CC8', 'CC9', 'A1', 'C1', 'PI1', 'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8'];
+  const order = ['CC1', 'CC2', 'CC3', 'CC4', 'CC5', 'CC6', 'CC7', 'CC8', 'CC9', 'A1', 'C1', 'PI1', 'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'COMMON', 'ISO27001', 'HIPAA', 'PCI', 'GDPR', 'CCPA'];
   const present = new Set(templates.flatMap((template) => template.criteria_mapped));
-  return order.filter((code) => present.has(code));
+  return [...order.filter((code) => present.has(code)), ...[...present].filter((code) => !order.includes(code)).sort()];
 }
 
 function templateSupportsCriterion(template: TemplateRow, criterionCode: string) {
@@ -148,8 +154,10 @@ function type1DocumentationExpectation(criterionCode: string) {
 function writeTemplateFiles(templates: TemplateRow[]) {
   for (const template of templates) {
     const filePath = path.join(templatesDir, template.output_filename_pattern.replace(/{{.*?}}/g, template.slug));
+    const expandedCriteria = expandCriteriaCodes(template.criteria_mapped).join(', ');
     const body = `# ${template.name}\n\n` +
       `> Baseline reviewer copy. Handlebars placeholders such as \`{{organization_name}}\` are intentionally preserved so this can be reviewed before organization-specific answers are inserted.\n\n` +
+      `<!-- Mapping: ${expandedCriteria} -->\n\n` +
       `| Field | Value |\n` +
       `| --- | --- |\n` +
       `| Template slug | \`${template.slug}\` |\n` +
@@ -174,17 +182,131 @@ function writeReadme(templates: TemplateRow[]) {
     `- A category-level coverage matrix for TSC and COSO-oriented review.\n` +
     `- A reviewer checklist for marking coverage as covered, partially covered, missing, not applicable, or requiring CPA judgment.\n\n` +
     `## How To Review\n\n` +
-    `1. Start with [TYPE1_DOCUMENTATION_COVERAGE.md](TYPE1_DOCUMENTATION_COVERAGE.md) to review each SOC 2 criterion at the documentation/design level.\n` +
-    `2. Use [COVERAGE_MATRIX.md](COVERAGE_MATRIX.md) to confirm category-level TSC/COSO coverage.\n` +
-    `3. Use [TEMPLATE_INDEX.md](TEMPLATE_INDEX.md) to open each baseline document.\n` +
-    `4. Use [REVIEW_CHECKLIST.md](REVIEW_CHECKLIST.md) to record independent reviewer conclusions.\n` +
-    `5. Review files in [templates/](templates/) with placeholders preserved. Placeholders indicate where wizard/company data will be inserted later.\n\n` +
+    `1. Read [REVIEW_SCOPE.md](REVIEW_SCOPE.md) to confirm the purpose, boundaries, and expected reviewer output.\n` +
+    `2. Use [TYPE1_DOCUMENTATION_COVERAGE.md](TYPE1_DOCUMENTATION_COVERAGE.md) to review each SOC 2 criterion at the documentation/design level.\n` +
+    `3. Use [COVERAGE_MATRIX.md](COVERAGE_MATRIX.md) to confirm category-level TSC/COSO coverage.\n` +
+    `4. Use [TEMPLATE_INDEX.md](TEMPLATE_INDEX.md) to open each baseline document.\n` +
+    `5. Use [REVIEW_CHECKLIST.md](REVIEW_CHECKLIST.md) to record independent reviewer conclusions.\n` +
+    `6. Return findings using [REVIEWER_FINDINGS_TEMPLATE.md](REVIEWER_FINDINGS_TEMPLATE.md).\n` +
+    `7. Review files in [templates/](templates/) with placeholders preserved. Placeholders indicate where wizard/company data will be inserted later.\n\n` +
     `## Review Boundary\n\n` +
     `This pack evaluates whether the baseline content model minimally covers documentation normally assessed in a SOC 2 Type I design-of-controls review. It does not prove that a specific company has implemented the controls. A company-specific generated document set and supporting evidence are still required before audit use.\n\n` +
     `## COSO Relationship\n\n` +
     `SOC 2 Common Criteria CC1-CC5 align to COSO principles: control environment, risk assessment, control activities, information and communication, and monitoring. CC6-CC9 and optional Availability, Confidentiality, Processing Integrity, and Privacy criteria extend the review into system-specific trust service commitments.\n`;
 
   writeFileSync(path.join(outputRoot, 'README.md'), readme);
+}
+
+function writeReviewScope() {
+  const scope = `# Reviewer Scope\n\n` +
+    `## Review Objective\n\n` +
+    `Determine whether the TrustScaffold baseline template pack minimally covers the documentation normally assessed during a SOC 2 Type I design-of-controls review before organization-specific facts, answers, control owners, system descriptions, or evidence are inserted.\n\n` +
+    `## Primary Review Question\n\n` +
+    `If a company completed the TrustScaffold wizard honestly and generated company-specific documents from this baseline set, would the baseline template library provide a reasonable starting point for documenting the design of controls mapped to the selected Trust Services Criteria?\n\n` +
+    `## In Scope\n\n` +
+    `- Baseline template language in [templates/](templates/).\n` +
+    `- Criteria-level coverage in [TYPE1_DOCUMENTATION_COVERAGE.md](TYPE1_DOCUMENTATION_COVERAGE.md).\n` +
+    `- Category-level TSC and COSO-oriented coverage in [COVERAGE_MATRIX.md](COVERAGE_MATRIX.md).\n` +
+    `- Whether each selected SOC 2 criterion has enough policy, procedure, system-description, or evidence-request language to support Type I design review.\n` +
+    `- Whether placeholders are clear enough to produce auditable company-specific language after wizard completion.\n` +
+    `- Whether control owners, cadences, review expectations, exception handling, and evidence expectations are present where needed.\n\n` +
+    `## Out Of Scope\n\n` +
+    `- Whether any specific company has implemented the controls.\n` +
+    `- Whether operating effectiveness evidence is sufficient for SOC 2 Type II.\n` +
+    `- Whether a specific CPA firm will accept generated documents without modification.\n` +
+    `- Legal advice, privacy counsel advice, HIPAA attestation, PCI DSS validation, or formal CPA opinion.\n` +
+    `- Testing live application behavior, authentication, data storage, exports, or evidence ingestion.\n\n` +
+    `## Review Modes\n\n` +
+    `| Mode | Criteria To Review | Use When |\n` +
+    `| --- | --- | --- |\n` +
+    `| Security-only SOC 2 Type I | CC1.1-CC9.2 | Reviewing the minimum SOC 2 Security category baseline. |\n` +
+    `| Security + Availability | CC1.1-CC9.2 and A1.1-A1.3 | Availability commitments are expected in the report. |\n` +
+    `| Security + Confidentiality | CC1.1-CC9.2 and C1.1-C1.2 | Confidential customer or company information commitments are expected. |\n` +
+    `| Security + Processing Integrity | CC1.1-CC9.2 and PI1.1-PI1.5 | Completeness, accuracy, timeliness, validity, or authorization of processing is in scope. |\n` +
+    `| Security + Privacy | CC1.1-CC9.2 and P1.1-P8.1 | Personal information privacy commitments are in scope. |\n` +
+    `| All TSC categories | All rows in TYPE1_DOCUMENTATION_COVERAGE.md | Reviewing the broadest baseline template set. |\n\n` +
+    `## Reviewer Assessment Scale\n\n` +
+    `| Assessment | Meaning |\n` +
+    `| --- | --- |\n` +
+    `| Sufficient | Baseline language appears adequate for Type I design documentation, subject to company-specific completion and evidence. |\n` +
+    `| Partial | Baseline language exists but should be strengthened, split into procedures, or made more specific. |\n` +
+    `| Missing | Baseline language does not adequately address the criterion or expected documentation area. |\n` +
+    `| N/A | Criterion is outside the selected engagement scope. |\n\n` +
+    `## Requested Reviewer Output\n\n` +
+    `Return findings using [REVIEWER_FINDINGS_TEMPLATE.md](REVIEWER_FINDINGS_TEMPLATE.md). For each finding, include the affected criterion, affected template, severity, rationale, and recommended language or remediation.\n`;
+
+  writeFileSync(path.join(outputRoot, 'REVIEW_SCOPE.md'), scope);
+}
+
+function writeReviewerFindingsTemplate() {
+  const template = `# Reviewer Findings Template\n\n` +
+    `Use this file to return independent review findings for the TrustScaffold baseline template pack.\n\n` +
+    `## Review Summary\n\n` +
+    `| Field | Reviewer Response | Reviewer Notes |\n` +
+    `| --- | --- | --- |\n` +
+    `| Reviewer name / firm |  |  |\n` +
+    `| Review date |  |  |\n` +
+    `| Review mode | ☐ Security-only ☐ Security + Availability ☐ Security + Confidentiality ☐ Security + Processing Integrity ☐ Security + Privacy ☐ All TSC categories |  |\n` +
+    `| Overall conclusion | ☐ Sufficient for readiness use ☐ Sufficient with changes ☐ Not sufficient yet ☐ Requires CPA-firm-specific interpretation |  |\n` +
+    `| Highest severity finding | ☐ Critical ☐ High ☐ Medium ☐ Low ☐ None |  |\n\n` +
+    `## Criteria Coverage Summary\n\n` +
+    `| Area | Assessment | Reviewer Notes |\n` +
+    `| --- | --- | --- |\n` +
+    `| CC1 Control Environment / COSO 1-5 | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |\n` +
+    `| CC2 Communication and Information / COSO 13-15 | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |\n` +
+    `| CC3 Risk Assessment / COSO 6-9 | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |\n` +
+    `| CC4 Monitoring Activities / COSO 16-17 | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |\n` +
+    `| CC5 Control Activities / COSO 10-12 | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |\n` +
+    `| CC6 Logical and Physical Access | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |\n` +
+    `| CC7 System Operations | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |\n` +
+    `| CC8 Change Management | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |\n` +
+    `| CC9 Risk Mitigation | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |\n` +
+    `| A1 Availability | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |\n` +
+    `| C1 Confidentiality | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |\n` +
+    `| PI1 Processing Integrity | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |\n` +
+    `| P1-P8 Privacy | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |\n\n` +
+    `## Reviewer Notes By Pack Section\n\n` +
+    `Use this table to capture review notes for each major section of the reviewer pack, even when the note does not rise to the level of a formal finding.\n\n` +
+    `| Pack Section | Reviewed? | Assessment | Reviewer Notes | Related Finding ID |\n` +
+    `| --- | --- | --- | --- | --- |\n` +
+    `| REVIEW_SCOPE.md | ☐ Yes ☐ No ☐ N/A | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |  |\n` +
+    `| TYPE1_DOCUMENTATION_COVERAGE.md | ☐ Yes ☐ No ☐ N/A | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |  |\n` +
+    `| COVERAGE_MATRIX.md | ☐ Yes ☐ No ☐ N/A | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |  |\n` +
+    `| TEMPLATE_INDEX.md | ☐ Yes ☐ No ☐ N/A | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |  |\n` +
+    `| REVIEW_CHECKLIST.md | ☐ Yes ☐ No ☐ N/A | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |  |\n` +
+    `| templates/ baseline documents | ☐ Yes ☐ No ☐ N/A | ☐ Sufficient ☐ Partial ☐ Missing ☐ N/A |  |  |\n\n` +
+    `## Template Section Review Notes\n\n` +
+    `Use this table for notes tied to a specific baseline template heading, section, criterion, or placeholder. Copy rows as needed.\n\n` +
+    `| Template | Section / Heading | Criterion / Area | Assessment | Reviewer Notes | Related Finding ID |\n` +
+    `| --- | --- | --- | --- | --- | --- |\n` +
+    `|  |  |  | ☐ Sufficient ☐ Partial ☐ Missing ☐ Ambiguous ☐ Overclaim ☐ Placeholder issue ☐ Evidence alignment issue ☐ N/A |  |  |\n\n` +
+    `## Findings\n\n` +
+    `Copy this section for each finding.\n\n` +
+    `### Finding 1: <short title>\n\n` +
+    `| Field | Reviewer Response | Reviewer Notes |\n` +
+    `| --- | --- | --- |\n` +
+    `| Finding ID |  |  |\n` +
+    `| Severity | ☐ Critical ☐ High ☐ Medium ☐ Low |  |\n` +
+    `| Affected criterion / criteria |  |  |\n` +
+    `| Affected template(s) |  |  |\n` +
+    `| Affected section(s) / heading(s) |  |  |\n` +
+    `| Assessment | ☐ Partial ☐ Missing ☐ Ambiguous ☐ Overclaim ☐ Placeholder issue ☐ Evidence alignment issue |  |\n` +
+    `| Rationale |  |  |\n` +
+    `| Recommended change |  |  |\n` +
+    `| Suggested wording, if applicable |  |  |\n\n` +
+    `## Cross-Cutting Comments\n\n` +
+    `- Policy/procedure distinction:\n` +
+    `- Placeholder clarity:\n` +
+    `- Control ownership and cadence clarity:\n` +
+    `- Evidence checklist alignment:\n` +
+    `- System Description adequacy:\n` +
+    `- CPA-firm-specific caveats:\n\n` +
+    `## Final Recommendation\n\n` +
+    `☐ Ready to use as a baseline template pack after company-specific completion.\n\n` +
+    `☐ Ready after the findings above are addressed.\n\n` +
+    `☐ Not ready; substantial template redesign is recommended before company-specific generation.\n`;
+
+  writeFileSync(path.join(outputRoot, 'REVIEWER_FINDINGS_TEMPLATE.md'), template);
 }
 
 function writeTemplateIndex(templates: TemplateRow[]) {
@@ -302,6 +424,8 @@ async function main() {
 
   writeTemplateFiles(templates);
   writeReadme(templates);
+  writeReviewScope();
+  writeReviewerFindingsTemplate();
   writeTemplateIndex(templates);
   writeCoverageMatrix(templates);
   writeType1DocumentationCoverage(templates);
