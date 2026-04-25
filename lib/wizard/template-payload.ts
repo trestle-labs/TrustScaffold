@@ -24,6 +24,12 @@ function formatAssuranceReportType(reportType: string) {
   return labels[reportType] ?? reportType;
 }
 
+function formatVendorReviewFrequency(subservices: WizardData['subservices']) {
+  if (subservices.some((subservice) => subservice.reviewCadence === 'quarterly')) return 'quarterly';
+  if (subservices.some((subservice) => subservice.reviewCadence === 'semi-annual')) return 'semi-annually';
+  return 'annually';
+}
+
 export function buildTemplatePayload(data: WizardData, options?: { workspaceOrganizationName?: string | null }) {
   const cloudProviders = data.infrastructure.cloudProviders ?? [data.infrastructure.type === 'hybrid' ? 'aws' : data.infrastructure.type === 'self-hosted' ? 'aws' : data.infrastructure.type];
   const usesAws = cloudProviders.includes('aws');
@@ -95,7 +101,10 @@ export function buildTemplatePayload(data: WizardData, options?: { workspaceOrga
     requires_peer_review: data.operations.requiresPeerReview,
     requires_cyber_insurance: data.operations.requiresCyberInsurance,
     dsar_acknowledgement_window: '5 business days',
-    vendor_review_frequency: 'annually',
+    vendor_review_frequency: formatVendorReviewFrequency(data.subservices),
+    processing_integrity_owner: data.company.primaryContactName,
+    processing_integrity_review_frequency: 'quarterly',
+    processing_exception_sla: '2 business days',
     runs_sast: true,
     runs_dependency_scanning: true,
     has_production_change_reviews: true,

@@ -29,6 +29,7 @@
 | 14 | Acceptable Use / Code of Conduct | `acceptable-use-code-of-conduct-policy` | CC1, CC2 | ✅ Covered |
 | 15 | SOC 2 Evidence Checklist | `evidence-checklist` | CC1 | ✅ Covered |
 | 16 | System Description (DC 200) | `system-description` | CC1–CC9 | ✅ Covered |
+| 17 | Processing Integrity Policy | `processing-integrity-policy` | PI1 | ✅ Covered (conditional) |
 
 ---
 
@@ -135,9 +136,7 @@
 
 | Criterion | Requirement | Template(s) | Section(s) | Notes |
 |-----------|-------------|-------------|------------|-------|
-| PI1.1–PI1.5 | Processing completeness, accuracy, inputs, outputs, storage | system-description | VII. TSC Mapping (conditional row) | Mapped to Sections III, V |
-
-**⚠ Reviewer Note:** Processing Integrity is addressed only in the System Description's conditional TSC mapping table. No standalone Processing Integrity policy template exists. Organizations selecting PI1 should supplement with application-specific data validation and reconciliation procedures. A CPA may require additional narrative or a dedicated PI policy annex.
+| PI1.1–PI1.5 | Processing completeness, accuracy, inputs, outputs, storage | processing-integrity-policy, evidence-checklist, system-description | Processing Objectives; Input and Authorization Controls; Reconciliation and Exception Handling; Processing Integrity Evidence; VII. TSC Mapping | Standalone conditional policy and evidence checklist rows cover validation, authorization, exception handling, reconciliation, output review, and processing evidence. |
 
 ### P1–P8 — Privacy (Conditional: `tscSelections.privacy`)
 
@@ -149,10 +148,8 @@
 | P4.1–P4.3 | Use, retention, disposal | privacy-notice-consent-policy | Retention | Legal, contractual, operational requirements |
 | P5.1–P5.2 | Access and correction | privacy-notice-consent-policy | Privacy Commitments | DSAR acknowledgement window |
 | P6.1–P6.7 | Disclosure and notification | privacy-notice-consent-policy | (implicit) | Template references privacy commitments |
-| P7.1 | Data quality | (not explicitly addressed) | — | **Gap: consider adding data quality clause** |
-| P8.1 | Monitoring and enforcement | (not explicitly addressed) | — | **Gap: consider adding complaint handling clause** |
-
-**⚠ Reviewer Note:** P7 (Data Quality) and P8 (Monitoring & Enforcement) are only implicitly covered. The privacy template should be supplemented with explicit data quality assurance and complaint-handling procedures for organizations selecting the Privacy category. Recommend adding two optional sections to the privacy template in a future iteration.
+| P7.1 | Data quality | privacy-notice-consent-policy, evidence-checklist | Data Quality and Correction; Privacy Evidence | Explicit data quality, correction, and downstream propagation controls added. |
+| P8.1 | Monitoring and enforcement | privacy-notice-consent-policy, evidence-checklist | Complaint Handling and Enforcement; Privacy Evidence | Explicit complaint intake, investigation, enforcement, and privacy monitoring evidence added. |
 
 ---
 
@@ -171,16 +168,13 @@
 | CC9 — Risk Mitigation | 2 | vendor-management, risk-management, bcdr | ✅ Full |
 | A1 — Availability | 3 | business-continuity-dr, backup-recovery | ✅ Full |
 | C1 — Confidentiality | 2 | data-classification, encryption | ✅ Full |
-| PI1 — Processing Integrity | 5 | system-description (conditional) | ⚠ Minimal |
-| P1–P8 — Privacy | 14 | privacy-notice-consent | ⚠ P7, P8 implicit |
+| PI1 — Processing Integrity | 5 | processing-integrity-policy, evidence-checklist, system-description | ✅ Covered (conditional) |
+| P1–P8 — Privacy | 14 | privacy-notice-consent, evidence-checklist | ✅ Covered (conditional) |
 
 ### Open Items for CPA Review
 
 1. **CC4 (Monitoring Activities):** No standalone monitoring policy. System Description addresses it in Section V. Determine if a dedicated template is required.
-2. **PI1 (Processing Integrity):** Only referenced in System Description TSC mapping table. Organizations selecting PI1 may need a standalone Processing Integrity annex.
-3. **P7 (Data Quality):** Not explicitly addressed in the privacy template. Consider adding a "Data Quality Assurance" section.
-4. **P8 (Monitoring & Enforcement):** Not explicitly addressed. Consider adding a "Complaint Handling & Enforcement" section.
-5. **Template language quality:** All templates include the `> This document is a starting-point compliance template and must be reviewed` disclaimer. A CPA should validate that the default language meets board-grade expectations for each engagement type.
+2. **Template language quality:** All templates include the `> This document is a starting-point compliance template and must be reviewed` disclaimer. A CPA should validate that the default language meets board-grade expectations for each engagement type.
 
 ---
 

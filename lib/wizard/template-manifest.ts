@@ -35,6 +35,10 @@ const CONFIDENTIALITY_TEMPLATES: TemplateManifestEntry[] = [
   { name: 'Encryption Policy', tsc: 'Confidentiality', criteriaHint: 'C1', description: 'Defines encryption requirements for data at rest and in transit, referencing your minimum TLS protocol version and key management approach.' },
 ];
 
+const PROCESSING_INTEGRITY_TEMPLATES: TemplateManifestEntry[] = [
+  { name: 'Processing Integrity Policy', tsc: 'Processing Integrity', criteriaHint: 'PI1', description: 'Defines input validation, authorization, exception handling, reconciliation, output review, and evidence expectations for complete and accurate processing.' },
+];
+
 const PRIVACY_TEMPLATES: TemplateManifestEntry[] = [
   { name: 'Privacy Notice & Consent Framework', tsc: 'Privacy', criteriaHint: 'P1–P8', description: 'A GDPR/CCPA-aligned privacy notice template and consent mechanism framework. Triggered by your Customer PII data type selection.' },
 ];
@@ -44,6 +48,7 @@ export function getExpectedTemplates(tscSelections: WizardData['tscSelections'])
     ...SECURITY_TEMPLATES,
     ...(tscSelections.availability ? AVAILABILITY_TEMPLATES : []),
     ...(tscSelections.confidentiality ? CONFIDENTIALITY_TEMPLATES : []),
+    ...(tscSelections.processingIntegrity ? PROCESSING_INTEGRITY_TEMPLATES : []),
     ...(tscSelections.privacy ? PRIVACY_TEMPLATES : []),
   ];
 }
