@@ -19,15 +19,15 @@ title: Data Protection Impact Assessment
 slug: data-protection-impact-assessment
 tsc_category: GDPR / Privacy
 criteria_mapped:
-  - GDPR
-  - P1
-  - P2
-  - P3
-  - P4
-  - P5
-  - P6
-  - P7
-  - P8
+	- GDPR
+	- P1
+	- P2
+	- P3
+	- P4
+	- P5
+	- P6
+	- P7
+	- P8
 generated_for: {{organization_name}}
 effective_date: {{effective_date}}
 version: {{policy_version}}

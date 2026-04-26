@@ -5,7 +5,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { defaultWizardValues, type WizardData } from '@/lib/wizard/schema';
 
-function mergeWizardData(data: Partial<WizardData> | undefined): WizardData {
+export function mergeWizardData(data: Partial<WizardData> | undefined): WizardData {
   const defaultSubservice: WizardData['subservices'][number] = {
     name: '',
     description: '',

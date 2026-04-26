@@ -138,6 +138,60 @@ export async function archiveGeneratedDocAction(formData: FormData) {
   redirect(buildGeneratedDocRoute(documentId, 'success=Document%20archived'));
 }
 
+export async function rejectGeneratedDocAction(formData: FormData) {
+  const documentId = String(formData.get('document_id') ?? '').trim();
+  const rejectionReason = String(formData.get('rejection_reason') ?? '').trim();
+
+  if (!documentId) {
+    redirect('/generated-docs?error=Missing%20document%20identifier');
+  }
+
+  if (rejectionReason.length < 10) {
+    redirect(buildGeneratedDocRoute(documentId, 'error=Provide%20a%20clear%20rejection%20reason%20(10%2B%20characters).'));
+  }
+
+  const { supabase, document, role } = await getDocumentAndRole(documentId);
+
+  if (!['admin', 'editor'].includes(role)) {
+    redirect(buildGeneratedDocRoute(documentId, 'error=Only%20admins%20and%20editors%20can%20reject%20drafts'));
+  }
+
+  if (document.status !== 'draft') {
+    redirect(buildGeneratedDocRoute(documentId, 'error=Only%20draft%20documents%20can%20be%20rejected'));
+  }
+
+  const { error: updateError } = await supabase
+    .from('generated_docs')
+    .update({ status: 'archived', approved_by: null, approved_at: null })
+    .eq('id', documentId)
+    .eq('organization_id', document.organization_id);
+
+  if (updateError) {
+    redirect(buildGeneratedDocRoute(documentId, `error=${encodeURIComponent(updateError.message)}`));
+  }
+
+  const { error: auditError } = await supabase.rpc('append_audit_log', {
+    p_organization_id: document.organization_id,
+    p_action: 'document.rejected',
+    p_entity_type: 'generated_doc',
+    p_entity_id: document.id,
+    p_details: {
+      reason: rejectionReason,
+      from_status: 'draft',
+      to_status: 'archived',
+      version: document.version,
+    },
+  });
+
+  if (auditError) {
+    redirect(buildGeneratedDocRoute(documentId, `error=${encodeURIComponent(auditError.message)}`));
+  }
+
+  revalidatePath(`/generated-docs/${documentId}`);
+  revalidatePath('/generated-docs');
+  redirect(buildGeneratedDocRoute(documentId, 'success=Draft%20rejected%20and%20archived%20with%20reviewer%20reason'));
+}
+
 export async function archiveSelectedGeneratedDocsAction(formData: FormData) {
   const selectedDocIds = getSelectedDocIds(formData);
 
@@ -317,6 +371,13 @@ export async function regenerateAllDocsAction() {
   }
 
   revalidatePath('/generated-docs');
+  const totalCount = docs.length;
+  const skippedCount = totalCount - successCount;
+
+  if (skippedCount > 0) {
+    redirect(buildGeneratedDocsRoute(`error=Regenerated%20${successCount}%20of%20${totalCount}%20documents.%20${skippedCount}%20document${skippedCount === 1 ? '' : 's'}%20were%20skipped%20and%20may%20still%20be%20stale.`));
+  }
+
   redirect(buildGeneratedDocsRoute(`success=Regenerated%20${successCount}%20document${successCount === 1 ? '' : 's'}%20from%20current%20org%20profile`));
 }
 

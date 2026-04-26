@@ -19,11 +19,11 @@ title: Legal and Regulatory Registry
 slug: legal-regulatory-registry
 tsc_category: ISO 27001
 criteria_mapped:
-  - ISO27001
-  - GDPR
-  - CCPA
-  - HIPAA
-  - PCI
+	- ISO27001
+	- GDPR
+	- CCPA
+	- HIPAA
+	- PCI
 generated_for: {{organization_name}}
 effective_date: {{effective_date}}
 version: {{policy_version}}

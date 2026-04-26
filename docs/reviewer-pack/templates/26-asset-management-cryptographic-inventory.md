@@ -19,12 +19,12 @@ title: Asset Management and Cryptographic Inventory
 slug: asset-management-cryptographic-inventory
 tsc_category: Universal
 criteria_mapped:
-  - COMMON
-  - CC6
-  - CC7
-  - C1
-  - ISO27001
-  - PCI
+	- COMMON
+	- CC6
+	- CC7
+	- C1
+	- ISO27001
+	- PCI
 generated_for: {{organization_name}}
 effective_date: {{effective_date}}
 version: {{policy_version}}

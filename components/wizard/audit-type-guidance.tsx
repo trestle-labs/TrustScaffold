@@ -3,6 +3,7 @@
 import { ArrowRight, Clock, FileCheck, ShieldCheck } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { expandAcronymsInText } from '@/lib/acronyms';
 import { cn } from '@/lib/utils';
 import type { ComplianceMaturity, OrgAge, TargetAuditType } from '@/lib/wizard/schema';
 
@@ -81,14 +82,14 @@ function AuditTypeCard({ type, selected, recommended, onSelect }: AuditTypeCardP
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
             <Icon className={cn('h-4 w-4', meta.color === 'emerald' ? 'text-emerald-600' : 'text-blue-600')} />
-            <p className="text-sm font-semibold text-foreground">{meta.label}</p>
+            <p className="text-sm font-semibold text-foreground">{expandAcronymsInText(meta.label)}</p>
             {recommended && (
               <Badge className={cn('text-[10px] px-1.5 py-0', meta.color === 'emerald' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700')}>
                 Recommended
               </Badge>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">{meta.tagline}</p>
+          <p className="text-xs text-muted-foreground">{expandAcronymsInText(meta.tagline)}</p>
         </div>
         <div className={cn(
           'h-4 w-4 shrink-0 rounded-full border-2 mt-0.5',
@@ -101,21 +102,21 @@ function AuditTypeCard({ type, selected, recommended, onSelect }: AuditTypeCardP
       <div className="grid gap-3 text-xs sm:grid-cols-2">
         <div className="space-y-1">
           <p className="font-medium text-foreground">What auditors test</p>
-          <p className="text-muted-foreground">{meta.whatAuditorsTest}</p>
+          <p className="text-muted-foreground">{expandAcronymsInText(meta.whatAuditorsTest)}</p>
         </div>
         <div className="space-y-1">
           <p className="font-medium text-foreground">Audit period</p>
-          <p className="text-muted-foreground">{meta.auditPeriod}</p>
+          <p className="text-muted-foreground">{expandAcronymsInText(meta.auditPeriod)}</p>
         </div>
         <div className="space-y-1">
           <p className="font-medium text-foreground flex items-center gap-1">
             <Clock className="h-3 w-3" /> Typical preparation
           </p>
-          <p className="text-muted-foreground">{meta.timeline}</p>
+          <p className="text-muted-foreground">{expandAcronymsInText(meta.timeline)}</p>
         </div>
         <div className="space-y-1">
           <p className="font-medium text-foreground">Typical cost range</p>
-          <p className="text-muted-foreground">{meta.typicalCost}</p>
+          <p className="text-muted-foreground">{expandAcronymsInText(meta.typicalCost)}</p>
         </div>
       </div>
 
@@ -125,14 +126,14 @@ function AuditTypeCard({ type, selected, recommended, onSelect }: AuditTypeCardP
           {meta.whenItFits.map((item) => (
             <li key={item} className="flex items-start gap-1.5 text-xs text-muted-foreground">
               <ArrowRight className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/60" />
-              {item}
+              {expandAcronymsInText(item)}
             </li>
           ))}
         </ul>
       </div>
 
       <p className="rounded-xl bg-amber-50 border border-amber-100 px-3 py-2 text-[11px] text-amber-700">
-        <span className="font-medium">Not ideal when: </span>{meta.notIdealWhen}
+        <span className="font-medium">Not ideal when: </span>{expandAcronymsInText(meta.notIdealWhen)}
       </p>
     </button>
   );
@@ -153,23 +154,24 @@ export function AuditTypeGuidance({ value, maturity, orgAge, onChange }: AuditTy
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <p className="text-sm font-medium text-foreground">Which SOC 2 audit type are you targeting?</p>
+        <p className="text-sm font-medium text-foreground">{expandAcronymsInText('Which SOC 2 audit type are you targeting?')}</p>
         <p className="text-xs text-muted-foreground">
-          This affects the System Description template and timeline recommendations.
-          Based on your maturity and org age, we&apos;ve pre-selected a recommendation — you can override it.
+          {expandAcronymsInText('This affects the System Description template and timeline recommendations.')}
+          {' '}
+          {expandAcronymsInText('Based on your maturity and org age, we\'ve pre-selected a recommendation — you can override it.')}
         </p>
       </div>
 
       {/* Path diagram */}
       <div className="flex items-center gap-2 rounded-2xl bg-secondary/50 px-4 py-3 text-xs text-muted-foreground">
-        <span className="font-medium text-foreground">Typical path:</span>
+        <span className="font-medium text-foreground">{expandAcronymsInText('Typical path:')}</span>
         <span>Policies &amp; procedures established</span>
         <ArrowRight className="h-3 w-3 shrink-0" />
-        <span>Type I audit (design)</span>
+        <span>{expandAcronymsInText('Type I audit (design)')}</span>
         <ArrowRight className="h-3 w-3 shrink-0" />
         <span>6–12 months operating</span>
         <ArrowRight className="h-3 w-3 shrink-0" />
-        <span>Type II audit (effectiveness)</span>
+        <span>{expandAcronymsInText('Type II audit (effectiveness)')}</span>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -202,8 +204,9 @@ export function AuditTypeGuidance({ value, maturity, orgAge, onChange }: AuditTy
 
       {value === 'unsure' && (
         <p className="rounded-xl bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
-          The generated policies will be written to satisfy both Type I and Type II requirements.
-          You can revisit this decision once you have spoken with an auditor or CPA firm.
+          {expandAcronymsInText('The generated policies will be written to satisfy both Type I and Type II requirements.')}
+          {' '}
+          {expandAcronymsInText('You can revisit this decision once you have spoken with an auditor or CPA firm.')}
         </p>
       )}
     </div>

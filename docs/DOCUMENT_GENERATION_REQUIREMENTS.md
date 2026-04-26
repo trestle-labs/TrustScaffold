@@ -24,8 +24,8 @@ Optional Trust Services Criteria add documents when selected:
 | `tscSelections.privacy === true` | `P1` through `P8` | Add Privacy documents. |
 | `scope.containsPhi === true` | `HIPAA` | Add HIPAA high-water-mark documents. |
 | `scope.hasCardholderDataEnvironment === true` | `PCI` | Add PCI-DSS high-water-mark documents. |
-| `company.websiteTargetsEuOrUkResidents === true` or `company.websiteUsesCookiesAnalytics === true` | `GDPR` | Add GDPR/privacy high-water-mark coverage and DPIA support. |
-| `company.websiteTargetsCaliforniaResidents === true` or `company.websiteSellsOrSharesPersonalInformation === true` | `CCPA` | Add CCPA/CPRA obligations to the legal registry. |
+| `company.hasPublicWebsite === true` and (`company.websiteTargetsEuOrUkResidents === true` or `company.websiteUsesCookiesAnalytics === true`) | `GDPR` | Add GDPR/privacy high-water-mark coverage and DPIA support. |
+| `company.hasPublicWebsite === true` and (`company.websiteTargetsCaliforniaResidents === true` or `company.websiteSellsOrSharesPersonalInformation === true`) | `CCPA` | Add CCPA/CPRA obligations to the legal registry. |
 | Security baseline | `COMMON`, `ISO27001` | Add universal common-control and ISO 27001 readiness documents. |
 
 Other wizard answers generally tailor document content rather than determine whether a document is generated. For example, cloud provider, IdP, VCS provider, subservice organizations, peer review, MFA, and internal audit answers change language, sections, warnings, and evidence requests inside generated documents.
@@ -71,7 +71,7 @@ The compile action must not generate documents unless the wizard payload passes 
 | Quarterly Vulnerability Scanning SOP | `quarterly-vulnerability-scanning-sop` | When a CDE is in scope. | `scope.hasCardholderDataEnvironment === true` | `PCI` |
 | ISO 27001 Statement of Applicability | `iso27001-statement-of-applicability` | Always, as part of the expanded multi-framework baseline. | `tscSelections.security` is always true. | `ISO27001` |
 | Legal and Regulatory Registry | `legal-regulatory-registry` | Always, as part of the expanded multi-framework baseline. Website, PHI, CDE, GDPR, and CCPA answers tailor rows. | `tscSelections.security` is always true. | `ISO27001`, `GDPR`, `CCPA`, `HIPAA`, `PCI` |
-| Data Protection Impact Assessment | `data-protection-impact-assessment` | When Privacy is selected or website answers indicate GDPR/UK GDPR exposure. | `tscSelections.privacy === true`, `company.websiteTargetsEuOrUkResidents === true`, or `company.websiteUsesCookiesAnalytics === true` | `GDPR`, `P1`-`P8` |
+| Data Protection Impact Assessment | `data-protection-impact-assessment` | When Privacy is selected or website answers indicate GDPR/UK GDPR exposure. | `tscSelections.privacy === true`, or `company.hasPublicWebsite === true` with `company.websiteTargetsEuOrUkResidents === true` or `company.websiteUsesCookiesAnalytics === true` | `GDPR`, `P1`-`P8` |
 | Asset Management and Cryptographic Inventory | `asset-management-cryptographic-inventory` | Always, as a universal common-control foundation. | `tscSelections.security` is always true. | `COMMON`, `CC6`, `CC7`, `C1`, `ISO27001`, `PCI` |
 
 ## Recommendation-Only Triggers

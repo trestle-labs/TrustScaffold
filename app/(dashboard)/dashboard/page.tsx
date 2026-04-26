@@ -5,8 +5,10 @@ import { FileText, Settings, ShieldCheck, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { WizardStageSummaryCards } from '@/components/wizard/wizard-stage-summary-cards';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { wizardSchema, wizardStepTitles } from '@/lib/wizard/schema';
 
 export default async function DashboardPage() {
   const context = await getDashboardContext();
@@ -23,7 +25,7 @@ export default async function DashboardPage() {
       .eq('organization_id', context.organization.id),
     supabase
       .from('wizard_drafts')
-      .select('updated_at')
+      .select('updated_at, current_step, payload')
       .eq('organization_id', context.organization.id)
       .maybeSingle(),
   ]);
@@ -39,6 +41,12 @@ export default async function DashboardPage() {
   const draftUpdatedAt = draft?.updated_at ?? null;
   const generatedDocs = generatedDocCount ?? 0;
   const hasDraft = Boolean(draftUpdatedAt);
+  const parsedDraft = draft?.payload ? wizardSchema.safeParse(draft.payload) : null;
+  const savedWizardData = parsedDraft?.success ? parsedDraft.data : null;
+  const savedStepIndex = typeof draft?.current_step === 'number' ? draft.current_step : null;
+  const savedStepLabel = savedStepIndex === null
+    ? null
+    : wizardStepTitles[Math.max(0, Math.min(savedStepIndex, wizardStepTitles.length - 1))];
   const isAdmin = context.organization.role === 'admin';
   const quickActions: Array<{
     href: Route;
@@ -80,7 +88,7 @@ export default async function DashboardPage() {
           <CardDescription>New admins land here first so they can manage users, start or resume the policy wizard, switch theme, and open settings without being forced into onboarding.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="space-y-3">
             <div className="rounded-2xl bg-secondary/60 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">Organization ID</p>
               <p className="mt-3 break-all font-mono text-sm text-foreground">{context.organization.id}</p>
@@ -124,6 +132,36 @@ export default async function DashboardPage() {
             </div>
             <p className="mt-4 text-xs text-muted-foreground">Theme controls are available in the top-right header.</p>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Wizard stage snapshots</CardTitle>
+          <CardDescription>
+            These are the persisted stage summaries pulled from the saved wizard draft so users can immediately see what has already been submitted without reopening the review step.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {savedWizardData ? (
+            <>
+              <div className="rounded-2xl border border-border bg-secondary/40 p-4 text-sm text-muted-foreground">
+                <p className="font-semibold text-foreground">Draft snapshot ready</p>
+                <p className="mt-1">
+                  {savedStepLabel ? `Last saved through ${savedStepLabel}.` : 'Wizard draft is available.'} Use these cards to confirm submitted profile details and jump directly back into the matching wizard stage.
+                </p>
+              </div>
+              <WizardStageSummaryCards data={savedWizardData} organizationName={context.organization.name} highWaterStep={savedStepIndex ?? 0} />
+            </>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-border bg-secondary/30 p-5 text-sm text-muted-foreground">
+              <p className="font-semibold text-foreground">No saved stage summaries yet</p>
+              <p className="mt-1">Start the wizard and save a draft to populate the dashboard with company, scope, governance, tooling, and operations snapshots.</p>
+              <Button asChild className="mt-3">
+                <Link href="/wizard">Open wizard</Link>
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -331,7 +331,7 @@ export const documentGenerationRules: DocumentGenerationRule[] = [
     outputFilenamePattern: '25-data-protection-impact-assessment.md',
     scope: 'gdpr',
     generationRequirement: 'Generate when Privacy is selected or website answers indicate EU/UK personal-data or tracking exposure because high-risk personal-data processing may require a DPIA and related privacy risk analysis.',
-    wizardAnswerTrigger: 'tscSelections.privacy is true, or websiteTargetsEuOrUkResidents / websiteUsesCookiesAnalytics indicate GDPR exposure.',
+    wizardAnswerTrigger: 'tscSelections.privacy is true, or hasPublicWebsite with websiteTargetsEuOrUkResidents / websiteUsesCookiesAnalytics indicates GDPR exposure.',
     description: 'Defines processing purpose, personal-data categories, lawful basis, necessity, proportionality, risks, mitigations, consultation, approval, and review expectations.',
   },
   {
@@ -355,7 +355,7 @@ export function isDocumentRuleSelected(rule: DocumentGenerationRule, selections:
   if (rule.scope === 'hipaa') return hasWizardContext(selections) ? selections.scope.containsPhi : false;
   if (rule.scope === 'pci') return hasWizardContext(selections) ? selections.scope.hasCardholderDataEnvironment : false;
   if (rule.scope === 'gdpr') {
-    return tscSelections.privacy || (hasWizardContext(selections) && (selections.company.websiteTargetsEuOrUkResidents || selections.company.websiteUsesCookiesAnalytics));
+    return tscSelections.privacy || (hasWizardContext(selections) && selections.company.hasPublicWebsite && (selections.company.websiteTargetsEuOrUkResidents || selections.company.websiteUsesCookiesAnalytics));
   }
 
   return tscSelections[rule.scope];

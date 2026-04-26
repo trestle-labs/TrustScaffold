@@ -3,7 +3,7 @@
 import type { Route } from 'next';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Check, Circle, CircleDashed, FileText, LayoutDashboard, Settings, ShieldCheck, Users } from 'lucide-react';
+import { BookOpen, Check, Circle, CircleDashed, FileText, LayoutDashboard, Settings, ShieldCheck, Users } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { useWizardStore } from '@/lib/wizard/store';
@@ -13,6 +13,7 @@ export const dashboardNavigation = [
   { href: '/dashboard' as Route, label: 'Dashboard', icon: LayoutDashboard },
   { href: '/wizard' as Route, label: 'Policy Wizard', icon: ShieldCheck },
   { href: '/generated-docs' as Route, label: 'Generated Docs', icon: FileText },
+  { href: '/dashboard/glossary' as Route, label: 'Glossary', icon: BookOpen },
   { href: '/team' as Route, label: 'Team', icon: Users },
   { href: '/settings' as Route, label: 'Settings', icon: Settings },
 ];

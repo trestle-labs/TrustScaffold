@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { ExternalLink, ChevronDown, ChevronRight } from 'lucide-react';
+import { expandAcronymsInText } from '@/lib/acronyms';
 
 type ShowMeHowProps = {
   title: string;
@@ -13,6 +14,7 @@ type ShowMeHowProps = {
 
 export function ShowMeHow({ title, steps, docUrl, docLabel }: ShowMeHowProps) {
   const [open, setOpen] = useState(false);
+  const expandedTitle = expandAcronymsInText(title);
 
   return (
     <div className="rounded-xl border border-blue-200 bg-blue-50 text-sm">
@@ -22,13 +24,13 @@ export function ShowMeHow({ title, steps, docUrl, docLabel }: ShowMeHowProps) {
         onClick={() => setOpen(!open)}
       >
         {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-        <span className="font-medium">Show me how: {title}</span>
+        <span className="font-medium">Show me how: {expandedTitle}</span>
       </button>
       {open && (
         <div className="border-t border-blue-200 px-4 py-3">
           <ol className="list-inside list-decimal space-y-1 text-blue-900">
             {steps.map((step, i) => (
-              <li key={i}>{step}</li>
+              <li key={i}>{expandAcronymsInText(step)}</li>
             ))}
           </ol>
           {docUrl && (
@@ -39,7 +41,7 @@ export function ShowMeHow({ title, steps, docUrl, docLabel }: ShowMeHowProps) {
               className="mt-2 inline-flex items-center gap-1 text-blue-700 underline hover:text-blue-900"
             >
               <ExternalLink className="h-3 w-3" />
-              {docLabel ?? 'Official documentation'}
+              {expandAcronymsInText(docLabel ?? 'Official documentation')}
             </a>
           )}
         </div>

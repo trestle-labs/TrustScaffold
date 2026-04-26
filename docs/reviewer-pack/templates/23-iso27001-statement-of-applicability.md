@@ -19,7 +19,7 @@ title: ISO 27001 Statement of Applicability
 slug: iso27001-statement-of-applicability
 tsc_category: ISO 27001
 criteria_mapped:
-  - ISO27001
+	- ISO27001
 generated_for: {{organization_name}}
 effective_date: {{effective_date}}
 version: {{policy_version}}

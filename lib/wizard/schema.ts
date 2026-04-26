@@ -7,16 +7,90 @@ export const orgAgeSchema = z.enum(['<1', '1-3', '3-10', '10+']);
 export const complianceMaturitySchema = z.enum(['first-time', 'some-experience', 'established']);
 export const targetAuditTypeSchema = z.enum(['type1', 'type2', 'unsure']);
 export const organizationRelationshipSchema = z.enum(['same-as-company', 'governing-company']);
+export const businessModelSchema = z.enum(['services', 'software', 'hybrid']);
+export const deliveryModelSchema = z.enum(['managed-services', 'saas', 'api-platform', 'professional-services', 'self-hosted-product', 'other']);
+
+const companySchema = z.object({
+  organizationRelationship: organizationRelationshipSchema,
+  name: z.string().trim().min(2, 'Company name is required'),
+  businessModel: businessModelSchema.default('hybrid'),
+  deliveryModel: deliveryModelSchema.default('saas'),
+  hasPublicWebsite: z.boolean().default(false),
+  website: z.string().trim().default(''),
+  primaryContactName: z.string().trim().min(2, 'Primary contact is required'),
+  primaryContactEmail: z.string().trim().email('Enter a valid contact email'),
+  industry: z.string().trim().min(2, 'Industry is required'),
+  orgAge: orgAgeSchema,
+  complianceMaturity: complianceMaturitySchema,
+  targetAuditType: targetAuditTypeSchema,
+  websiteCollectsPersonalData: z.boolean().default(false),
+  websiteUsesCookiesAnalytics: z.boolean().default(false),
+  websiteTargetsEuOrUkResidents: z.boolean().default(false),
+  websiteTargetsCaliforniaResidents: z.boolean().default(false),
+  websiteAllowsChildrenUnder13: z.boolean().default(false),
+  websiteHasPrivacyNotice: z.boolean().default(false),
+  websiteHasCookieBanner: z.boolean().default(false),
+  websiteSellsOrSharesPersonalInformation: z.boolean().default(false),
+  dsarRequestChannel: z.string().trim().default(''),
+}).superRefine((company, ctx) => {
+  if (!company.hasPublicWebsite) return;
+
+  if (!company.website) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['website'],
+      message: 'Website URL is required when a public website is in scope',
+    });
+    return;
+  }
+
+  if (!z.string().url().safeParse(company.website).success) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['website'],
+      message: 'Enter a valid website URL',
+    });
+  }
+});
 
 const subserviceSchema = z.object({
-  name: z.string().trim().min(1, 'Vendor name is required'),
-  description: z.string().trim().min(1, 'Vendor description is required'),
+  name: z.string().trim().default(''),
+  description: z.string().trim().default(''),
   role: z.string().trim().default(''),
   dataShared: z.string().trim().default(''),
   reviewCadence: subserviceReviewCadenceSchema,
   hasAssuranceReport: z.boolean(),
   assuranceReportType: assuranceReportTypeSchema,
   controlInclusion: controlInclusionSchema,
+}).superRefine((subservice, ctx) => {
+  const hasMeaningfulContent = Boolean(
+    subservice.name ||
+    subservice.description ||
+    subservice.role ||
+    subservice.dataShared ||
+    subservice.hasAssuranceReport ||
+    subservice.assuranceReportType !== 'none'
+  );
+
+  if (!hasMeaningfulContent) {
+    return;
+  }
+
+  if (!subservice.name) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['name'],
+      message: 'Vendor name is required when a sub-service row is used',
+    });
+  }
+
+  if (!subservice.description) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['description'],
+      message: 'Vendor description is required when a sub-service row is used',
+    });
+  }
 });
 
 export const infrastructureTypeSchema = z.enum(['aws', 'azure', 'gcp', 'hybrid', 'self-hosted']);
@@ -41,26 +115,7 @@ export const changeReviewApproachSchema = z.union([z.literal(''), z.enum(['autho
 export const securityAssessmentReadinessSchema = z.enum(['not-started', 'in-progress', 'established']);
 
 export const wizardSchema = z.object({
-  company: z.object({
-    organizationRelationship: organizationRelationshipSchema,
-    name: z.string().trim().min(2, 'Company name is required'),
-    website: z.string().trim().url('Enter a valid website URL'),
-    primaryContactName: z.string().trim().min(2, 'Primary contact is required'),
-    primaryContactEmail: z.string().trim().email('Enter a valid contact email'),
-    industry: z.string().trim().min(2, 'Industry is required'),
-    orgAge: orgAgeSchema,
-    complianceMaturity: complianceMaturitySchema,
-    targetAuditType: targetAuditTypeSchema,
-    websiteCollectsPersonalData: z.boolean(),
-    websiteUsesCookiesAnalytics: z.boolean(),
-    websiteTargetsEuOrUkResidents: z.boolean(),
-    websiteTargetsCaliforniaResidents: z.boolean(),
-    websiteAllowsChildrenUnder13: z.boolean(),
-    websiteHasPrivacyNotice: z.boolean(),
-    websiteHasCookieBanner: z.boolean(),
-    websiteSellsOrSharesPersonalInformation: z.boolean(),
-    dsarRequestChannel: z.string().trim().default(''),
-  }),
+  company: companySchema,
   governance: z.object({
     hasEmployeeHandbook: z.boolean(),
     hasCodeOfConduct: z.boolean(),
@@ -245,12 +300,17 @@ export type HrisProvider = z.infer<typeof hrisProviderSchema>;
 export type SubserviceReviewCadence = z.infer<typeof subserviceReviewCadenceSchema>;
 export type AssuranceReportType = z.infer<typeof assuranceReportTypeSchema>;
 export type ControlInclusion = z.infer<typeof controlInclusionSchema>;
+export type BusinessModel = z.infer<typeof businessModelSchema>;
+export type DeliveryModel = z.infer<typeof deliveryModelSchema>;
 
 export const defaultWizardValues: WizardData = {
   company: {
     organizationRelationship: 'same-as-company',
     name: '',
-    website: 'https://',
+    businessModel: 'hybrid',
+    deliveryModel: 'saas',
+    hasPublicWebsite: false,
+    website: '',
     primaryContactName: '',
     primaryContactEmail: '',
     industry: '',
@@ -437,7 +497,7 @@ export const wizardStepTitles = [
   'Infrastructure',
   'System Scope',
   'Governance',
-  'TSC Selection',
+  'TSC (Trust Services Criteria) Selection',
   'Security Assessment',
   'Security Tooling',
   'Operations',
@@ -447,10 +507,10 @@ export const wizardStepTitles = [
 
 export const dataTypeOptions = [
   {
-    label: 'Customer PII',
+    label: 'Customer PII (Personally Identifiable Information)',
     description: 'Personally identifiable information belonging to your end users or customers.',
     examples: ['Names and email addresses', 'Phone numbers and home addresses', 'Government-issued IDs, date of birth', 'IP addresses tied to identifiable individuals'],
-    socNote: 'Selecting this is the primary trigger for the Privacy TSC (P1–P8). Auditors will expect a public privacy notice, consent tracking, and a DSAR (data subject access request) process. If the system also handles healthcare-regulated records, turn on the dedicated PHI field below this selector.',
+    socNote: 'Selecting this is the primary trigger for the Privacy TSC (Trust Services Criteria) (P1–P8). Auditors will expect a public privacy notice, consent tracking, and a DSAR (Data Subject Access Request) process. If the system also handles healthcare-regulated records, turn on the dedicated PHI (Protected Health Information) field below this selector.',
     triggersPrivacy: true,
   },
   {
@@ -470,7 +530,7 @@ export const dataTypeOptions = [
   {
     label: 'Authentication secrets',
     description: 'Credentials and tokens that grant access to systems or accounts.',
-    examples: ['Hashed or encrypted passwords', 'API keys and service tokens', 'OAuth access and refresh tokens', 'MFA seeds and recovery codes', 'Session identifiers'],
+    examples: ['Hashed or encrypted passwords', 'API (Application Programming Interface) keys and service tokens', 'OAuth access and refresh tokens', 'MFA (Multi-Factor Authentication) seeds and recovery codes', 'Session identifiers'],
     socNote: 'This is one of the highest-sensitivity categories. Auditors will test your secrets management tooling, rotation cadence, storage encryption, and whether secrets ever appear in logs.',
     triggersPrivacy: false,
   },
@@ -478,14 +538,14 @@ export const dataTypeOptions = [
     label: 'Support tickets',
     description: 'Customer-submitted issue reports, chat transcripts, and attachments.',
     examples: ['Bug reports with reproduction steps', 'Attachments like screenshots or log files', 'Chat history from support tools (Intercom, Zendesk)', 'Account or transaction details pasted by customers'],
-    socNote: 'Support tickets frequently contain implicit PII — customer names, emails, and account data in the ticket body. If this is the case, also check Customer PII.',
+    socNote: 'Support tickets frequently contain implicit PII (Personally Identifiable Information) — customer names, emails, and account data in the ticket body. If this is the case, also check Customer PII (Personally Identifiable Information).',
     triggersPrivacy: false,
   },
   {
     label: 'Product telemetry',
     description: 'Usage events, performance metrics, and diagnostic data generated by your system.',
     examples: ['Feature click events and navigation paths', 'Error traces and stack dumps', 'API response times and throughput metrics', 'Session recordings or heatmaps'],
-    socNote: 'Telemetry becomes a PII concern if it includes IP addresses, user IDs, or behavioral data linkable to individuals. Review what your logging captures before deciding.',
+    socNote: 'Telemetry becomes a PII (Personally Identifiable Information) concern if it includes IP addresses, user IDs, or behavioral data linkable to individuals. Review what your logging captures before deciding.',
     triggersPrivacy: false,
   },
 ] as const;
@@ -499,9 +559,9 @@ export const tscOptions = [
     criteriaCode: 'A1',
     description: 'Ensures your system is available for operation and use as committed or agreed.',
     triggers: [
-      'Your contracts include uptime SLAs (e.g., 99.9% availability)',
+      'Your contracts include uptime SLAs (Service Level Agreements) (e.g., 99.9% availability)',
       'Customers depend on your system for time-sensitive workflows',
-      'You maintain documented RTO / RPO targets',
+      'You maintain documented RTO (Recovery Time Objective) / RPO (Recovery Point Objective) targets',
     ],
     templateAdditions: 2,
     templateNames: ['Business Continuity & Disaster Recovery Policy', 'Backup & Recovery Policy'],
@@ -538,7 +598,7 @@ export const tscOptions = [
     criteriaCode: 'P1–P8',
     description: 'Personal information is collected, used, retained, and disclosed in conformity with commitments.',
     triggers: [
-      'You collect or process personal data from EU residents (GDPR), California consumers (CCPA), or Canadian residents (PIPEDA)',
+      'You collect or process personal data from EU residents (GDPR - General Data Protection Regulation), California consumers (CCPA - California Consumer Privacy Act), or Canadian residents (PIPEDA - Personal Information Protection and Electronic Documents Act)',
       'Your privacy policy commits to data subject rights (access, deletion, portability)',
       'Customers ask whether you have a formal Privacy Notice aligned to AICPA privacy criteria',
     ],
@@ -589,6 +649,33 @@ export const orgAgeOptions = [
   { value: '10+',  label: 'More than 10 years old' },
 ] as const;
 
+export const businessModelOptions = [
+  {
+    value: 'services',
+    label: 'Services company',
+    description: 'Primarily delivers people-driven services, managed operations, consulting, or implementation work.',
+  },
+  {
+    value: 'software',
+    label: 'Software company',
+    description: 'Primarily delivers software products, SaaS, APIs, or platforms with productized delivery.',
+  },
+  {
+    value: 'hybrid',
+    label: 'Hybrid services + software',
+    description: 'Delivers both software products and service-based implementation or managed support.',
+  },
+] as const;
+
+export const deliveryModelOptions = [
+  { value: 'managed-services', label: 'Managed services' },
+  { value: 'saas', label: 'SaaS application' },
+  { value: 'api-platform', label: 'API (Application Programming Interface) / platform' },
+  { value: 'professional-services', label: 'Professional services' },
+  { value: 'self-hosted-product', label: 'Self-hosted product' },
+  { value: 'other', label: 'Other' },
+] as const;
+
 export const complianceMaturityOptions = [
   {
     value: 'first-time',
@@ -615,7 +702,7 @@ export const acknowledgementCadenceOptions = [
 ] as const;
 
 export const orgChartMaintenanceOptions = [
-  { value: 'hris-auto', label: 'Auto-generated from HRIS' },
+  { value: 'hris-auto', label: 'Auto-generated from HRIS (Human Resources Information System)' },
   { value: 'manual-quarterly', label: 'Manually updated quarterly' },
   { value: 'manual-annual', label: 'Manually updated annually' },
   { value: 'ad-hoc', label: 'Updated ad-hoc' },
@@ -698,10 +785,10 @@ export function selectedCriteriaCodes(data: WizardData) {
     ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8'].forEach((code) => criteria.add(code));
     criteria.add('GDPR');
   }
-  if (data.company.websiteTargetsEuOrUkResidents || data.company.websiteUsesCookiesAnalytics) {
+  if (data.company.hasPublicWebsite && (data.company.websiteTargetsEuOrUkResidents || data.company.websiteUsesCookiesAnalytics)) {
     criteria.add('GDPR');
   }
-  if (data.company.websiteTargetsCaliforniaResidents || data.company.websiteSellsOrSharesPersonalInformation) {
+  if (data.company.hasPublicWebsite && (data.company.websiteTargetsCaliforniaResidents || data.company.websiteSellsOrSharesPersonalInformation)) {
     criteria.add('CCPA');
   }
   if (data.scope.containsPhi) {

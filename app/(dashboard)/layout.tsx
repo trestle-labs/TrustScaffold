@@ -44,7 +44,9 @@ export default async function DashboardLayout({ children }: Readonly<{ children:
         <DashboardSidebar />
         <div className="flex min-h-screen flex-1 flex-col">
           <DashboardHeader appVersion={APP_VERSION_LABEL} appCommit={APP_GIT_COMMIT} />
-          <section className="flex-1 px-4 py-6 sm:px-8">{children}</section>
+          <section className="flex-1 px-4 py-6 sm:px-8">
+            {children}
+          </section>
         </div>
       </main>
     </OrgProvider>

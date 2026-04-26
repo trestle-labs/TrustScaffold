@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, ChevronDown, ChevronUp, Circle, CircleDashed, Info, Plus, Sparkles, Trash2, Users, Building2 } from 'lucide-react';
 import { useFieldArray, useForm, type FieldPath } from 'react-hook-form';
@@ -34,10 +34,13 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
+import { expandAcronymsInText } from '@/lib/acronyms';
 import { cn } from '@/lib/utils';
 import {
   dataTypeOptions,
   defaultWizardValues,
+  businessModelOptions,
+  deliveryModelOptions,
   hrisProviderOptions,
   idpProviderOptions,
   selectedTscLabels,
@@ -70,7 +73,7 @@ import {
   type WizardRecommendationRule,
   type WizardWarningRule,
 } from '@/lib/wizard/rule-matrix';
-import { useWizardStore } from '@/lib/wizard/store';
+import { mergeWizardData, useWizardStore } from '@/lib/wizard/store';
 import { computeAssessmentSummary, computeStepCompletions, domainBoolFields } from '@/lib/wizard/security-scoring';
 
 const customSubserviceVendorValue = '__other__';
@@ -188,10 +191,58 @@ function StepShell({ title, description, children }: { title: string; descriptio
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-foreground sm:text-2xl">{title}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+        <h2 className="text-xl font-semibold text-foreground sm:text-2xl">{expandAcronymsInText(title)}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{expandAcronymsInText(description)}</p>
       </div>
       {children}
+    </div>
+  );
+}
+
+function MiniStepCard({
+  title,
+  question,
+  answer,
+  rationale,
+  recommendations,
+  tone = 'neutral',
+}: {
+  title: string;
+  question: string;
+  answer: string;
+  rationale: string;
+  recommendations: string[];
+  tone?: 'neutral' | 'good' | 'warn';
+}) {
+  const toneStyles = {
+    neutral: 'border-slate-200 bg-slate-50 text-slate-800',
+    good: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+    warn: 'border-amber-200 bg-amber-50 text-amber-900',
+  } as const;
+
+  const answerStyles = {
+    neutral: 'bg-slate-100 text-slate-700',
+    good: 'bg-emerald-100 text-emerald-700',
+    warn: 'bg-amber-100 text-amber-700',
+  } as const;
+
+  return (
+    <div className={cn('rounded-2xl border p-4', toneStyles[tone])}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold">{expandAcronymsInText(title)}</p>
+          <p className="text-xs">{expandAcronymsInText(question)}</p>
+        </div>
+        <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-medium', answerStyles[tone])}>{expandAcronymsInText(answer)}</span>
+      </div>
+      <p className="mt-2 text-xs opacity-90">{expandAcronymsInText(rationale)}</p>
+      {recommendations.length ? (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {recommendations.map((item) => (
+            <Badge key={item} variant="outline" className="bg-white/70 text-[10px]">{expandAcronymsInText(item)}</Badge>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -209,7 +260,7 @@ function ControlRow({ control, name, label, gap, recommendation }: {
           <Checkbox checked={field.value} onCheckedChange={(c) => field.onChange(Boolean(c))} className="mt-0.5" />
         </FormControl>
         <div className="flex flex-1 items-start justify-between gap-2">
-          <FormLabel className="cursor-pointer leading-snug">{label}</FormLabel>
+          <FormLabel className="cursor-pointer leading-snug">{expandAcronymsInText(label)}</FormLabel>
           <Popover>
             <PopoverTrigger asChild>
               <button type="button" className="shrink-0 rounded p-0.5 text-muted-foreground/60 transition-colors hover:text-foreground">
@@ -220,11 +271,11 @@ function ControlRow({ control, name, label, gap, recommendation }: {
               <div className="space-y-3">
                 <div>
                   <p className="text-xs font-semibold text-foreground">Without this</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{gap}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{expandAcronymsInText(gap)}</p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-foreground">How to implement</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{recommendation}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{expandAcronymsInText(recommendation)}</p>
                 </div>
               </div>
             </PopoverContent>
@@ -271,14 +322,14 @@ function FirstTimerTip({ tip }: { tip: string }) {
     <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
       <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
       <p className="text-xs text-amber-800">
-        <span className="font-semibold">Getting started: </span>{tip}
+        <span className="font-semibold">Getting started: </span>{expandAcronymsInText(tip)}
       </p>
     </div>
   );
 }
 
 function AssessmentSectionLabel({ children }: { children: string }) {
-  return <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{children}</p>;
+  return <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{expandAcronymsInText(children)}</p>;
 }
 
 function RuleWarningCard({ rule }: { rule: WizardWarningRule }) {
@@ -297,8 +348,8 @@ function RuleWarningCard({ rule }: { rule: WizardWarningRule }) {
   return (
     <div className={`rounded-2xl border p-4 ${tones.wrapper}`}>
       <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Attention needed</p>
-      <p className={`mt-1 text-sm font-semibold ${tones.title}`}>{rule.title}</p>
-      <p className={`mt-1 text-xs ${tones.body}`}>{rule.recommendation}</p>
+      <p className={`mt-1 text-sm font-semibold ${tones.title}`}>{expandAcronymsInText(rule.title)}</p>
+      <p className={`mt-1 text-xs ${tones.body}`}>{expandAcronymsInText(rule.recommendation)}</p>
     </div>
   );
 }
@@ -309,9 +360,9 @@ function DeepDiveSelectCard({ control, rule }: { control: any; rule: WizardDeepD
     <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
       <div className="space-y-1">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-700">Follow-up question</p>
-        <p className="text-sm font-semibold text-blue-900">{rule.title}</p>
-        <p className="text-xs text-blue-800">{rule.description}</p>
-        <p className="text-xs text-blue-700">{rule.recommendation}</p>
+        <p className="text-sm font-semibold text-blue-900">{expandAcronymsInText(rule.title)}</p>
+        <p className="text-xs text-blue-800">{expandAcronymsInText(rule.description)}</p>
+        <p className="text-xs text-blue-700">{expandAcronymsInText(rule.recommendation)}</p>
       </div>
       <div className="mt-3">
         <FormField
@@ -319,7 +370,7 @@ function DeepDiveSelectCard({ control, rule }: { control: any; rule: WizardDeepD
           name={rule.field as any}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{rule.label}</FormLabel>
+              <FormLabel>{expandAcronymsInText(rule.label)}</FormLabel>
               <FormControl>
                 <select
                   {...field}
@@ -328,14 +379,14 @@ function DeepDiveSelectCard({ control, rule }: { control: any; rule: WizardDeepD
                   <option value="">Select an answer</option>
                   {rule.options.map((option) => (
                     <option key={option.value} value={option.value}>
-                      {option.label}
+                      {expandAcronymsInText(option.label)}
                     </option>
                   ))}
                 </select>
               </FormControl>
               {field.value ? (
                 <FormDescription>
-                  {rule.options.find((option) => option.value === field.value)?.description}
+                  {expandAcronymsInText(rule.options.find((option) => option.value === field.value)?.description ?? '')}
                 </FormDescription>
               ) : null}
               <FormMessage />
@@ -362,7 +413,7 @@ function DomainHeader({ label, criteria, score, answered, total, readiness, expa
         </span>
         <div>
           <p className="text-sm font-medium text-foreground">
-            {label} <span className="font-normal text-xs text-muted-foreground">({criteria})</span>
+            {expandAcronymsInText(label)} <span className="font-normal text-xs text-muted-foreground">({expandAcronymsInText(criteria)})</span>
           </p>
           <p className="text-[10px] text-muted-foreground">{readinessLabel}</p>
         </div>
@@ -373,21 +424,6 @@ function DomainHeader({ label, criteria, score, answered, total, readiness, expa
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-
-function ReviewRow({ label, value, required }: { label: string; value?: string | null; required?: boolean }) {
-  const isEmpty = !value?.trim();
-  return (
-    <div className="flex items-baseline gap-2 text-sm">
-      <span className="w-32 shrink-0 text-xs text-muted-foreground">{label}</span>
-      {isEmpty
-        ? <span className={cn('text-xs italic', required ? 'font-medium text-amber-500' : 'text-muted-foreground/40')}>
-            {required ? 'Required — missing' : '—'}
-          </span>
-        : <span className="min-w-0 break-words text-foreground">{value}</span>
-      }
-    </div>
-  );
-}
 
 function DecisionTraceCard({ items }: { items: WizardDecisionTraceItem[] }) {
   const kindStyles: Record<WizardDecisionTraceItem['kind'], { badge: string; label: string }> = {
@@ -416,12 +452,12 @@ function DecisionTraceCard({ items }: { items: WizardDecisionTraceItem[] }) {
               <div key={item.id} className="rounded-2xl border border-border bg-secondary/30 p-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className={cn('rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide', tone.badge)}>{tone.label}</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{item.stepLabel}</span>
-                  {item.criteria?.length ? <span className="text-[10px] text-muted-foreground">{item.criteria.join(', ')}</span> : null}
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{expandAcronymsInText(item.stepLabel)}</span>
+                  {item.criteria?.length ? <span className="text-[10px] text-muted-foreground">{expandAcronymsInText(item.criteria.join(', '))}</span> : null}
                 </div>
-                <p className="mt-2 text-sm font-semibold text-foreground">{item.title}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{item.summary}</p>
-                {item.recommendation ? <p className="mt-2 text-xs text-foreground">{item.recommendation}</p> : null}
+                <p className="mt-2 text-sm font-semibold text-foreground">{expandAcronymsInText(item.title)}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{expandAcronymsInText(item.summary)}</p>
+                {item.recommendation ? <p className="mt-2 text-xs text-foreground">{expandAcronymsInText(item.recommendation)}</p> : null}
               </div>
             );
           })
@@ -563,8 +599,8 @@ function GenerateStep({
                   </PopoverTrigger>
                   <PopoverContent className="w-72" align="end">
                     <p className="text-xs font-semibold text-foreground">{t.name}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{t.description}</p>
-                    <p className="mt-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/60">TSC criteria: {t.criteriaHint}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{expandAcronymsInText(t.description)}</p>
+                    <p className="mt-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/60">{expandAcronymsInText(`TSC criteria: ${t.criteriaHint}`)}</p>
                   </PopoverContent>
                 </Popover>
                 <Badge variant="outline" className="hidden px-1.5 py-0 text-[10px] sm:inline-flex">
@@ -628,9 +664,11 @@ function GenerateStep({
 
 export function PolicyWizard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { organization } = useOrg();
   const [isGenerating, startGenerating] = useTransition();
   const hasLoadedPersistedDraft = useRef(false);
+  const hasAppliedRequestedStepRef = useRef<number | null>(null);
   const formTopRef = useRef<HTMLDivElement | null>(null);
   const lastServerSavedSnapshotRef = useRef<string>(JSON.stringify(defaultWizardValues));
   const autosaveInFlightRef = useRef(false);
@@ -652,6 +690,7 @@ export function PolicyWizard() {
   const [customSubserviceRoleIds, setCustomSubserviceRoleIds] = React.useState<Record<string, boolean>>({});
   const [autoFilledSubserviceRoleIds, setAutoFilledSubserviceRoleIds] = React.useState<Record<string, boolean>>({});
   const [draftSyncStatus, setDraftSyncStatus] = React.useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [hasLoadedDraftFromServer, setHasLoadedDraftFromServer] = React.useState(false);
   const [maxStepReached, setMaxStepReached] = React.useState(currentStep);
   const watchedInfrastructure = form.watch('infrastructure.type');
   const watchedCloudProviders = form.watch('infrastructure.cloudProviders') ?? [];
@@ -661,6 +700,21 @@ export function PolicyWizard() {
     () => getRecommendedTrainingTools(watchedValues.subservices ?? []),
     [watchedValues.subservices],
   );
+  const requestedStep = useMemo(() => {
+    const rawStep = searchParams.get('step');
+
+    if (!rawStep) {
+      return null;
+    }
+
+    const parsedStep = Number.parseInt(rawStep, 10);
+
+    if (Number.isNaN(parsedStep)) {
+      return null;
+    }
+
+    return Math.max(0, Math.min(parsedStep, wizardStepTitles.length - 1));
+  }, [searchParams]);
 
   useEffect(() => {
     setCustomSubserviceVendorIds((previous) => {
@@ -710,20 +764,38 @@ export function PolicyWizard() {
       // Try to load server-side draft. If it's newer than localStorage, prefer it.
       loadWizardDraftAction().then((result) => {
         if (result.ok && result.payload) {
-          setData(result.payload);
+          const normalizedDraft = mergeWizardData(result.payload);
+          setData(normalizedDraft);
           setCurrentStep(result.currentStep);
           setMaxStepReached(result.currentStep);
-          form.reset(result.payload);
-          lastServerSavedSnapshotRef.current = JSON.stringify(result.payload);
+          form.reset(normalizedDraft);
+          lastServerSavedSnapshotRef.current = JSON.stringify(normalizedDraft);
           setDraftSyncStatus('saved');
         } else {
-          const fallbackDraft = shouldDiscardLocalDraft ? defaultWizardValues : data;
+          const fallbackDraft = mergeWizardData(shouldDiscardLocalDraft ? defaultWizardValues : data);
           form.reset(fallbackDraft);
           lastServerSavedSnapshotRef.current = JSON.stringify(fallbackDraft);
         }
+
+        setHasLoadedDraftFromServer(true);
       });
     }
   }, [data, form, hasHydrated, organization, organizationId, reset, setCurrentStep, setData, setOrganization]);
+
+  useEffect(() => {
+    if (!hasHydrated || !hasLoadedDraftFromServer || requestedStep === null) {
+      return;
+    }
+
+    if (hasAppliedRequestedStepRef.current === requestedStep) {
+      return;
+    }
+
+    setCurrentStep(requestedStep);
+    setMaxStepReached((previous) => Math.max(previous, requestedStep));
+    hasAppliedRequestedStepRef.current = requestedStep;
+    scrollToFormTop();
+  }, [hasHydrated, hasLoadedDraftFromServer, requestedStep, setCurrentStep]);
 
   useEffect(() => {
     const subscription = form.watch((value) => {
@@ -732,6 +804,22 @@ export function PolicyWizard() {
 
     return () => subscription.unsubscribe();
   }, [form, setData]);
+
+  useEffect(() => {
+    if (!hasHydrated) {
+      return;
+    }
+
+    const currentDraft = form.getValues();
+    const normalizedDraft = mergeWizardData(currentDraft);
+
+    if (JSON.stringify(currentDraft) === JSON.stringify(normalizedDraft)) {
+      return;
+    }
+
+    form.reset(normalizedDraft);
+    setData(normalizedDraft);
+  }, [form, hasHydrated, setData]);
 
   const autosaveIntervalMinutes = organization?.wizardAutosaveIntervalMinutes ?? 5;
 
@@ -774,6 +862,7 @@ export function PolicyWizard() {
   const completion = ((currentStep + 1) / wizardStepTitles.length) * 100;
   const selectedTsc = selectedTscLabels(watchedValues as WizardData);
   const organizationRelationship = form.watch('company.organizationRelationship');
+  const hasPublicWebsite = form.watch('company.hasPublicWebsite');
 
   useEffect(() => {
     if (!organization || organizationRelationship !== 'same-as-company') {
@@ -790,9 +879,20 @@ export function PolicyWizard() {
   }, [currentStep, form, organization, organizationRelationship]);
 
   const currentWizardData = watchedValues as WizardData;
+  const isServiceLed = currentWizardData.company.businessModel === 'services' || currentWizardData.company.deliveryModel === 'managed-services' || currentWizardData.company.deliveryModel === 'professional-services';
+  const isSoftwareLed = currentWizardData.company.businessModel === 'software' || currentWizardData.company.deliveryModel === 'saas' || currentWizardData.company.deliveryModel === 'api-platform' || currentWizardData.company.deliveryModel === 'self-hosted-product';
+  const websiteSignalsEnabled = currentWizardData.company.hasPublicWebsite;
   const reviewParseResult = useMemo(() => wizardSchema.safeParse(watchedValues), [watchedValues]);
-  const reviewSummary = reviewParseResult.success ? reviewParseResult.data : currentWizardData;
-  const reviewErrors = reviewParseResult.success ? [] : reviewParseResult.error.issues.map((issue) => issue.message);
+  const reviewErrors = reviewParseResult.success
+    ? []
+    : reviewParseResult.error.issues.map((issue) => {
+        if (issue.message !== 'Required') {
+          return issue.message;
+        }
+
+        const fieldPath = issue.path.join('.');
+        return fieldPath ? `${fieldPath} is required` : 'A required field is missing';
+      });
 
   const assessmentSummary = useMemo(() => computeAssessmentSummary(watchedValues as WizardData), [watchedValues]);
   const stepCompletions = useMemo(() => computeStepCompletions(watchedValues as WizardData, maxStepReached), [watchedValues, maxStepReached]);
@@ -980,6 +1080,18 @@ export function PolicyWizard() {
                   title="Welcome & Onboarding"
                   description="Capture the company metadata the template compiler will use across every generated policy."
                 >
+                  <MiniStepCard
+                    title="Stage checkpoint"
+                    question="Should website and privacy-trigger questions apply for this organization?"
+                    answer={websiteSignalsEnabled ? 'Yes, website in scope' : 'No public website in scope'}
+                    rationale={websiteSignalsEnabled
+                      ? 'Website, cookies, regional exposure, and DSAR answers can drive GDPR/CCPA obligations and document selection.'
+                      : 'Website-specific obligations are intentionally suppressed so the wizard does not invent privacy scope that is not present.'}
+                    recommendations={websiteSignalsEnabled
+                      ? ['Confirm canonical URL', 'Validate notice and consent signals', 'Capture DSAR channel']
+                      : ['Website questions hidden', 'Privacy can still be selected via TSC if needed']}
+                    tone={websiteSignalsEnabled ? 'good' : 'neutral'}
+                  />
                   <div className="grid gap-4 md:grid-cols-2">
                     <FormField
                       control={form.control}
@@ -1065,17 +1177,103 @@ export function PolicyWizard() {
                     />
                     <FormField
                       control={form.control}
+                      name="company.businessModel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Business model</FormLabel>
+                          <FormControl>
+                            <select {...field} className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                              {businessModelOptions.map((opt) => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                              ))}
+                            </select>
+                          </FormControl>
+                          <FormDescription>
+                            {businessModelOptions.find((opt) => opt.value === field.value)?.description}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="company.deliveryModel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Primary delivery model</FormLabel>
+                          <FormControl>
+                            <select {...field} className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                              {deliveryModelOptions.map((opt) => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                              ))}
+                            </select>
+                          </FormControl>
+                          <FormDescription>
+                            This helps the wizard emphasize service evidence depth versus software SDLC depth.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="company.hasPublicWebsite"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2 flex items-start gap-3 rounded-2xl border border-border bg-secondary/30 p-4">
+                          <FormControl>
+                            <Checkbox
+                              className="mt-0.5"
+                              checked={Boolean(field.value)}
+                              onCheckedChange={(checked) => {
+                                const next = Boolean(checked);
+                                field.onChange(next);
+
+                                if (!next) {
+                                  form.setValue('company.website', '', { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                                  form.setValue('company.websiteCollectsPersonalData', false, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                                  form.setValue('company.websiteUsesCookiesAnalytics', false, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                                  form.setValue('company.websiteTargetsEuOrUkResidents', false, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                                  form.setValue('company.websiteTargetsCaliforniaResidents', false, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                                  form.setValue('company.websiteAllowsChildrenUnder13', false, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                                  form.setValue('company.websiteHasPrivacyNotice', false, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                                  form.setValue('company.websiteHasCookieBanner', false, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                                  form.setValue('company.websiteSellsOrSharesPersonalInformation', false, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                                  form.setValue('company.dsarRequestChannel', '', { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <div className="space-y-1">
+                            <FormLabel className="text-sm font-medium leading-none">Company has a public website in scope</FormLabel>
+                            <FormDescription className="text-xs">
+                              Enable this when public web channels should affect privacy, consent, and regional obligations.
+                            </FormDescription>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {hasPublicWebsite ? (
+                    <FormField
+                      control={form.control}
                       name="company.website"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Website</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} placeholder="https://example.com" />
                           </FormControl>
+                          <FormDescription>The canonical public URL used in customer-facing notices and reviewer documentation.</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                    ) : (
+                      <div className="md:col-span-2 rounded-2xl border border-border bg-muted/30 p-4 text-xs text-muted-foreground">
+                        Website-specific privacy questions are hidden because no public website is currently in scope.
+                      </div>
+                    )}
+                    {hasPublicWebsite ? (
                     <div className="md:col-span-2 space-y-3 rounded-2xl border border-border bg-secondary/30 p-4">
                       <div className="space-y-1">
                         <p className="text-sm font-semibold text-foreground">Website privacy and regulatory signals</p>
@@ -1115,7 +1313,7 @@ export function PolicyWizard() {
                         name="company.dsarRequestChannel"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Privacy / DSAR request channel</FormLabel>
+                            <FormLabel>Privacy / Data Subject Access Request (DSAR) channel</FormLabel>
                             <FormControl>
                               <Input {...field} placeholder={form.watch('company.primaryContactEmail') || 'privacy@example.com'} />
                             </FormControl>
@@ -1125,6 +1323,7 @@ export function PolicyWizard() {
                         )}
                       />
                     </div>
+                    ) : null}
                     <FormField
                       control={form.control}
                       name="company.primaryContactName"
@@ -1251,6 +1450,18 @@ export function PolicyWizard() {
                   title="Governance, People & Training"
                   description="Capture the organizational controls that auditors evaluate for CC1 (Control Environment), CC4 (Monitoring), and CC1.4 (Competence). These questions determine which governance documents and evidence the checklist will generate."
                 >
+                  <MiniStepCard
+                    title="Stage checkpoint"
+                    question="Is governance primarily formalized or founder/manager-led today?"
+                    answer={currentWizardData.governance.hasBoardOrAdvisory ? 'Formal oversight present' : 'Founder or management-led oversight'}
+                    rationale={currentWizardData.governance.hasBoardOrAdvisory
+                      ? 'Formal oversight strengthens CC1.2 narratives and evidence expectations for meeting cadence and risk reviews.'
+                      : 'Founder-led governance is acceptable when accurately documented with concrete accountability and monitoring practices.'}
+                    recommendations={currentWizardData.governance.hasBoardOrAdvisory
+                      ? ['Document meeting cadence', 'Link board reviews to risk register']
+                      : ['Capture oversight approach', 'Assign security owner explicitly', 'Define monitoring cadence']}
+                    tone={currentWizardData.governance.hasBoardOrAdvisory ? 'good' : 'warn'}
+                  />
                   <div className="space-y-6">
                     {hasActiveGovernanceRule('welcome-first-time-guidance') && (
                       <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm space-y-1">
@@ -1339,7 +1550,7 @@ export function PolicyWizard() {
                       <FormField control={form.control} name="governance.hasDedicatedSecurityOfficer" render={({ field }) => (
                         <FormItem className="flex items-center gap-3">
                           <FormControl><Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(Boolean(checked))} /></FormControl>
-                          <FormLabel>A designated security officer or CISO owns the information security program.</FormLabel>
+                          <FormLabel>A designated security officer or Chief Information Security Officer (CISO) owns the information security program.</FormLabel>
                         </FormItem>
                       )} />
                       {getWarningRulesForField('governance', 'governance.hasDedicatedSecurityOfficer').map((rule) => (
@@ -1520,6 +1731,18 @@ export function PolicyWizard() {
                   title="System Scope"
                   description="Define the product boundary, data flows, and final system-description language that the generated policies should describe."
                 >
+                  <MiniStepCard
+                    title="Stage checkpoint"
+                    question="Is your in-scope boundary service-heavy, software-heavy, or both?"
+                    answer={isServiceLed && isSoftwareLed ? 'Hybrid service + software boundary' : isServiceLed ? 'Service-led boundary' : isSoftwareLed ? 'Software-led boundary' : 'General boundary'}
+                    rationale={isServiceLed
+                      ? 'Service-led scope usually needs stronger subcontractor, ticketing, and customer-delivery evidence language.'
+                      : 'Software-led scope usually needs stronger SDLC, change, and processing-control language.'}
+                    recommendations={isServiceLed
+                      ? ['Name key subprocessors', 'Describe managed workflows', 'Clarify customer support channels']
+                      : ['Describe product data flows', 'Define system interfaces', 'Clarify processing ownership']}
+                    tone={isServiceLed || isSoftwareLed ? 'good' : 'neutral'}
+                  />
                   <div className="grid gap-6">
 
                     {/* System Name */}
@@ -1671,7 +1894,7 @@ export function PolicyWizard() {
                                   return (
                                     <FormItem className="flex h-full flex-col">
                                       <FormLabel>Role</FormLabel>
-                                      <FormDescription className="md:min-h-12">Classify the vendor's job in the system, for example cloud host, identity provider, HRIS, or support platform.</FormDescription>
+                                      <FormDescription className="md:min-h-12">Classify the vendor&apos;s job in the system, for example cloud host, identity provider, HRIS, or support platform.</FormDescription>
                                       <FormControl className="mt-auto">
                                         <select
                                           value={selectedRoleValue}
@@ -1729,7 +1952,7 @@ export function PolicyWizard() {
                                 render={({ field }) => (
                                   <FormItem className="flex h-full flex-col">
                                     <FormLabel>Assurance review cadence</FormLabel>
-                                    <FormDescription className="md:min-h-12">How often your team reviews this vendor's assurance evidence, risk posture, or due diligence package.</FormDescription>
+                                    <FormDescription className="md:min-h-12">How often your team reviews this vendor&apos;s assurance evidence, risk posture, or due diligence package.</FormDescription>
                                     <FormControl className="mt-auto">
                                       <select
                                         {...field}
@@ -2047,6 +2270,18 @@ export function PolicyWizard() {
                   title="Compliance Scope"
                   description="Security (CC1–CC9) is always included. Choose additional Trust Services Criteria based on your contractual commitments and the nature of your data — each one adds specific policies and evidence requirements."
                 >
+                  <MiniStepCard
+                    title="Stage checkpoint"
+                    question="Are selected criteria aligned to actual legal, contractual, and data-handling obligations?"
+                    answer={selectedTsc.length > 1 ? `${selectedTsc.length} criteria in scope` : 'Security-only baseline'}
+                    rationale="This step should capture real obligations, not hypothetical future scope, because criteria selection controls generated policies and evidence expectations."
+                    recommendations={[
+                      'Confirm customer commitments',
+                      'Confirm regulated data triggers',
+                      'Avoid over-selecting unsupported criteria',
+                    ]}
+                    tone={selectedTsc.length > 1 ? 'good' : 'neutral'}
+                  />
                   <div className="space-y-4">
                     {/* Always-on Security badge */}
                     <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
@@ -2141,6 +2376,18 @@ export function PolicyWizard() {
                   title="Infrastructure Profiling"
                   description="Select the primary hosting model and answer provider-specific questions. This is the branching step that drives infrastructure language in the compiled Markdown."
                 >
+                  <MiniStepCard
+                    title="Stage checkpoint"
+                    question="Does infrastructure reality match what the generated controls will claim?"
+                    answer={currentWizardData.infrastructure.hostsOwnHardware ? 'Hybrid or self-hosted elements present' : `Cloud-only: ${(currentWizardData.infrastructure.cloudProviders ?? []).join(', ').toUpperCase() || 'Not set'}`}
+                    rationale={currentWizardData.infrastructure.hostsOwnHardware
+                      ? 'Self-hosted or hybrid scope increases physical-security, media handling, and failover control expectations.'
+                      : 'Cloud-only scope relies heavily on inherited controls and provider-native identity, logging, and network safeguards.'}
+                    recommendations={currentWizardData.infrastructure.hostsOwnHardware
+                      ? ['Validate server room controls', 'Confirm media destruction process', 'Document failover and rack access']
+                      : ['Document inherited controls', 'Confirm provider security baselines', 'Validate cloud logging coverage']}
+                    tone={currentWizardData.infrastructure.hostsOwnHardware ? 'warn' : 'good'}
+                  />
                   <div className="space-y-6">
                     {/* Multi-cloud provider selection */}
                     <FormField
@@ -2151,7 +2398,7 @@ export function PolicyWizard() {
                           <FormLabel>Cloud providers (select all that apply)</FormLabel>
                           <div className="grid gap-3 md:grid-cols-3">
                             {(['aws', 'azure', 'gcp'] as const).map((provider) => {
-                              const labels = { aws: 'AWS', azure: 'Azure', gcp: 'GCP' } as const;
+                              const labels = { aws: 'Amazon Web Services (AWS)', azure: 'Microsoft Azure', gcp: 'Google Cloud Platform (GCP)' } as const;
                               const checked = (field.value ?? []).includes(provider);
                               return (
                                 <div key={provider} className="flex items-center gap-3 rounded-2xl border border-border bg-white p-4">
@@ -2217,7 +2464,7 @@ export function PolicyWizard() {
                       name="infrastructure.idpProvider"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Identity provider</FormLabel>
+                          <FormLabel>Identity Provider (IdP)</FormLabel>
                           <FormControl>
                             <select
                               {...field}
@@ -2244,7 +2491,7 @@ export function PolicyWizard() {
                       <div className="grid gap-4 md:grid-cols-2">
                         <FormField control={form.control} name="operations.vcsProvider" render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Branch-protection guide provider</FormLabel>
+                            <FormLabel>Version Control System (VCS) / Branch-protection guide provider</FormLabel>
                             <FormControl>
                               <select {...field} className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                                 {vcsProviderOptions.map((provider) => (
@@ -2258,7 +2505,7 @@ export function PolicyWizard() {
                         )} />
                         <FormField control={form.control} name="operations.hrisProvider" render={({ field }) => (
                           <FormItem>
-                            <FormLabel>HRIS provider</FormLabel>
+                            <FormLabel>Human Resources Information System (HRIS) provider</FormLabel>
                             <FormControl>
                               <select {...field} className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                                 {hrisProviderOptions.map((provider) => (
@@ -2275,7 +2522,7 @@ export function PolicyWizard() {
 
                     {watchedCloudProviders.includes('aws') && (
                       <div className="space-y-3 rounded-2xl bg-secondary/50 p-4">
-                        <p className="text-sm font-medium text-foreground">AWS-specific controls</p>
+                        <p className="text-sm font-medium text-foreground">Amazon Web Services (AWS)-specific controls</p>
                         <FormField
                           control={form.control}
                           name="infrastructure.usesAwsIam"
@@ -2305,7 +2552,7 @@ export function PolicyWizard() {
 
                     {watchedCloudProviders.includes('azure') && (
                       <div className="space-y-3 rounded-2xl bg-secondary/50 p-4">
-                        <p className="text-sm font-medium text-foreground">Azure-specific controls</p>
+                        <p className="text-sm font-medium text-foreground">Microsoft Azure-specific controls</p>
                         <FormField
                           control={form.control}
                           name="infrastructure.usesAzureEntraId"
@@ -2347,7 +2594,7 @@ export function PolicyWizard() {
 
                     {watchedCloudProviders.includes('gcp') && (
                       <div className="space-y-3 rounded-2xl bg-secondary/50 p-4">
-                        <p className="text-sm font-medium text-foreground">GCP-specific controls</p>
+                        <p className="text-sm font-medium text-foreground">Google Cloud Platform (GCP)-specific controls</p>
                         <FormField
                           control={form.control}
                           name="infrastructure.usesGcpIam"
@@ -2410,7 +2657,7 @@ export function PolicyWizard() {
                               <FormControl>
                                 <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(Boolean(checked))} />
                               </FormControl>
-                              <FormLabel>Cloud VPN or private network access logs are required for administrative connectivity.</FormLabel>
+                              <FormLabel>Cloud Virtual Private Network (VPN) or private network access logs are required for administrative connectivity.</FormLabel>
                             </FormItem>
                           )}
                         />
@@ -2473,6 +2720,20 @@ export function PolicyWizard() {
                   title="Security Assessment"
                   description="Evaluate your organization's readiness across six technical security review domains. These map directly to the evidence an assessor will request during a SOC 2 audit. Each domain is contextualized to your selected cloud provider(s)."
                 >
+                  <MiniStepCard
+                    title="Stage checkpoint"
+                    question="Is your assessment depth aligned to your delivery risk profile?"
+                    answer={isSoftwareLed ? 'Software-led depth expected' : isServiceLed ? 'Service-led depth expected' : 'Baseline depth expected'}
+                    rationale={isSoftwareLed
+                      ? 'Software-heavy delivery increases expectations for SDLC, configuration, and runtime control evidence.'
+                      : isServiceLed
+                        ? 'Service-heavy delivery increases expectations for process repeatability, oversight, and operational evidence.'
+                        : 'A balanced baseline is acceptable when scope and delivery model are mixed or early-stage.'}
+                    recommendations={isSoftwareLed
+                      ? ['Prioritize config and integrity domains', 'Show change and release guardrails', 'Demonstrate vulnerability response']
+                      : ['Prioritize governance handoffs', 'Show operational runbooks', 'Demonstrate monitoring accountability']}
+                    tone={isSoftwareLed || isServiceLed ? 'good' : 'neutral'}
+                  />
                   <div className="space-y-6">
                     {/* ── Overall Progress ── */}
                     <Card>
@@ -2700,7 +2961,7 @@ export function PolicyWizard() {
                           {form.watch('securityAssessment.configReview.hasPatchManagementProcess') && (
                             <FormField control={form.control} name="securityAssessment.configReview.patchSlaBusinessDays" render={({ field }) => (
                               <FormItem className="ml-8">
-                                <FormLabel>Critical patch SLA (business days)</FormLabel>
+                                <FormLabel>Critical patch Service Level Agreement (SLA) (business days)</FormLabel>
                                 <FormControl>
                                   <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
                                 </FormControl>
@@ -2799,7 +3060,7 @@ export function PolicyWizard() {
                           {form.watch('securityAssessment.fileIntegrity.hasFileIntegrityMonitoring') && (
                             <FormField control={form.control} name="securityAssessment.fileIntegrity.fimTool" render={({ field }) => (
                               <FormItem className="ml-8">
-                                <FormLabel>FIM tool</FormLabel>
+                                <FormLabel>File Integrity Monitoring (FIM) tool</FormLabel>
                                 <FormControl><Input {...field} placeholder="e.g. OSSEC, Tripwire, Wazuh, CrowdStrike" /></FormControl>
                               </FormItem>
                             )} />
@@ -2824,6 +3085,18 @@ export function PolicyWizard() {
                   title="Security Tooling"
                   description="Identify the security and monitoring tools in your environment. This drives evidence checklist items for CC6.6 (external threats), CC6.8 (malware prevention), CC7.1 (vulnerability management), and A1.1 (capacity monitoring)."
                 >
+                  <MiniStepCard
+                    title="Stage checkpoint"
+                    question="Can you produce tool-backed evidence for each core security function?"
+                    answer={currentWizardData.securityTooling.siemTool || currentWizardData.securityTooling.vulnerabilityScanningTool || currentWizardData.securityTooling.endpointProtectionTool ? 'Tool evidence partially documented' : 'Tool evidence not documented yet'}
+                    rationale="Auditors generally accept manual controls only when evidence is consistent and repeatable; tool-backed telemetry significantly reduces audit friction."
+                    recommendations={[
+                      'Document SIEM or monitoring source',
+                      'Document vulnerability scanning cadence',
+                      'Document endpoint or device controls',
+                    ]}
+                    tone={currentWizardData.securityTooling.siemTool || currentWizardData.securityTooling.vulnerabilityScanningTool ? 'good' : 'warn'}
+                  />
                   <div className="space-y-6">
 
                     {/* ── Security Monitoring ── */}
@@ -2837,7 +3110,7 @@ export function PolicyWizard() {
                       )}
                       <FormField control={form.control} name="securityTooling.siemTool" render={({ field }) => (
                         <FormItem className="mb-2">
-                          <FormLabel>SIEM or security monitoring platform</FormLabel>
+                          <FormLabel>Security Information and Event Management (SIEM) or security monitoring platform</FormLabel>
                           <FormControl><Input {...field} placeholder="e.g., Datadog Security, Splunk, Elastic SIEM, AWS Security Hub" /></FormControl>
                           <FormDescription>Leave blank if no centralized security monitoring is in place.</FormDescription>
                         </FormItem>
@@ -2894,7 +3167,7 @@ export function PolicyWizard() {
                       {form.watch('securityTooling.hasMdm') && (
                         <FormField control={form.control} name="securityTooling.mdmTool" render={({ field }) => (
                           <FormItem className="ml-8">
-                            <FormLabel>MDM tool</FormLabel>
+                            <FormLabel>Mobile Device Management (MDM) tool</FormLabel>
                             <FormControl><Input {...field} placeholder="e.g., Jamf, Kandji, Intune" /></FormControl>
                           </FormItem>
                         )} />
@@ -2995,6 +3268,18 @@ export function PolicyWizard() {
                   title="Operational Context"
                   description="Capture the tools, SLAs, and controls that drive both policy language and the evidence checklist your auditor will use. Everything here maps to a specific audit request."
                 >
+                  <MiniStepCard
+                    title="Stage checkpoint"
+                    question="Are operational controls matched to how work is actually delivered?"
+                    answer={isServiceLed ? 'Service-led operational model' : isSoftwareLed ? 'Software-led operational model' : 'General operational model'}
+                    rationale={isServiceLed
+                      ? 'Service organizations need clear ticketing, support, and customer communication evidence tied to execution SLAs.'
+                      : 'Software organizations need strong release, access, and incident workflows that map to engineering execution.'}
+                    recommendations={isServiceLed
+                      ? ['Validate ticket workflow ownership', 'Document support channel evidence', 'Confirm customer contract commitments']
+                      : ['Validate peer review and MFA controls', 'Document incident workflow', 'Confirm access SLA evidence']}
+                    tone={isServiceLed || isSoftwareLed ? 'good' : 'neutral'}
+                  />
                   <div className="space-y-6">
 
                     {/* ── Operational Tools ── */}
@@ -3035,7 +3320,7 @@ export function PolicyWizard() {
                       <div className="grid gap-4 md:grid-cols-2">
                         <FormField control={form.control} name="operations.terminationSlaHours" render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Termination SLA (hours)</FormLabel>
+                            <FormLabel>Termination Service Level Agreement (SLA) (hours)</FormLabel>
                             <FormControl>
                               <Input type="number" min={1} max={168} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} />
                             </FormControl>
@@ -3045,7 +3330,7 @@ export function PolicyWizard() {
                         )} />
                         <FormField control={form.control} name="operations.onboardingSlaDays" render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Onboarding SLA (business days)</FormLabel>
+                            <FormLabel>Onboarding Service Level Agreement (SLA) (business days)</FormLabel>
                             <FormControl>
                               <Input type="number" min={1} max={30} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} />
                             </FormControl>
@@ -3190,7 +3475,7 @@ export function PolicyWizard() {
                         {form.watch('operations.requiresLostDeviceReporting') ? (
                           <FormField control={form.control} name="operations.lostDeviceReportSlaHours" render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Device report SLA (hours)</FormLabel>
+                              <FormLabel>Device report Service Level Agreement (SLA) (hours)</FormLabel>
                               <FormControl>
                                 <Input type="number" min={1} max={168} value={field.value} onChange={(e) => field.onChange(Number(e.target.value))} />
                               </FormControl>
@@ -3266,7 +3551,7 @@ export function PolicyWizard() {
                     {/* ── Confidentiality & Data Lifecycle ── */}
                     <div className="space-y-1 rounded-2xl bg-secondary/50 p-4">
                       <p className="text-sm font-medium text-foreground">Confidentiality & data lifecycle <span className="font-normal text-xs text-muted-foreground">(C1.1, C1.2)</span></p>
-                      <p className="mb-3 text-xs text-muted-foreground">These controls govern how confidential information is protected from creation to destruction. They're required if you selected the Confidentiality TSC and are best practices regardless.</p>
+                      <p className="mb-3 text-xs text-muted-foreground">These controls govern how confidential information is protected from creation to destruction. They&apos;re required if you selected the Confidentiality TSC and are best practices regardless.</p>
                       {assessmentSummary.isFirstTimer && (
                         <div className="mb-3">
                           <FirstTimerTip tip="NDA collection at onboarding is the fastest win here — add it to your onboarding checklist and collect signatures through your HRIS. This alone closes the C1.1 gap that many first-timers miss." />
@@ -3311,6 +3596,18 @@ export function PolicyWizard() {
                   title="Review"
                   description="Your SOC 2 readiness report — see overall progress, security gaps, and prioritized remediation steps before generating policies."
                 >
+                  <MiniStepCard
+                    title="Stage checkpoint"
+                    question="Is this draft truthful, complete, and aligned to how your team actually operates?"
+                    answer={reviewErrors.length === 0 ? 'Validation clean' : `${reviewErrors.length} issue${reviewErrors.length === 1 ? '' : 's'} to fix`}
+                    rationale="This is the last quality gate before generation. Resolve mismatches now so generated language stays defensible during independent review."
+                    recommendations={[
+                      'Fix validation gaps',
+                      'Verify profile-driven branching',
+                      'Confirm website/regulatory scope answers',
+                    ]}
+                    tone={reviewErrors.length === 0 ? 'good' : 'warn'}
+                  />
                   <div className="space-y-6">
                     {reviewErrors.length ? (
                       <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
@@ -3360,198 +3657,13 @@ export function PolicyWizard() {
 
                     <DecisionTraceCard items={decisionTraceItems} />
 
-                    {reviewSummary ? (
-                      <div className="grid gap-4 lg:grid-cols-2">
-
-                        {/* Company */}
-                        <Card>
-                          <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-base">Company</CardTitle>
-                            <button type="button" onClick={() => jumpToStep(0)} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Edit</button>
-                          </CardHeader>
-                          <CardContent className="space-y-1.5">
-                            <ReviewRow label="Company name" value={reviewSummary.company.name} required />
-                            <ReviewRow
-                              label="Org relationship"
-                              value={reviewSummary.company.organizationRelationship === 'same-as-company' ? 'Workspace org is the company' : `Workspace org governs ${reviewSummary.company.name}`}
-                            />
-                            {reviewSummary.company.organizationRelationship === 'governing-company' ? (
-                              <ReviewRow label="Workspace org" value={organization.name} />
-                            ) : null}
-                            <ReviewRow label="Website" value={reviewSummary.company.website} />
-                            <ReviewRow label="Website collects personal data" value={reviewSummary.company.websiteCollectsPersonalData ? 'Yes' : 'No'} />
-                            <ReviewRow label="Cookies / analytics" value={reviewSummary.company.websiteUsesCookiesAnalytics ? 'Yes' : 'No'} />
-                            <ReviewRow label="EU/UK exposure" value={reviewSummary.company.websiteTargetsEuOrUkResidents ? 'Yes' : 'No'} />
-                            <ReviewRow label="California exposure" value={reviewSummary.company.websiteTargetsCaliforniaResidents ? 'Yes' : 'No'} />
-                            <ReviewRow label="Privacy notice" value={reviewSummary.company.websiteHasPrivacyNotice ? 'Published' : 'Not documented'} />
-                            <ReviewRow label="Cookie consent" value={reviewSummary.company.websiteHasCookieBanner ? 'Available' : 'Not documented'} />
-                            <ReviewRow label="DSAR channel" value={reviewSummary.company.dsarRequestChannel || reviewSummary.company.primaryContactEmail} />
-                            <ReviewRow label="Contact name" value={reviewSummary.company.primaryContactName} />
-                            <ReviewRow label="Contact email" value={reviewSummary.company.primaryContactEmail} />
-                            <ReviewRow label="Industry" value={reviewSummary.company.industry} />
-                            <ReviewRow label="Compliance maturity" value={reviewSummary.company.complianceMaturity} />
-                            <ReviewRow label="Target audit" value={reviewSummary.company.targetAuditType} />
-                          </CardContent>
-                        </Card>
-
-                        {/* System Scope */}
-                        <Card>
-                          <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-base">System scope</CardTitle>
-                            <button type="button" onClick={() => jumpToStep(2)} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Edit</button>
-                          </CardHeader>
-                          <CardContent className="space-y-2">
-                            <ReviewRow label="System name" value={reviewSummary.scope.systemName} required />
-                            <ReviewRow label="Description" value={reviewSummary.scope.systemDescription} required />
-                            <div>
-                              <p className="mb-1 text-xs text-muted-foreground">Data types</p>
-                              {reviewSummary.scope.dataTypesHandled.length > 0
-                                ? <div className="flex flex-wrap gap-1.5">{reviewSummary.scope.dataTypesHandled.map((dt) => <Badge key={dt} variant="secondary" className="text-xs">{dt}</Badge>)}</div>
-                                : <span className="text-xs italic text-muted-foreground/40">None selected</span>
-                              }
-                            </div>
-                            <ReviewRow label="PHI in scope" value={reviewSummary.scope.containsPhi ? 'Yes' : 'No'} />
-                            <ReviewRow label="CDE in scope" value={reviewSummary.scope.hasCardholderDataEnvironment ? 'Yes' : 'No'} />
-                            {reviewSummary.scope.containsPhi ? (
-                              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900">
-                                <p className="font-semibold">HIPAA administrative safeguards preview</p>
-                                <p className="mt-1 text-emerald-800">
-                                  Generated drafts will include workforce access administration, HRIS and identity-driven access changes, PHI-aware training and sanctions expectations, incident escalation, and vendor oversight language for healthcare-regulated data.
-                                </p>
-                              </div>
-                            ) : null}
-                            {reviewSummary.scope.hasCardholderDataEnvironment ? (
-                              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
-                                <p className="font-semibold">PCI segmentation preview</p>
-                                <p className="mt-1 text-blue-800">
-                                  Generated drafts will include cardholder data environment boundary ownership, segmentation change review, restricted connectivity expectations, administrative access controls, and vendor impact on the CDE.
-                                </p>
-                              </div>
-                            ) : null}
-                            <ReviewRow label="Tenancy" value={reviewSummary.scope.isMultiTenant ? 'Multi-tenant SaaS' : 'Single-tenant'} />
-                          </CardContent>
-                        </Card>
-
-                        {/* TSC & Infrastructure */}
-                        <Card>
-                          <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-base">TSC & infrastructure</CardTitle>
-                            <div className="flex gap-3">
-                              <button type="button" onClick={() => jumpToStep(4)} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Edit TSC</button>
-                              <button type="button" onClick={() => jumpToStep(1)} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Edit infra</button>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="space-y-2">
-                            <div>
-                              <p className="mb-1 text-xs text-muted-foreground">Trust Service Criteria</p>
-                              <div className="flex flex-wrap gap-1.5">{selectedTsc.map((label) => <Badge key={label} className="text-xs">{label}</Badge>)}</div>
-                            </div>
-                            <ReviewRow label="Cloud providers" value={reviewSummary.infrastructure.cloudProviders?.join(', ') || reviewSummary.infrastructure.type || '—'} />
-                            <ReviewRow label="Identity provider" value={reviewSummary.infrastructure.idpProvider} />
-                            <ReviewRow label="Availability zones" value={reviewSummary.infrastructure.usesAvailabilityZones ? 'Yes' : 'No'} />
-                            <ReviewRow label="VPN logging" value={reviewSummary.infrastructure.usesCloudVpn ? 'Enabled' : 'No'} />
-                            {reviewSummary.infrastructure.hostsOwnHardware && (
-                              <ReviewRow label="On-premises hardware" value="Yes" />
-                            )}
-                          </CardContent>
-                        </Card>
-
-                        {/* Governance & Training */}
-                        <Card>
-                          <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-base">Governance & training</CardTitle>
-                            <button type="button" onClick={() => jumpToStep(3)} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Edit</button>
-                          </CardHeader>
-                          <CardContent className="space-y-2">
-                            <div className="flex flex-wrap gap-1.5">
-                              {reviewSummary.governance.hasEmployeeHandbook && <Badge variant="secondary" className="text-xs">Employee handbook</Badge>}
-                              {reviewSummary.governance.hasCodeOfConduct && <Badge variant="secondary" className="text-xs">Code of conduct</Badge>}
-                              {reviewSummary.governance.hasDisciplinaryProcedures && <Badge variant="secondary" className="text-xs">Disciplinary procedures</Badge>}
-                              {reviewSummary.governance.hasBoardOrAdvisory && <Badge variant="secondary" className="text-xs">Board / advisory</Badge>}
-                              {reviewSummary.governance.hasDedicatedSecurityOfficer && <Badge variant="secondary" className="text-xs">{reviewSummary.governance.securityOfficerTitle || 'Security officer'}</Badge>}
-                              {reviewSummary.governance.hasOrgChart && <Badge variant="secondary" className="text-xs">Org chart</Badge>}
-                              {reviewSummary.governance.hasJobDescriptions && <Badge variant="secondary" className="text-xs">Job descriptions</Badge>}
-                              {reviewSummary.governance.hasInternalAuditProgram && <Badge variant="secondary" className="text-xs">Internal audit</Badge>}
-                            </div>
-                            <ReviewRow label="Policy acknowledgement" value={reviewSummary.governance.acknowledgementCadence} />
-                            <ReviewRow label="Training tool" value={reviewSummary.training.securityAwarenessTrainingTool || undefined} />
-                            <ReviewRow label="Training cadence" value={reviewSummary.training.trainingCadence} />
-                            {reviewSummary.training.hasPhishingSimulation && (
-                              <ReviewRow label="Phishing sim" value={reviewSummary.training.phishingSimulationFrequency} />
-                            )}
-                          </CardContent>
-                        </Card>
-
-                        {/* Security Tooling */}
-                        <Card>
-                          <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-base">Security tooling</CardTitle>
-                            <button type="button" onClick={() => jumpToStep(6)} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Edit</button>
-                          </CardHeader>
-                          <CardContent className="space-y-2">
-                            <div className="flex flex-wrap gap-1.5">
-                              {reviewSummary.securityTooling.siemTool && <Badge variant="secondary" className="text-xs">SIEM: {reviewSummary.securityTooling.siemTool}</Badge>}
-                              {reviewSummary.securityTooling.hasIdsIps && <Badge variant="secondary" className="text-xs">IDS/IPS</Badge>}
-                              {reviewSummary.securityTooling.hasWaf && <Badge variant="secondary" className="text-xs">WAF</Badge>}
-                              {reviewSummary.securityTooling.endpointProtectionTool && <Badge variant="secondary" className="text-xs">EPP: {reviewSummary.securityTooling.endpointProtectionTool}</Badge>}
-                              {reviewSummary.securityTooling.hasMdm && <Badge variant="secondary" className="text-xs">MDM{reviewSummary.securityTooling.mdmTool ? `: ${reviewSummary.securityTooling.mdmTool}` : ''}</Badge>}
-                              {reviewSummary.securityTooling.vulnerabilityScanningTool && <Badge variant="secondary" className="text-xs">Vuln scan: {reviewSummary.securityTooling.vulnerabilityScanningTool}</Badge>}
-                              {reviewSummary.securityTooling.hasDast && <Badge variant="secondary" className="text-xs">DAST</Badge>}
-                              {reviewSummary.securityTooling.monitoringTool && <Badge variant="secondary" className="text-xs">Monitoring: {reviewSummary.securityTooling.monitoringTool}</Badge>}
-                              {reviewSummary.securityTooling.hasAutoscaling && <Badge variant="secondary" className="text-xs">Autoscaling</Badge>}
-                            </div>
-                            <ReviewRow label="Pen test frequency" value={reviewSummary.securityTooling.penetrationTestFrequency} />
-                            <ReviewRow label="Log retention" value={`${reviewSummary.securityTooling.logRetentionDays} days`} />
-                          </CardContent>
-                        </Card>
-
-                        {/* Operations */}
-                        <Card>
-                          <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-base">Operations</CardTitle>
-                            <button type="button" onClick={() => jumpToStep(7)} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Edit</button>
-                          </CardHeader>
-                          <CardContent className="space-y-2">
-                            <ReviewRow label="Source control tool name" value={reviewSummary.operations.versionControlSystem} />
-                            <ReviewRow label="Branch-protection guide provider" value={reviewSummary.operations.vcsProvider} />
-                            <ReviewRow label="Ticketing" value={reviewSummary.operations.ticketingSystem} />
-                            <ReviewRow label="On-call tool" value={reviewSummary.operations.onCallTool} />
-                            <ReviewRow label="HRIS" value={reviewSummary.operations.hrisProvider} />
-                            <ReviewRow label="Termination SLA" value={`${reviewSummary.operations.terminationSlaHours} hours`} />
-                            <ReviewRow label="Onboarding SLA" value={`${reviewSummary.operations.onboardingSlaDays} business days`} />
-                            <ReviewRow label="Acceptable use scope" value={reviewSummary.operations.acceptableUseScope} />
-                            <ReviewRow label="Security reporting" value={reviewSummary.operations.securityReportChannel || reviewSummary.company.primaryContactEmail} />
-                            {reviewSummary.operations.requiresLostDeviceReporting ? (
-                              <ReviewRow label="Lost device reporting" value={`${reviewSummary.operations.lostDeviceReportSlaHours} hours`} />
-                            ) : null}
-                            <div className="flex flex-wrap gap-1.5 pt-1">
-                              {reviewSummary.operations.requiresMfa && <Badge variant="secondary" className="text-xs">MFA required</Badge>}
-                              {reviewSummary.operations.requiresPeerReview && <Badge variant="secondary" className="text-xs">Peer review</Badge>}
-                              {reviewSummary.operations.requiresCyberInsurance && <Badge variant="secondary" className="text-xs">Cyber insurance</Badge>}
-                              {reviewSummary.operations.requiresApprovedSoftware && <Badge variant="secondary" className="text-xs">Approved tools only</Badge>}
-                              {reviewSummary.operations.restrictsCompanyDataToApprovedSystems && <Badge variant="secondary" className="text-xs">Approved data locations</Badge>}
-                              {reviewSummary.operations.monitorsCompanySystems && <Badge variant="secondary" className="text-xs">System monitoring notice</Badge>}
-                              {reviewSummary.operations.permitsLimitedPersonalUse && <Badge variant="secondary" className="text-xs">Limited personal use</Badge>}
-                              {reviewSummary.operations.hasRiskRegister && <Badge variant="secondary" className="text-xs">Risk register</Badge>}
-                              {reviewSummary.operations.hasNdaProcess && <Badge variant="secondary" className="text-xs">NDAs</Badge>}
-                              {reviewSummary.operations.dataRetentionDefined && <Badge variant="secondary" className="text-xs">Retention schedule</Badge>}
-                            </div>
-                            {reviewSummary.subservices.filter(s => s.name).length > 0 && (
-                              <div className="space-y-1.5 pt-1">
-                                <p className="text-xs text-muted-foreground">Subservice organizations</p>
-                                {reviewSummary.subservices.filter(s => s.name).map((s) => (
-                                  <div key={s.name} className="rounded-xl bg-secondary/60 px-3 py-2">
-                                    <p className="text-xs font-medium text-foreground">{s.name}</p>
-                                    <p className="text-[10px] text-muted-foreground">{s.role}{s.hasAssuranceReport ? ` · ${s.assuranceReportType}` : ' · No assurance report'}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-
-                      </div>
-                    ) : null}
+                    <div className="rounded-2xl border border-border bg-secondary/30 p-4 text-sm text-muted-foreground">
+                      <p className="font-semibold text-foreground">Stage summaries moved to Dashboard</p>
+                      <p className="mt-1">The persisted company, scope, infrastructure, governance, tooling, and operations cards now live on the dashboard so users can review submitted information without reopening this review step.</p>
+                      <Button type="button" variant="outline" className="mt-3" onClick={() => router.push('/dashboard')}>
+                        Open dashboard
+                      </Button>
+                    </div>
                   </div>
                 </StepShell>
               ) : null}
@@ -3561,6 +3673,18 @@ export function PolicyWizard() {
                   title="Generate Policies"
                   description="Review what will be compiled, then generate your org-scoped policy drafts and evidence checklist."
                 >
+                  <MiniStepCard
+                    title="Stage checkpoint"
+                    question="Does the generated document set match your real obligations and selected scope?"
+                    answer={`${getExpectedTemplates(watchedValues).length} expected documents`}
+                    rationale="Generation should include only the baseline plus criteria and trigger-driven documents that are actually in scope for this organization."
+                    recommendations={[
+                      'Confirm TSC selection',
+                      'Confirm website, PHI, and CDE triggers',
+                      'Adjust scope before compile if count looks off',
+                    ]}
+                    tone="neutral"
+                  />
                   <GenerateStep
                     watchedValues={watchedValues as WizardData}
                     selectedTsc={selectedTsc}

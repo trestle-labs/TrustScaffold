@@ -19,7 +19,7 @@ title: Tokenization and Cardholder Data Policy
 slug: tokenization-cardholder-data-policy
 tsc_category: PCI-DSS
 criteria_mapped:
-  - PCI
+	- PCI
 generated_for: {{organization_name}}
 effective_date: {{effective_date}}
 version: {{policy_version}}

@@ -7,7 +7,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'TrustScaffold',
-  description: 'Open-source compliance automation platform — starting with SOC 2. Self-hostable, multi-tenant, and auditor-ready.',
+  description: 'Open-source compliance automation platform — starting with SOC 2 (System and Organization Controls 2). Self-hostable, multi-tenant, and auditor-ready.',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
