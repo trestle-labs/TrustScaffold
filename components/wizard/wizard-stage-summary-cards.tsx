@@ -1,3 +1,4 @@
+import type { Route } from 'next';
 import Link from 'next/link';
 
 import { Badge } from '@/components/ui/badge';
@@ -35,7 +36,7 @@ type SummaryCard = {
   subservices?: SummarySubservice[];
   actions: Array<{
     label: string;
-    href: string;
+    href: Route;
   }>;
 };
 
