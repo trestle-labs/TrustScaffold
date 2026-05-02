@@ -2,7 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { renderTemplate } from '@/lib/documents/template-engine';
+import { renderTemplate, stripMappingMetadata } from '@/lib/documents/template-engine';
+import { canRejectOrRegenerateDocuments } from '@/lib/auth/roles';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { buildTemplatePayload } from '@/lib/wizard/template-payload';
@@ -47,7 +48,7 @@ export async function compileDocsAction(rawWizardData: WizardData): Promise<Comp
 
   const organization = context.organization;
 
-  if (!['admin', 'editor'].includes(organization.role)) {
+  if (!canRejectOrRegenerateDocuments(organization.role)) {
     return { ok: false, error: 'Only admins and editors can generate policy drafts' };
   }
 
@@ -82,7 +83,7 @@ export async function compileDocsAction(rawWizardData: WizardData): Promise<Comp
         template_id: template.id,
         title: template.name,
         file_name: renderTemplate(template.output_filename_pattern, mergedVariables, template.name),
-        content_markdown: renderTemplate(template.markdown_template, mergedVariables, template.name),
+        content_markdown: stripMappingMetadata(renderTemplate(template.markdown_template, mergedVariables, template.name)),
         input_payload: parsed.data,
         status: 'draft',
         version: 1,

@@ -3,11 +3,12 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
+import { canRejectOrRegenerateDocuments } from '@/lib/auth/roles';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { wizardSchema, type WizardData } from '@/lib/wizard/schema';
 
-const SCHEMA_VERSION = 7;
+const SCHEMA_VERSION = 8;
 
 function str(formData: FormData, key: string, fallback: string): string {
   const val = formData.get(key);
@@ -18,7 +19,7 @@ export async function updateOrgProfileAction(formData: FormData): Promise<void> 
   const context = await getDashboardContext();
   if (!context?.organization) redirect('/login');
 
-  if (!['admin', 'editor'].includes(context.organization.role)) {
+  if (!canRejectOrRegenerateDocuments(context.organization.role)) {
     redirect('/settings?error=Only+admins+and+editors+can+update+the+org+profile');
   }
 
@@ -42,6 +43,7 @@ export async function updateOrgProfileAction(formData: FormData): Promise<void> 
       primaryContactName: str(formData, 'primaryContactName', current.company.primaryContactName),
       primaryContactEmail: str(formData, 'primaryContactEmail', current.company.primaryContactEmail),
       complianceMaturity: (str(formData, 'complianceMaturity', current.company.complianceMaturity) as WizardData['company']['complianceMaturity']),
+      soxApplicability: (str(formData, 'soxApplicability', current.company.soxApplicability) as WizardData['company']['soxApplicability']),
       targetAuditType: (str(formData, 'targetAuditType', current.company.targetAuditType) as WizardData['company']['targetAuditType']),
     },
     governance: {
@@ -90,6 +92,7 @@ export async function updateOrgProfileAction(formData: FormData): Promise<void> 
   if (error) redirect(`/settings?error=${encodeURIComponent(error.message)}`);
 
   revalidatePath('/generated-docs');
+  revalidatePath('/dashboard');
   revalidatePath('/settings');
   redirect('/settings?success=Org+profile+updated.+Documents+will+be+flagged+as+stale+until+regenerated.');
 }

@@ -32,6 +32,7 @@ Use this checklist to review the baseline template set before organization-speci
 | PCI | PCI-DSS high-water-mark requirements | ☐ Covered ☐ Partial ☐ Missing ☐ N/A |  |
 | GDPR | GDPR / privacy high-water-mark requirements | ☐ Covered ☐ Partial ☐ Missing ☐ N/A |  |
 | CCPA | CCPA / CPRA privacy high-water-mark requirements | ☐ Covered ☐ Partial ☐ Missing ☐ N/A |  |
+| SOX | SOX | ☐ Covered ☐ Partial ☐ Missing ☐ N/A |  |
 
 ## Template-Level Review
 
@@ -64,6 +65,15 @@ Use this checklist to review the baseline template set before organization-speci
 | Legal and Regulatory Registry | ☐ Ready ☐ Needs edits ☐ Not needed |  |
 | Data Protection Impact Assessment | ☐ Ready ☐ Needs edits ☐ Not needed |  |
 | Asset Management and Cryptographic Inventory | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| SOX IT General Controls Matrix | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| SOX Access and Change Evidence Request List | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| SOX Key Report Inventory | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| SOX Interface Control Register | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| Complementary User Entity Controls Matrix | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| Complementary Subservice Organization Controls Register | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| Management Assertion Letter | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| Points of Focus Gap Analysis | ☐ Ready ☐ Needs edits ☐ Not needed |  |
+| Bridge Letter / Comfort Letter | ☐ Ready ☐ Needs edits ☐ Not needed |  |
 
 ## Cross-Cutting Questions
 

@@ -19,7 +19,32 @@ title: Information Security Policy
 slug: information-security-policy
 tsc_category: Security
 criteria_mapped:
+      "iso27001_targeted": true,
+      "iso27001_program_status": "Targeted for ISO 27001 certification",
+      "iso27001_scope_statement": "The Example Corp production platform, its supporting engineering and security processes, and the cloud infrastructure used to deliver the service.",
+      "iso27001_certification_body": "Not yet selected",
+      "iso27001_exclusion_rationale": "No Annex A exclusions have been formally approved yet.",
   - CC1
+      "iso_annex_domain_rows": [
+        {
+          "domain": "Organizational controls",
+          "applicability": "Applicable",
+          "rationale": "Governance, risk, supplier, incident, and legal controls are required for the ISMS regardless of certification timing.",
+          "support": "Information Security Policy; Risk Management Policy; Vendor Management Policy; Legal and Regulatory Registry",
+          "owner": "Example Owner",
+          "status": "In active certification scope"
+        }
+      ],
+      "iso_derived_control_rows": [
+        {
+          "control": "A.8.24 Use of cryptography",
+          "applicability": "Applicable",
+          "rationale": "Sensitive or regulated data types in scope require encryption and key-management controls.",
+          "support": "Encryption Policy; Cryptographic Inventory",
+          "owner": "Example Owner",
+          "status": "Seeded from wizard answers"
+        }
+      ],
   - CC2
   - CC5
   - CC6

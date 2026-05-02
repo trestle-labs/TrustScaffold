@@ -19,7 +19,7 @@ title: PHI Data Flow and Inventory Map
 slug: phi-data-flow-inventory-map
 tsc_category: HIPAA
 criteria_mapped:
-	- HIPAA
+  - HIPAA
 generated_for: {{organization_name}}
 effective_date: {{effective_date}}
 version: {{policy_version}}

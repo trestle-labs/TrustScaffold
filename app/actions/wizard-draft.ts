@@ -2,9 +2,10 @@
 
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { mergeWizardData } from '@/lib/wizard/merge-data';
 import { wizardSchema, type WizardData } from '@/lib/wizard/schema';
 
-const CURRENT_SCHEMA_VERSION = 7;
+const CURRENT_SCHEMA_VERSION = 9;
 
 export type WizardDraftResult =
   | { ok: true }
@@ -62,9 +63,27 @@ export async function loadWizardDraftAction(): Promise<LoadDraftResult> {
   if (error) return { ok: false, error: error.message };
   if (!data) return { ok: true, payload: null };
 
-  // Reject drafts from an older schema version — defaults will fill gaps via store migrate()
-  const parsed = wizardSchema.safeParse(data.payload);
+  const persistedSchemaVersion = typeof data.schema_version === 'number' ? data.schema_version : 0;
+  if (persistedSchemaVersion > CURRENT_SCHEMA_VERSION) {
+    return { ok: true, payload: null };
+  }
+
+  const candidatePayload = persistedSchemaVersion < CURRENT_SCHEMA_VERSION
+    ? mergeWizardData(data.payload as Partial<WizardData>)
+    : data.payload;
+
+  const parsed = wizardSchema.safeParse(candidatePayload);
   if (!parsed.success) return { ok: true, payload: null };
+
+  if (persistedSchemaVersion < CURRENT_SCHEMA_VERSION) {
+    await supabase
+      .from('wizard_drafts')
+      .update({
+        payload: parsed.data,
+        schema_version: CURRENT_SCHEMA_VERSION,
+      })
+      .eq('organization_id', context.organization.id);
+  }
 
   return {
     ok: true,

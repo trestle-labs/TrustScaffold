@@ -1,14 +1,25 @@
 import type { Route } from 'next';
 import Link from 'next/link';
-import { FileText, Settings, ShieldCheck, Users } from 'lucide-react';
+import { ClipboardList, FileText, Network, Settings, ShieldCheck, Users } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { WizardStageSummaryCards } from '@/components/wizard/wizard-stage-summary-cards';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
+import {
+  emptyStateSurfaceClassName,
+  infoPanelSurfaceClassName,
+  interactiveListRowSurfaceClassName,
+  metricPanelSurfaceClassName,
+  nestedPanelSurfaceClassName,
+  successPanelSurfaceClassName,
+  warningPanelSurfaceClassName,
+} from '@/lib/ui/card-surfaces';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { wizardSchema, wizardStepTitles } from '@/lib/wizard/schema';
+import { cn, formatDisplayLabel } from '@/lib/utils';
+import { soxApplicabilityOptions, wizardSchema, wizardStepTitles } from '@/lib/wizard/schema';
 
 export default async function DashboardPage() {
   const context = await getDashboardContext();
@@ -18,10 +29,10 @@ export default async function DashboardPage() {
   }
 
   const supabase = await createSupabaseServerClient();
-  const [{ count: generatedDocCount, error: generatedDocsError }, { data: draft, error: draftError }] = await Promise.all([
+  const [{ data: docs, error: generatedDocsError }, { data: draft, error: draftError }] = await Promise.all([
     supabase
       .from('generated_docs')
-      .select('id', { head: true, count: 'exact' })
+      .select('id, status, updated_at, input_payload')
       .eq('organization_id', context.organization.id),
     supabase
       .from('wizard_drafts')
@@ -39,7 +50,7 @@ export default async function DashboardPage() {
   }
 
   const draftUpdatedAt = draft?.updated_at ?? null;
-  const generatedDocs = generatedDocCount ?? 0;
+  const generatedDocs = docs?.length ?? 0;
   const hasDraft = Boolean(draftUpdatedAt);
   const parsedDraft = draft?.payload ? wizardSchema.safeParse(draft.payload) : null;
   const savedWizardData = parsedDraft?.success ? parsedDraft.data : null;
@@ -48,6 +59,22 @@ export default async function DashboardPage() {
     ? null
     : wizardStepTitles[Math.max(0, Math.min(savedStepIndex, wizardStepTitles.length - 1))];
   const isAdmin = context.organization.role === 'admin';
+  const draftUpdatedAtDate = draftUpdatedAt ? new Date(draftUpdatedAt) : null;
+  const staleDocs = draftUpdatedAtDate && docs
+    ? docs.filter((doc) => doc.status !== 'archived' && new Date(doc.updated_at) < draftUpdatedAtDate)
+    : [];
+  const latestGeneratedDoc = docs
+    ?.filter((doc) => doc.status !== 'archived')
+    .sort((left, right) => new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime())[0];
+  const latestGeneratedPayload = latestGeneratedDoc?.input_payload ? wizardSchema.safeParse(latestGeneratedDoc.input_payload) : null;
+  const currentSoxApplicability = savedWizardData?.company.soxApplicability ?? 'none';
+  const latestGeneratedSoxApplicability = latestGeneratedPayload?.success ? latestGeneratedPayload.data.company.soxApplicability : null;
+  const soxLabel = (value: string | null) => soxApplicabilityOptions.find((option) => option.value === value)?.label ?? value ?? 'Unknown';
+  const soxApplicabilityChangedSinceGeneration = Boolean(
+    savedWizardData
+    && latestGeneratedSoxApplicability
+    && latestGeneratedSoxApplicability !== currentSoxApplicability
+  );
   const quickActions: Array<{
     href: Route;
     label: string;
@@ -73,6 +100,18 @@ export default async function DashboardPage() {
       icon: FileText,
     },
     {
+      href: '/dashboard/audit-report',
+      label: 'Open audit report',
+      description: 'View an auditor-style report generated from current wizard answers, including findings and evidence gaps.',
+      icon: ClipboardList,
+    },
+    {
+      href: '/dashboard/control-map',
+      label: 'Open control map',
+      description: 'Visualize how wizard answers map to controls, frameworks, sub-service organizations, and generated docs.',
+      icon: Network,
+    },
+    {
       href: '/settings',
       label: 'Open settings',
       description: 'Configure org profile, integrations, portal access, and evidence delivery.',
@@ -89,34 +128,42 @@ export default async function DashboardPage() {
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
           <div className="space-y-3">
-            <div className="rounded-2xl bg-secondary/60 p-4">
+            <div className={metricPanelSurfaceClassName}>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">Organization ID</p>
               <p className="mt-3 break-all font-mono text-sm text-foreground">{context.organization.id}</p>
             </div>
-            <div className="rounded-2xl bg-accent/60 p-4">
+            <div className={metricPanelSurfaceClassName}>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">Role</p>
-              <p className="mt-3 text-lg font-semibold text-foreground">{context.organization.role}</p>
+              <p className="mt-3 text-lg font-semibold text-foreground">{formatDisplayLabel(context.organization.role)}</p>
             </div>
-            <div className="rounded-2xl bg-secondary/60 p-4">
+            <div className={metricPanelSurfaceClassName}>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">Draft status</p>
-              <p className="mt-3 text-lg font-semibold text-foreground">{hasDraft ? 'In progress' : 'Not started'}</p>
+              <p className="mt-3 text-lg font-semibold text-foreground">{hasDraft ? 'In Progress' : 'Not Started'}</p>
               <p className="mt-1 text-xs text-muted-foreground">{hasDraft && draftUpdatedAt ? `Updated ${new Date(draftUpdatedAt).toLocaleString()}` : 'No saved wizard draft yet.'}</p>
             </div>
-            <div className="rounded-2xl bg-accent/60 p-4">
+            <div className={metricPanelSurfaceClassName}>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">Generated docs</p>
               <p className="mt-3 text-lg font-semibold text-foreground">{generatedDocs}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{generatedDocs > 0 ? 'Drafts are ready for review.' : 'Run the wizard to create the first draft set.'}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {generatedDocs === 0
+                  ? 'Run the wizard to create the first draft set.'
+                  : soxApplicabilityChangedSinceGeneration
+                    ? 'Generated docs do not match the current SOX applicability answer.'
+                    : staleDocs.length > 0
+                      ? 'Some generated docs are older than the current draft.'
+                      : 'Drafts are ready for review.'}
+              </p>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-border bg-card p-5">
+          <div className={cn(nestedPanelSurfaceClassName, 'rounded-3xl p-5')}>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">Quick actions</p>
             <div className="mt-4 grid gap-3">
               {quickActions.map((action) => {
                 const Icon = action.icon;
 
                 return (
-                  <Link key={action.href} href={action.href} className="rounded-2xl border border-border bg-background px-4 py-3 transition-colors hover:border-primary/40 hover:bg-secondary/50">
+                  <Link key={action.href} href={action.href} className={cn(interactiveListRowSurfaceClassName, 'px-4 py-3')}>
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5 rounded-xl bg-primary/10 p-2 text-primary">
                         <Icon className="h-4 w-4" />
@@ -145,22 +192,45 @@ export default async function DashboardPage() {
         <CardContent className="space-y-4">
           {savedWizardData ? (
             <>
-              <div className="rounded-2xl border border-border bg-secondary/40 p-4 text-sm text-muted-foreground">
+              <div className={metricPanelSurfaceClassName}>
                 <p className="font-semibold text-foreground">Draft snapshot ready</p>
-                <p className="mt-1">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {savedStepLabel ? `Last saved through ${savedStepLabel}.` : 'Wizard draft is available.'} Use these cards to confirm submitted profile details and jump directly back into the matching wizard stage.
                 </p>
               </div>
+              {generatedDocs > 0 && (staleDocs.length > 0 || soxApplicabilityChangedSinceGeneration) ? (
+                <div className={warningPanelSurfaceClassName}>
+                  <p className="text-sm font-semibold">Generated documents need attention</p>
+                  {soxApplicabilityChangedSinceGeneration ? (
+                    <p className="mt-1 text-xs text-current/90">
+                      The current draft says {soxLabel(currentSoxApplicability)}, but the latest generated documents reflect {soxLabel(latestGeneratedSoxApplicability)}. Regenerate documents so the SOX template set matches the current answer.
+                    </p>
+                  ) : null}
+                  {staleDocs.length > 0 ? (
+                    <p className="mt-1 text-xs text-current/90">
+                      {staleDocs.length} generated document{staleDocs.length === 1 ? '' : 's'} predate the current wizard draft and may no longer reflect the latest answers.
+                    </p>
+                  ) : null}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button asChild size="sm">
+                      <Link href="/generated-docs">Review generated docs</Link>
+                    </Button>
+                    <Button asChild size="sm" variant="outline">
+                      <Link href="/settings">Open settings</Link>
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
               <WizardStageSummaryCards data={savedWizardData} organizationName={context.organization.name} highWaterStep={savedStepIndex ?? 0} />
             </>
           ) : (
-            <div className="rounded-2xl border border-dashed border-border bg-secondary/30 p-5 text-sm text-muted-foreground">
+            <EmptyState className="p-5">
               <p className="font-semibold text-foreground">No saved stage summaries yet</p>
               <p className="mt-1">Start the wizard and save a draft to populate the dashboard with company, scope, governance, tooling, and operations snapshots.</p>
               <Button asChild className="mt-3">
                 <Link href="/wizard">Open wizard</Link>
               </Button>
-            </div>
+            </EmptyState>
           )}
         </CardContent>
       </Card>
@@ -173,17 +243,17 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             {!hasDraft ? (
-              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-500/30 dark:bg-blue-500/10">
-                <p className="font-semibold text-blue-900 dark:text-blue-100">No onboarding draft yet</p>
-                <p className="mt-1 text-blue-800 dark:text-blue-200">Start the policy wizard to establish the organization profile, infrastructure footprint, governance answers, and first document set.</p>
+              <div className={infoPanelSurfaceClassName}>
+                <p className="font-semibold">No onboarding draft yet</p>
+                <p className="mt-1 text-current/90">Start the policy wizard to establish the organization profile, infrastructure footprint, governance answers, and first document set.</p>
                 <Button asChild className="mt-3">
                   <Link href="/wizard">Start wizard</Link>
                 </Button>
               </div>
             ) : (
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-500/30 dark:bg-emerald-500/10">
-                <p className="font-semibold text-emerald-900 dark:text-emerald-100">Wizard draft already exists</p>
-                <p className="mt-1 text-emerald-800 dark:text-emerald-200">Resume the wizard to update answers or go straight to Generated Docs if you want to review existing drafts.</p>
+              <div className={successPanelSurfaceClassName}>
+                <p className="font-semibold">Wizard draft already exists</p>
+                <p className="mt-1 text-current/90">Resume the wizard to update answers or go straight to Generated Docs if you want to review existing drafts.</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button asChild>
                     <Link href="/wizard">Resume wizard</Link>
@@ -196,7 +266,7 @@ export default async function DashboardPage() {
             )}
 
             {isAdmin ? (
-              <div className="rounded-2xl border border-border bg-secondary/40 p-4">
+              <div className={metricPanelSurfaceClassName}>
                 <p className="font-semibold text-foreground">Admin setup checklist</p>
                 <ul className="mt-2 space-y-2 text-muted-foreground">
                   <li>Create additional members in Team before sharing the workspace.</li>

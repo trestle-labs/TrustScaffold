@@ -1,3 +1,4 @@
+import { mergeWizardData } from './merge-data';
 import type { WizardData } from './schema';
 
 export const wizardStepIds = [
@@ -96,13 +97,13 @@ export interface WizardDecisionTraceItem {
 }
 
 export const wizardBaseValidationFieldsByStep: Record<WizardStepId, WizardFieldPath[]> = {
-  welcome: ['company.name', 'company.businessModel', 'company.deliveryModel', 'company.hasPublicWebsite', 'company.primaryContactName', 'company.primaryContactEmail', 'company.industry', 'company.orgAge', 'company.complianceMaturity', 'company.targetAuditType'],
+  welcome: ['company.name', 'company.businessModel', 'company.deliveryModel', 'company.hasPublicWebsite', 'company.primaryContactName', 'company.primaryContactEmail', 'company.industry', 'company.orgAge', 'company.complianceMaturity', 'company.soxApplicability', 'company.targetAuditType'],
   'system-scope': ['scope.systemName', 'scope.systemDescription', 'scope.dataTypesHandled'],
   governance: ['governance.acknowledgementCadence', 'training.securityAwarenessTrainingTool', 'training.trainingCadence'],
   'tsc-selection': ['tscSelections.availability', 'tscSelections.confidentiality', 'tscSelections.processingIntegrity', 'tscSelections.privacy'],
   infrastructure: ['infrastructure.cloudProviders', 'infrastructure.type', 'infrastructure.idpProvider', 'operations.vcsProvider', 'operations.hrisProvider'],
   'security-assessment': ['securityAssessment.documentReview.readiness', 'securityAssessment.logReview.readiness', 'securityAssessment.rulesetReview.readiness', 'securityAssessment.configReview.readiness', 'securityAssessment.networkAnalysis.readiness', 'securityAssessment.fileIntegrity.readiness'],
-  'security-tooling': ['securityTooling.penetrationTestFrequency'],
+  'security-tooling': ['securityTooling.penetrationTestFrequency', 'securityTooling.remediationSlaCriticalDays', 'securityTooling.remediationSlaHighDays'],
   operations: ['operations.ticketingSystem', 'operations.versionControlSystem', 'operations.onCallTool', 'operations.terminationSlaHours', 'operations.onboardingSlaDays', 'operations.policyPublicationMethod'],
   review: [],
   generate: [],
@@ -491,6 +492,18 @@ export const wizardRuleMatrix: WizardRule[] = [
     when: (data) => !data.operations.requiresPeerReview,
   },
   {
+    id: 'security-tooling-threat-modeling-warning',
+    kind: 'warning',
+    step: 'security-tooling',
+    title: 'Software delivery is in scope without design-phase threat modeling',
+    summary: 'Secure SDLC output is materially weaker when software teams skip a documented threat-modeling step before new features or architecture changes are built.',
+    criteria: ['CC8.1'],
+    severity: 'warning',
+    recommendation: 'Capture whether threat modeling exists today and, if it does, document the real method and cadence so the Secure SDLC policy matches engineering practice.',
+    anchorField: 'securityTooling.hasThreatModeling',
+    when: (data) => (data.company.businessModel === 'software' || data.company.businessModel === 'hybrid') && !data.securityTooling.hasThreatModeling,
+  },
+  {
     id: 'infrastructure-multi-cloud-warning',
     kind: 'warning',
     step: 'infrastructure',
@@ -511,6 +524,90 @@ export const wizardRuleMatrix: WizardRule[] = [
     severity: 'warning',
     recommendation: 'Document which controls are inherited from cloud providers versus which controls remain your responsibility for on-premises or colocated systems.',
     when: (data) => data.infrastructure.hostsOwnHardware && data.infrastructure.cloudProviders.length > 0,
+  },
+  {
+    id: 'scope-hipaa-detail-warning',
+    kind: 'warning',
+    step: 'system-scope',
+    title: 'PHI is in scope but HIPAA operating detail is still thin',
+    summary: 'The HIPAA templates need concrete PHI elements, ingress paths, and storage locations to avoid placeholder rows.',
+    criteria: ['HIPAA'],
+    severity: 'warning',
+    recommendation: 'Capture PHI elements, ingestion methods, and storage locations so the PHI inventory and data-flow templates describe the real environment.',
+    anchorField: 'scope.containsPhi',
+    when: (data) => data.scope.containsPhi && (data.scope.hipaa.phiElements.length === 0 || data.scope.hipaa.phiIngestionMethods.length === 0 || data.scope.hipaa.phiStorageLocations.length === 0),
+  },
+  {
+    id: 'scope-pci-detail-warning',
+    kind: 'warning',
+    step: 'system-scope',
+    title: 'CDE is in scope but PCI boundary details are incomplete',
+    summary: 'The PCI templates need processors, segmentation assumptions, and scanning ownership to avoid generic language.',
+    criteria: ['PCI'],
+    severity: 'warning',
+    recommendation: 'Capture payment processors, segmentation approach, and scanning ownership so the PCI documents reflect the actual cardholder data boundary.',
+    anchorField: 'scope.hasCardholderDataEnvironment',
+    when: (data) => data.scope.hasCardholderDataEnvironment && (!data.scope.pci.paymentProcessors.trim() || !data.scope.pci.asvScanProvider.trim()),
+  },
+  {
+    id: 'governance-sox-detail-warning',
+    kind: 'warning',
+    step: 'governance',
+    title: 'SOX applicability selected without financial-system detail',
+    summary: 'SOX / ITGC output is much weaker when the in-scope finance systems and owners are left unspecified.',
+    criteria: ['SOX'],
+    severity: 'warning',
+    recommendation: 'Add the in-scope financial systems, owners, and access review cadence so the SOX pack does not default to generic scoping language.',
+    anchorField: 'company.soxApplicability',
+    when: (data) => data.company.soxApplicability !== 'none' && (data.governance.sox.financialSystemsInScope.length === 0 || data.governance.sox.itgcFinancialSystems.length === 0),
+  },
+  {
+    id: 'governance-iso-scope-warning',
+    kind: 'warning',
+    step: 'governance',
+    title: 'ISO 27001 targeting is enabled without a concrete ISMS scope statement',
+    summary: 'A certification-targeted SoA is much weaker if the system, people, locations, and supporting services inside the ISMS boundary are not explicitly stated.',
+    criteria: ['ISO27001'],
+    severity: 'warning',
+    recommendation: 'Write the real ISMS scope statement before relying on the generated SoA so Annex A applicability is grounded in the actual certification boundary.',
+    anchorField: 'governance.iso27001.targeted',
+    when: (data) => data.governance.iso27001.targeted && !data.governance.iso27001.scopeStatement.trim(),
+  },
+  {
+    id: 'governance-iso-exclusion-guidance',
+    kind: 'warning',
+    step: 'governance',
+    title: 'ISO 27001 targeting is enabled without exclusion rationale',
+    summary: 'The SoA can still be generated, but exclusion language is stronger when any proposed Annex A exclusions or "none yet" status are stated explicitly.',
+    criteria: ['ISO27001'],
+    severity: 'info',
+    recommendation: 'Capture either the current exclusion rationale or state that no exclusions have been proposed yet so reviewers know the omission is intentional.',
+    anchorField: 'governance.iso27001.exclusionRationale',
+    when: (data) => data.governance.iso27001.targeted && !data.governance.iso27001.exclusionRationale.trim(),
+  },
+  {
+    id: 'operations-incident-detail-warning',
+    kind: 'warning',
+    step: 'operations',
+    title: 'Incident response baseline is missing concrete operating targets',
+    summary: 'The incident response plan still needs a named lead, escalation path, and playbook coverage to look audit-ready.',
+    criteria: ['CC7.1', 'CC7.2', 'CC7.3'],
+    severity: 'warning',
+    recommendation: 'Capture the incident-response lead, escalation path, and documented playbook types so the generated IR plan reflects real operations.',
+    anchorField: 'operations.incidentResponse.incidentResponseLead',
+    when: (data) => !data.operations.incidentResponse.incidentResponseLead.trim() || !data.operations.incidentResponse.incidentEscalationPath.trim() || data.operations.incidentResponse.incidentTypesWithPlaybooks.length === 0,
+  },
+  {
+    id: 'operations-risk-detail-warning',
+    kind: 'warning',
+    step: 'operations',
+    title: 'Risk register enabled without scoring and treatment detail',
+    summary: 'The risk management policy is materially stronger when the scoring model, review cadence, and treatment options are explicit.',
+    criteria: ['CC3.1', 'CC3.2', 'CC3.3'],
+    severity: 'info',
+    recommendation: 'Capture the scoring method, appetite, review cadence, treatment options, and tool used for the risk register.',
+    anchorField: 'operations.hasRiskRegister',
+    when: (data) => data.operations.hasRiskRegister && (!data.operations.riskProgram.riskRegisterTool.trim() || data.operations.riskProgram.riskTreatmentOptions.length === 0),
   },
   {
     id: 'generate-no-subservices-warning',
@@ -685,21 +782,26 @@ export function getWizardStepId(stepIndex: number): WizardStepId {
   return wizardStepIds[Math.max(0, Math.min(stepIndex, wizardStepIds.length - 1))];
 }
 
-export function getActiveWizardRules(data: WizardData, step: WizardStepId, kind?: WizardRuleKind): WizardRule[] {
-  return wizardRuleMatrix.filter((rule) => rule.step === step && rule.when(data) && (!kind || rule.kind === kind));
+function normalizeWizardData(data: Partial<WizardData> | WizardData | undefined): WizardData {
+  return mergeWizardData(data);
 }
 
-export function getActiveWizardRulesForField(data: WizardData, step: WizardStepId, anchorField: WizardFieldPath, kind?: WizardRuleKind): WizardRule[] {
+export function getActiveWizardRules(data: Partial<WizardData> | WizardData | undefined, step: WizardStepId, kind?: WizardRuleKind): WizardRule[] {
+  const normalizedData = normalizeWizardData(data);
+  return wizardRuleMatrix.filter((rule) => rule.step === step && rule.when(normalizedData) && (!kind || rule.kind === kind));
+}
+
+export function getActiveWizardRulesForField(data: Partial<WizardData> | WizardData | undefined, step: WizardStepId, anchorField: WizardFieldPath, kind?: WizardRuleKind): WizardRule[] {
   return getActiveWizardRules(data, step, kind).filter((rule) => rule.anchorField === anchorField);
 }
 
-export function getStepValidationFields(stepIndex: number, data: WizardData): WizardFieldPath[] {
+export function getStepValidationFields(stepIndex: number, data: Partial<WizardData> | WizardData | undefined): WizardFieldPath[] {
   const step = getWizardStepId(stepIndex);
   const activeDeepDiveFields = getActiveWizardRules(data, step, 'deep-dive').map((rule) => (rule as WizardDeepDiveRule).field);
   return Array.from(new Set([...wizardBaseValidationFieldsByStep[step], ...activeDeepDiveFields]));
 }
 
-export function getWizardDecisionTrace(data: WizardData): WizardDecisionTraceItem[] {
+export function getWizardDecisionTrace(data: Partial<WizardData> | WizardData | undefined): WizardDecisionTraceItem[] {
   return wizardStepIds.flatMap((step) => getActiveWizardRules(data, step)).filter((rule) => {
     if (rule.kind === 'branching') {
       return rule.effect === 'show-guidance';

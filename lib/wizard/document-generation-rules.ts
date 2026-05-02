@@ -1,6 +1,6 @@
-import type { WizardData } from './schema';
+import { hasSoxApplicability, type WizardData } from './schema';
 
-export type TrustServiceScope = 'security' | 'availability' | 'confidentiality' | 'processingIntegrity' | 'privacy' | 'hipaa' | 'pci' | 'iso27001' | 'gdpr' | 'common';
+export type TrustServiceScope = 'security' | 'availability' | 'confidentiality' | 'processingIntegrity' | 'privacy' | 'hipaa' | 'pci' | 'iso27001' | 'gdpr' | 'common' | 'sox';
 
 export interface DocumentGenerationRule {
   slug: string;
@@ -306,8 +306,8 @@ export const documentGenerationRules: DocumentGenerationRule[] = [
     criteriaHint: 'ISO 27001 Annex A SoA',
     outputFilenamePattern: '23-iso27001-statement-of-applicability.md',
     scope: 'iso27001',
-    generationRequirement: 'Generate for the baseline security package because the SoA is the ISO 27001 master index for selected, implemented, and excluded Annex A controls.',
-    wizardAnswerTrigger: 'tscSelections.security is always true; ISO controls are included as the multi-framework high-water baseline.',
+    generationRequirement: 'Generate when ISO 27001 targeting is enabled because the SoA is the ISO 27001 master index for selected, implemented, and excluded Annex A controls.',
+    wizardAnswerTrigger: 'governance.iso27001.targeted is true.',
     description: 'Provides a starter Annex A applicability matrix with inclusion rationale, exclusion rationale, implementation status, owner, and linked TrustScaffold templates.',
   },
   {
@@ -318,8 +318,8 @@ export const documentGenerationRules: DocumentGenerationRule[] = [
     criteriaHint: 'ISO 27001 legal obligations plus selected high-water frameworks',
     outputFilenamePattern: '24-legal-regulatory-registry.md',
     scope: 'iso27001',
-    generationRequirement: 'Generate for the baseline security package because ISO 27001 expects legal, statutory, regulatory, and contractual obligations to be identified and reviewed.',
-    wizardAnswerTrigger: 'tscSelections.security is always true; website, PHI, CDE, CCPA/CPRA, GDPR, and Privacy answers add framework-specific rows inside the registry.',
+    generationRequirement: 'Generate when ISO 27001 targeting is enabled because ISO 27001 expects legal, statutory, regulatory, and contractual obligations to be identified and reviewed.',
+    wizardAnswerTrigger: 'governance.iso27001.targeted is true; website, PHI, CDE, CCPA/CPRA, GDPR, and Privacy answers add framework-specific rows inside the registry.',
     description: 'Lists applicable laws, regulations, contractual commitments, owners, review cadence, evidence, and conditional HIPAA, PCI, GDPR, and privacy obligations.',
   },
   {
@@ -346,6 +346,114 @@ export const documentGenerationRules: DocumentGenerationRule[] = [
     wizardAnswerTrigger: 'tscSelections.security is always true.',
     description: 'Defines asset inventory, data stores, encryption algorithms, key custody, certificate inventory, rotation cadence, ownership, and evidence expectations.',
   },
+  {
+    slug: 'sox-itgc-control-matrix',
+    name: 'SOX IT General Controls Matrix',
+    tsc: 'SOX / ITGC',
+    criteriaMapped: ['COMMON', 'SOX'],
+    criteriaHint: 'SOX ITGC entity-level, access, change, and operations controls',
+    outputFilenamePattern: '27-sox-itgc-control-matrix.md',
+    scope: 'sox',
+    generationRequirement: 'Generate when SOX / ITGC applicability is selected because the organization needs an ITGC-oriented control map for IPO readiness, public-company controls, customer diligence, or internal-control reviews.',
+    wizardAnswerTrigger: 'company.soxApplicability is not none.',
+    description: 'Maps entity-level controls, logical access, change management, system operations, and evidence expectations into a SOX-oriented ITGC matrix that finance, internal audit, and security can refine together.',
+  },
+  {
+    slug: 'sox-evidence-request-list',
+    name: 'SOX Access and Change Evidence Request List',
+    tsc: 'SOX / ITGC',
+    criteriaMapped: ['COMMON', 'SOX'],
+    criteriaHint: 'SOX evidence for access reviews, privileged access, change control, and key reports',
+    outputFilenamePattern: '28-sox-evidence-request-list.md',
+    scope: 'sox',
+    generationRequirement: 'Generate when SOX / ITGC applicability is selected because SOX-scoped organizations need a concrete evidence list for access recertifications, provisioning, privileged access, change approvals, deployments, interfaces, and key report controls.',
+    wizardAnswerTrigger: 'company.soxApplicability is not none.',
+    description: 'Lists the evidence artifacts usually requested for SOX ITGC readiness across onboarding, offboarding, access reviews, change management, release evidence, ticketing, and management review.',
+  },
+  {
+    slug: 'sox-key-report-inventory',
+    name: 'SOX Key Report Inventory',
+    tsc: 'SOX / ITGC',
+    criteriaMapped: ['COMMON', 'SOX'],
+    criteriaHint: 'SOX key reports, spreadsheets, and management-review data sources',
+    outputFilenamePattern: '29-sox-key-report-inventory.md',
+    scope: 'sox',
+    generationRequirement: 'Generate when SOX / ITGC applicability is selected because finance, audit, and system owners need an inventory of key reports, exports, reconciliations, and spreadsheet dependencies that influence financial reporting.',
+    wizardAnswerTrigger: 'company.soxApplicability is not none.',
+    description: 'Inventories key reports, spreadsheets, report owners, logic owners, review controls, and evidence expectations for SOX-oriented reporting workflows.',
+  },
+  {
+    slug: 'sox-interface-control-register',
+    name: 'SOX Interface Control Register',
+    tsc: 'SOX / ITGC',
+    criteriaMapped: ['COMMON', 'SOX'],
+    criteriaHint: 'SOX interface, file transfer, and reconciliation controls',
+    outputFilenamePattern: '30-sox-interface-control-register.md',
+    scope: 'sox',
+    generationRequirement: 'Generate when SOX / ITGC applicability is selected because systems that exchange data with finance or reporting processes need interface ownership, reconciliation, failure handling, and change-control documentation.',
+    wizardAnswerTrigger: 'company.soxApplicability is not none.',
+    description: 'Documents inbound and outbound interfaces, file transfers, API integrations, reconciliation controls, exception handling, and evidence retention for SOX-oriented system dependencies.',
+  },
+  {
+    slug: 'complementary-user-entity-controls-matrix',
+    name: 'Complementary User Entity Controls Matrix',
+    tsc: 'Universal',
+    criteriaMapped: ['COMMON', 'CC6', 'CC7', 'CC9'],
+    criteriaHint: 'Common criteria, logical access, incident response, and vendor dependencies',
+    outputFilenamePattern: '31-complementary-user-entity-controls-matrix.md',
+    scope: 'common',
+    generationRequirement: 'Generate for every completed wizard because auditors and customers commonly ask for the user-entity responsibilities that must operate alongside TrustScaffold-generated controls.',
+    wizardAnswerTrigger: 'tscSelections.security is always true; Availability, Processing Integrity, and vendor answers add tailored rows inside the matrix.',
+    description: 'Defines the core customer-operated controls needed to rely on the service, including access approvals, secure configuration, data handling, incident coordination, and optional continuity or reconciliation responsibilities.',
+  },
+  {
+    slug: 'complementary-subservice-organization-controls-register',
+    name: 'Complementary Subservice Organization Controls Register',
+    tsc: 'Universal',
+    criteriaMapped: ['COMMON', 'CC3', 'CC6', 'CC9', 'ISO27001'],
+    criteriaHint: 'Common criteria, vendor risk, access, supplier dependencies, and ISO supplier governance',
+    outputFilenamePattern: '32-complementary-subservice-organization-controls-register.md',
+    scope: 'common',
+    generationRequirement: 'Generate for every completed wizard because vendor and hosting dependencies need an explicit register showing inclusive vs carve-out treatment, monitoring expectations, and compensating controls.',
+    wizardAnswerTrigger: 'tscSelections.security is always true; subservice answers populate vendor-specific rows, and the document falls back to an explicit no-subservice statement when none are listed.',
+    description: 'Documents subservice organizations, assurance basis, carve-out or inclusive treatment, retained monitoring responsibilities, and customer-visible dependency assumptions.',
+  },
+  {
+    slug: 'management-assertion-letter',
+    name: 'Management Assertion Letter',
+    tsc: 'Universal',
+    criteriaMapped: ['COMMON', 'CC1', 'CC2', 'CC3', 'CC4'],
+    criteriaHint: 'Common criteria and management control-environment assertion support',
+    outputFilenamePattern: '33-management-assertion-letter.md',
+    scope: 'common',
+    generationRequirement: 'Generate for every completed wizard because reviewer packs commonly need a management-level statement describing scope, control responsibility, and known focus areas alongside the policy set.',
+    wizardAnswerTrigger: 'tscSelections.security is always true; optional TSC selections and active decision-trace items tailor the scope statement and emphasis areas.',
+    description: 'Provides management’s draft assertion over the described system scope, selected trust service categories, complementary controls, and identified follow-up focus areas.',
+  },
+  {
+    slug: 'points-of-focus-gap-analysis',
+    name: 'Points of Focus Gap Analysis',
+    tsc: 'Universal',
+    criteriaMapped: ['COMMON', 'CC1', 'CC2', 'CC3', 'CC4', 'CC6', 'CC7', 'CC8', 'CC9'],
+    criteriaHint: 'Rule-matrix-driven readiness gaps mapped to selected criteria and generated documents',
+    outputFilenamePattern: '34-points-of-focus-gap-analysis.md',
+    scope: 'common',
+    generationRequirement: 'Generate for every completed wizard because the active rule matrix already captures warnings, recommendations, and deep-dive prompts that should be translated into an assessor-style readiness matrix with criterion intent, evidence expectations, and target-state guidance.',
+    wizardAnswerTrigger: 'tscSelections.security is always true; the rows are driven by the active wizard decision trace and related generated-document coverage.',
+    description: 'Summarizes active wizard warnings, recommendations, and evidence prompts into a criterion-linked assessor matrix with related generated documents, expected evidence, and target-state guidance.',
+  },
+  {
+    slug: 'bridge-letter-comfort-letter',
+    name: 'Bridge Letter / Comfort Letter',
+    tsc: 'Universal',
+    criteriaMapped: ['COMMON', 'CC2', 'CC3', 'CC4'],
+    criteriaHint: 'Customer-facing current-state summary and management follow-up commitments',
+    outputFilenamePattern: '35-bridge-letter-comfort-letter.md',
+    scope: 'common',
+    generationRequirement: 'Generate for every completed wizard because customers often request a time-bound status letter describing the current control environment, the documents available, and the top remediation items still in progress.',
+    wizardAnswerTrigger: 'tscSelections.security is always true; the letter uses the same generated-document set and prioritized gap-analysis rows already derived from the wizard trace.',
+    description: 'Provides a customer-facing bridge or comfort letter summarizing current scope, available documentation, active improvement priorities, and the next management review date.',
+  },
 ];
 
 export function isDocumentRuleSelected(rule: DocumentGenerationRule, selections: DocumentRuleSelections) {
@@ -354,6 +462,7 @@ export function isDocumentRuleSelected(rule: DocumentGenerationRule, selections:
   if (rule.scope === 'security' || rule.scope === 'common' || rule.scope === 'iso27001') return true;
   if (rule.scope === 'hipaa') return hasWizardContext(selections) ? selections.scope.containsPhi : false;
   if (rule.scope === 'pci') return hasWizardContext(selections) ? selections.scope.hasCardholderDataEnvironment : false;
+  if (rule.scope === 'sox') return hasWizardContext(selections) ? hasSoxApplicability(selections) : false;
   if (rule.scope === 'gdpr') {
     return tscSelections.privacy || (hasWizardContext(selections) && selections.company.hasPublicWebsite && (selections.company.websiteTargetsEuOrUkResidents || selections.company.websiteUsesCookiesAnalytics));
   }

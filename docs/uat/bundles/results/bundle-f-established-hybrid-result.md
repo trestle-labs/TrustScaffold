@@ -35,6 +35,8 @@
 
 - System Scope: pass | partial | fail
   - CDE in scope selected:
+  - PHI data elements selected for the hybrid healthcare/payment boundary: `Name`, `Date of birth`, `Diagnosis codes`, `Insurance information`
+  - PCI data elements selected for the CDE boundary: `Primary account number (PAN)`, `Cardholder name`, `Expiration date`, `Tokenized PAN or network token`
   - Review PCI segmentation preview shown:
   - Scope language reflects online service and payment boundaries:
 

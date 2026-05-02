@@ -1,13 +1,15 @@
+import { AlertCallout } from '@/components/ui/alert-callout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
+import { ORG_ROLE_OPTIONS, getOrganizationRoleDisplay, isAdminRole } from '@/lib/auth/roles';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { createSupabaseServiceRoleClient } from '@/lib/supabase-service';
+import { selectFieldClassName } from '@/lib/ui/form-controls';
 
 import { createTeamMemberAction, removeTeamMemberAction, updateTeamMemberRoleAction } from './actions';
-
-const roleOptions = ['admin', 'editor', 'approver', 'viewer'] as const;
 
 export default async function TeamPage({
   searchParams,
@@ -54,11 +56,12 @@ export default async function TeamPage({
       createdAt: membership.created_at,
       email: authUser?.email ?? 'Unknown email',
       fullName: typeof authUser?.user_metadata?.full_name === 'string' ? authUser.user_metadata.full_name : null,
+      orgRoleTitle: typeof authUser?.user_metadata?.org_role_title === 'string' ? authUser.user_metadata.org_role_title : null,
       lastSignInAt: authUser?.last_sign_in_at ?? null,
     };
   });
 
-  const isAdmin = context.organization.role === 'admin';
+  const isAdmin = isAdminRole(context.organization.role);
 
   return (
     <div className="space-y-6">
@@ -76,8 +79,8 @@ export default async function TeamPage({
             <Badge variant="secondary">Approvers can approve documents</Badge>
             <Badge variant="outline">Viewers have read-only access</Badge>
           </div>
-          {successMessage ? <p className="rounded-2xl bg-primary/10 px-4 py-3 text-primary">{successMessage}</p> : null}
-          {errorMessage ? <p className="rounded-2xl bg-destructive/10 px-4 py-3 text-destructive">{errorMessage}</p> : null}
+          {successMessage ? <AlertCallout variant="success">{successMessage}</AlertCallout> : null}
+          {errorMessage ? <AlertCallout variant="danger">{errorMessage}</AlertCallout> : null}
         </CardContent>
       </Card>
 
@@ -89,17 +92,18 @@ export default async function TeamPage({
           </CardHeader>
           <CardContent className="space-y-4">
             {!members.length ? (
-              <p className="text-sm text-muted-foreground">No members are attached to this organization yet.</p>
+              <EmptyState>No members are attached to this organization yet.</EmptyState>
             ) : (
               members.map((member) => (
-                <div key={member.userId} className="rounded-2xl border border-border bg-white p-4">
+                <Card key={member.userId} variant="panel">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="text-base font-semibold text-foreground">{member.fullName ?? member.email}</p>
-                        <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>{member.role}</Badge>
+                        <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>{getOrganizationRoleDisplay(member.role)}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">{member.email}</p>
+                      {member.orgRoleTitle ? <p className="text-sm text-muted-foreground">Org role: {member.orgRoleTitle}</p> : null}
                       <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
                         Added {new Date(member.createdAt).toLocaleDateString()} · Last sign-in{' '}
                         {member.lastSignInAt ? new Date(member.lastSignInAt).toLocaleString() : 'never'}
@@ -113,11 +117,11 @@ export default async function TeamPage({
                           <select
                             name="role"
                             defaultValue={member.role}
-                            className="h-11 rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className={selectFieldClassName}
                           >
-                            {roleOptions.map((role) => (
+                            {ORG_ROLE_OPTIONS.map((role) => (
                               <option key={role} value={role}>
-                                {role}
+                                {getOrganizationRoleDisplay(role)}
                               </option>
                             ))}
                           </select>
@@ -127,12 +131,12 @@ export default async function TeamPage({
                         <form action={removeTeamMemberAction}>
                           <input type="hidden" name="member_user_id" value={member.userId} />
                           <input type="hidden" name="member_role" value={member.role} />
-                          <Button type="submit" variant="ghost">Remove</Button>
+                          <Button type="submit" variant="danger">Remove</Button>
                         </form>
                       </div>
                     ) : null}
                   </div>
-                </div>
+                </Card>
               ))
             )}
           </CardContent>
@@ -153,6 +157,10 @@ export default async function TeamPage({
                   <Input id="full_name" name="full_name" placeholder="Alex Reviewer" />
                 </div>
                 <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground" htmlFor="org_role_title">Org role / job title</label>
+                  <Input id="org_role_title" name="org_role_title" placeholder="Controller, Security Lead, External Auditor" />
+                </div>
+                <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground" htmlFor="email">Email</label>
                   <Input id="email" name="email" type="email" placeholder="alex@example.com" required />
                 </div>
@@ -166,11 +174,11 @@ export default async function TeamPage({
                     id="role"
                     name="role"
                     defaultValue="viewer"
-                    className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className={selectFieldClassName}
                   >
-                    {roleOptions.map((role) => (
+                    {ORG_ROLE_OPTIONS.map((role) => (
                       <option key={role} value={role}>
-                        {role}
+                        {getOrganizationRoleDisplay(role)}
                       </option>
                     ))}
                   </select>

@@ -5,6 +5,7 @@ export const assuranceReportTypeSchema = z.enum(['soc2-type2', 'soc2-type1', 'so
 export const controlInclusionSchema = z.enum(['inclusive', 'carve-out']);
 export const orgAgeSchema = z.enum(['<1', '1-3', '3-10', '10+']);
 export const complianceMaturitySchema = z.enum(['first-time', 'some-experience', 'established']);
+export const soxApplicabilitySchema = z.enum(['none', 'customer-requested', 'public-company-or-ipo', 'financial-reporting-systems']);
 export const targetAuditTypeSchema = z.enum(['type1', 'type2', 'unsure']);
 export const organizationRelationshipSchema = z.enum(['same-as-company', 'governing-company']);
 export const businessModelSchema = z.enum(['services', 'software', 'hybrid']);
@@ -22,6 +23,7 @@ const companySchema = z.object({
   industry: z.string().trim().min(2, 'Industry is required'),
   orgAge: orgAgeSchema,
   complianceMaturity: complianceMaturitySchema,
+  soxApplicability: soxApplicabilitySchema.default('none'),
   targetAuditType: targetAuditTypeSchema,
   websiteCollectsPersonalData: z.boolean().default(false),
   websiteUsesCookiesAnalytics: z.boolean().default(false),
@@ -111,6 +113,27 @@ export const penTestFrequencySchema = z.enum(['annual', 'semi-annual', 'quarterl
 export const policyPublicationMethodSchema = z.enum(['intranet', 'wiki', 'sharepoint', 'confluence', 'notion', 'other']);
 export const mfaGapReasonSchema = z.union([z.literal(''), z.enum(['not-configured-yet', 'legacy-tooling-limitations', 'rollout-in-progress', 'limited-to-admins-today', 'not-prioritized-yet'])]);
 export const changeReviewApproachSchema = z.union([z.literal(''), z.enum(['author-self-review', 'pairing-without-gate', 'founder-or-lead-approval', 'post-deploy-review', 'none-today'])]);
+export const riskScoringMethodSchema = z.enum(['qualitative', 'quantitative', 'hybrid']);
+export const riskAppetiteSchema = z.enum(['low', 'moderate', 'high']);
+export const riskTreatmentOptionSchema = z.enum(['mitigate', 'accept', 'transfer', 'avoid']);
+export const riskReviewCadenceSchema = z.enum(['monthly', 'quarterly', 'semi-annual', 'annual']);
+export const postIncidentReviewWindowSchema = z.enum(['24h', '48h', '1-week', '2-weeks']);
+export const incidentPlaybookTypeSchema = z.enum(['ransomware', 'data-breach', 'insider-threat', 'ddos', 'account-compromise', 'supply-chain']);
+export const phiElementSchema = z.enum(['name', 'dob', 'ssn', 'diagnosis-codes', 'insurance-info', 'medication', 'lab-results', 'other']);
+export const phiIngestionMethodSchema = z.enum(['api', 'file-upload', 'hl7-fhir', 'manual-entry', 'edi']);
+export const phiStorageLocationSchema = z.enum(['relational-db', 'object-storage', 'data-warehouse', 'backups', 'logs']);
+export const minimumNecessaryApproachSchema = z.enum(['rbac', 'attribute-based', 'manual-review']);
+export const pciDataElementSchema = z.enum(['pan', 'cardholder-name', 'expiration-date', 'service-code', 'cvv', 'track-data', 'pin-data', 'tokenized-pan']);
+export const financialSystemScopeSchema = z.enum(['erp', 'gl', 'ar', 'ap', 'payroll', 'consolidation', 'reporting', 'crm-with-revenue']);
+export const accessCertificationCadenceSchema = z.enum(['monthly', 'quarterly', 'semi-annual', 'annual']);
+export const itgcRatingApproachSchema = z.enum(['self-assessment', 'internal-audit', 'external-audit']);
+export const pciSaqLevelSchema = z.enum(['SAQ-A', 'SAQ-A-EP', 'SAQ-B', 'SAQ-C', 'SAQ-D', 'ROC']);
+export const pciComplianceLevelSchema = z.enum(['level-1', 'level-2', 'level-3', 'level-4']);
+export const cdeNetworkSegmentationSchema = z.enum(['hard', 'soft', 'none']);
+export const cvssRemediationThresholdSchema = z.enum(['7.0', '4.0', 'all-findings']);
+export const pciPenetrationTestCadenceSchema = z.enum(['annual', 'semi-annual']);
+export const threatModelingApproachSchema = z.enum(['stride', 'pasta', 'attack-tree', 'informal']);
+export const threatModelingCadenceSchema = z.enum(['per-feature', 'quarterly', 'annually', 'as-needed']);
 
 export const securityAssessmentReadinessSchema = z.enum(['not-started', 'in-progress', 'established']);
 
@@ -134,6 +157,26 @@ export const wizardSchema = z.object({
     internalAuditFrequency: internalAuditFrequencySchema,
     controlMonitoringApproachWhenNoInternalAudit: controlMonitoringApproachSchema,
     hasPerformanceReviewsLinkedToControls: z.boolean(),
+    iso27001: z.object({
+      targeted: z.boolean().default(false),
+      scopeStatement: z.string().trim().default(''),
+      certificationBody: z.string().trim().default(''),
+      exclusionRationale: z.string().trim().default(''),
+    }),
+    sox: z.object({
+      externalAuditFirm: z.string().trim().default(''),
+      financialSystemsInScope: z.array(financialSystemScopeSchema).default([]),
+      itgcFinancialSystems: z.array(z.object({
+        name: z.string().trim().default(''),
+        owner: z.string().trim().default(''),
+        process: z.string().trim().default(''),
+      })).default([]),
+      hasSegregationOfDutiesMatrix: z.boolean().default(false),
+      accessCertificationCadence: accessCertificationCadenceSchema.default('quarterly'),
+      hasJournalEntryControls: z.boolean().default(false),
+      changeFreezePeriod: z.string().trim().default(''),
+      itgcRatingApproach: itgcRatingApproachSchema.default('self-assessment'),
+    }),
   }),
   training: z.object({
     securityAwarenessTrainingTool: z.string().trim().min(1, 'Specify the training tool or enter "Manual"'),
@@ -149,6 +192,31 @@ export const wizardSchema = z.object({
     containsPhi: z.boolean(),
     hasCardholderDataEnvironment: z.boolean(),
     isMultiTenant: z.boolean(),
+    hipaa: z.object({
+      phiElements: z.array(phiElementSchema).default([]),
+      phiIngestionMethods: z.array(phiIngestionMethodSchema).default([]),
+      phiStorageLocations: z.array(phiStorageLocationSchema).default([]),
+      phiThirdPartyAccess: z.boolean().default(false),
+      phiBaaCounterparties: z.string().trim().default(''),
+      minimumNecessaryApproach: minimumNecessaryApproachSchema.default('rbac'),
+      phiRetentionYears: z.number().int().min(1).max(25).default(7),
+      hipaaSecurityOfficerDesignated: z.boolean().default(false),
+      hipaaPrivacyOfficerDesignated: z.boolean().default(false),
+      phiAuditLoggingEnabled: z.boolean().default(false),
+    }),
+    pci: z.object({
+      storesCardholderData: z.boolean().default(false),
+      cardholderDataElements: z.array(pciDataElementSchema).default([]),
+      pciSaqLevel: pciSaqLevelSchema.default('SAQ-A'),
+      pciComplianceLevel: pciComplianceLevelSchema.default('level-4'),
+      paymentProcessors: z.string().trim().default(''),
+      hasTokenizationSolution: z.boolean().default(false),
+      tokenizationProvider: z.string().trim().default(''),
+      cdeNetworkSegmentation: cdeNetworkSegmentationSchema.default('soft'),
+      asvScanProvider: z.string().trim().default(''),
+      cvssRemediationThreshold: cvssRemediationThresholdSchema.default('7.0'),
+      pciPenetrationTestCadence: pciPenetrationTestCadenceSchema.default('annual'),
+    }),
   }),
   tscSelections: z.object({
     security: z.literal(true),
@@ -187,6 +255,20 @@ export const wizardSchema = z.object({
     vulnerabilityScanningTool: z.string().trim().default(''),
     penetrationTestFrequency: penTestFrequencySchema,
     hasDast: z.boolean(),
+    hasSastTool: z.boolean().default(false),
+    sastTool: z.string().trim().default(''),
+    hasSecretsScanningTool: z.boolean().default(false),
+    secretsScanningTool: z.string().trim().default(''),
+    hasDependencyScanning: z.boolean().default(false),
+    dependencyScanningTool: z.string().trim().default(''),
+    hasThreatModeling: z.boolean().default(false),
+    threatModelingApproach: threatModelingApproachSchema.default('informal'),
+    threatModelingCadence: threatModelingCadenceSchema.default('as-needed'),
+    hasVulnerabilityDisclosureProgram: z.boolean().default(false),
+    vulnerabilityDisclosureChannel: z.string().trim().default(''),
+    remediationSlaCriticalDays: z.number().int().min(1).max(365).default(7),
+    remediationSlaHighDays: z.number().int().min(1).max(365).default(30),
+    hasSecurityChampionProgram: z.boolean().default(false),
     monitoringTool: z.string().trim().default(''),
     hasAutoscaling: z.boolean(),
     logRetentionDays: z.number().int().min(30).max(730).default(90),
@@ -221,6 +303,23 @@ export const wizardSchema = z.object({
     hasNdaProcess: z.boolean(),
     dataRetentionDefined: z.boolean(),
     hasDataDisposalProcedure: z.boolean(),
+    riskProgram: z.object({
+      riskScoringMethod: riskScoringMethodSchema.default('qualitative'),
+      riskAppetite: riskAppetiteSchema.default('moderate'),
+      riskTreatmentOptions: z.array(riskTreatmentOptionSchema).default(['mitigate', 'accept', 'transfer', 'avoid']),
+      riskReviewCadence: riskReviewCadenceSchema.default('quarterly'),
+      riskRegisterTool: z.string().trim().default(''),
+    }),
+    incidentResponse: z.object({
+      incidentResponseLead: z.string().trim().default(''),
+      incidentTriageSlaMinutes: z.number().int().min(5).max(1440).default(30),
+      incidentNotificationWindowHours: z.number().int().min(1).max(720).default(72),
+      postIncidentReviewWindow: postIncidentReviewWindowSchema.default('1-week'),
+      incidentEscalationPath: z.string().trim().default(''),
+      incidentTypesWithPlaybooks: z.array(incidentPlaybookTypeSchema).default([]),
+      hasIncidentRetainer: z.boolean().default(false),
+      irRetainerFirm: z.string().trim().default(''),
+    }),
   }),
   securityAssessment: z.object({
     // Document Review (CC2.1, CC5.2)
@@ -290,6 +389,7 @@ export const wizardSchema = z.object({
 export type WizardData = z.infer<typeof wizardSchema>;
 export type OrgAge = z.infer<typeof orgAgeSchema>;
 export type ComplianceMaturity = z.infer<typeof complianceMaturitySchema>;
+export type SoxApplicability = z.infer<typeof soxApplicabilitySchema>;
 export type TargetAuditType = z.infer<typeof targetAuditTypeSchema>;
 export type SubserviceInput = z.infer<typeof subserviceSchema>;
 export type InfrastructureType = z.infer<typeof infrastructureTypeSchema>;
@@ -316,6 +416,7 @@ export const defaultWizardValues: WizardData = {
     industry: '',
     orgAge: '<1' as const,
     complianceMaturity: 'first-time' as const,
+    soxApplicability: 'none' as const,
     targetAuditType: 'unsure' as const,
     websiteCollectsPersonalData: false,
     websiteUsesCookiesAnalytics: false,
@@ -345,6 +446,22 @@ export const defaultWizardValues: WizardData = {
     internalAuditFrequency: 'annual',
     controlMonitoringApproachWhenNoInternalAudit: '',
     hasPerformanceReviewsLinkedToControls: false,
+    iso27001: {
+      targeted: false,
+      scopeStatement: '',
+      certificationBody: '',
+      exclusionRationale: '',
+    },
+    sox: {
+      externalAuditFirm: '',
+      financialSystemsInScope: [],
+      itgcFinancialSystems: [],
+      hasSegregationOfDutiesMatrix: false,
+      accessCertificationCadence: 'quarterly',
+      hasJournalEntryControls: false,
+      changeFreezePeriod: '',
+      itgcRatingApproach: 'self-assessment',
+    },
   },
   training: {
     securityAwarenessTrainingTool: '',
@@ -360,6 +477,31 @@ export const defaultWizardValues: WizardData = {
     containsPhi: false,
     hasCardholderDataEnvironment: false,
     isMultiTenant: true,
+    hipaa: {
+      phiElements: [],
+      phiIngestionMethods: [],
+      phiStorageLocations: [],
+      phiThirdPartyAccess: false,
+      phiBaaCounterparties: '',
+      minimumNecessaryApproach: 'rbac',
+      phiRetentionYears: 7,
+      hipaaSecurityOfficerDesignated: false,
+      hipaaPrivacyOfficerDesignated: false,
+      phiAuditLoggingEnabled: false,
+    },
+    pci: {
+      storesCardholderData: false,
+      cardholderDataElements: [],
+      pciSaqLevel: 'SAQ-A',
+      pciComplianceLevel: 'level-4',
+      paymentProcessors: '',
+      hasTokenizationSolution: false,
+      tokenizationProvider: '',
+      cdeNetworkSegmentation: 'soft',
+      asvScanProvider: '',
+      cvssRemediationThreshold: '7.0',
+      pciPenetrationTestCadence: 'annual',
+    },
   },
   tscSelections: {
     security: true,
@@ -398,6 +540,20 @@ export const defaultWizardValues: WizardData = {
     vulnerabilityScanningTool: '',
     penetrationTestFrequency: 'annual',
     hasDast: false,
+    hasSastTool: false,
+    sastTool: '',
+    hasSecretsScanningTool: false,
+    secretsScanningTool: '',
+    hasDependencyScanning: false,
+    dependencyScanningTool: '',
+    hasThreatModeling: false,
+    threatModelingApproach: 'informal',
+    threatModelingCadence: 'as-needed',
+    hasVulnerabilityDisclosureProgram: false,
+    vulnerabilityDisclosureChannel: '',
+    remediationSlaCriticalDays: 7,
+    remediationSlaHighDays: 30,
+    hasSecurityChampionProgram: false,
     monitoringTool: '',
     hasAutoscaling: false,
     logRetentionDays: 90,
@@ -432,6 +588,23 @@ export const defaultWizardValues: WizardData = {
     hasNdaProcess: false,
     dataRetentionDefined: false,
     hasDataDisposalProcedure: false,
+    riskProgram: {
+      riskScoringMethod: 'qualitative',
+      riskAppetite: 'moderate',
+      riskTreatmentOptions: ['mitigate', 'accept', 'transfer', 'avoid'],
+      riskReviewCadence: 'quarterly',
+      riskRegisterTool: '',
+    },
+    incidentResponse: {
+      incidentResponseLead: '',
+      incidentTriageSlaMinutes: 30,
+      incidentNotificationWindowHours: 72,
+      postIncidentReviewWindow: '1-week',
+      incidentEscalationPath: '',
+      incidentTypesWithPlaybooks: [],
+      hasIncidentRetainer: false,
+      irRetainerFirm: '',
+    },
   },
   securityAssessment: {
     documentReview: {
@@ -694,6 +867,29 @@ export const complianceMaturityOptions = [
   },
 ] as const;
 
+export const soxApplicabilityOptions = [
+  {
+    value: 'none',
+    label: 'No current SOX / ITGC driver',
+    description: 'Use this when the product is not currently supporting public-company reporting, IPO readiness, or customer-driven SOX requests.',
+  },
+  {
+    value: 'customer-requested',
+    label: 'Customer or prospect requests SOX / ITGC readiness',
+    description: 'Use this when enterprise customers, parent companies, or procurement reviews ask for SOX-style access, change, and evidence controls.',
+  },
+  {
+    value: 'public-company-or-ipo',
+    label: 'Public company or IPO readiness',
+    description: 'Use this when the company is public, preparing for IPO, or building an internal-controls program for controllership and audit.',
+  },
+  {
+    value: 'financial-reporting-systems',
+    label: 'Systems or reports support financial reporting',
+    description: 'Use this when the product, connected systems, key reports, or interfaces may affect internal control over financial reporting (ICFR).',
+  },
+] as const;
+
 export const acknowledgementCadenceOptions = [
   { value: 'not-yet',           label: 'Not yet — we haven\'t established this practice' },
   { value: 'hire-only',         label: 'At hire only' },
@@ -753,6 +949,163 @@ export const policyPublicationMethodOptions = [
   { value: 'other', label: 'Other' },
 ] as const;
 
+export const riskScoringMethodOptions = [
+  { value: 'qualitative', label: 'Qualitative' },
+  { value: 'quantitative', label: 'Quantitative' },
+  { value: 'hybrid', label: 'Hybrid' },
+] as const;
+
+export const riskAppetiteOptions = [
+  { value: 'low', label: 'Low' },
+  { value: 'moderate', label: 'Moderate' },
+  { value: 'high', label: 'High' },
+] as const;
+
+export const riskTreatmentOptions = [
+  { value: 'mitigate', label: 'Mitigate' },
+  { value: 'accept', label: 'Accept' },
+  { value: 'transfer', label: 'Transfer' },
+  { value: 'avoid', label: 'Avoid' },
+] as const;
+
+export const riskReviewCadenceOptions = [
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'quarterly', label: 'Quarterly' },
+  { value: 'semi-annual', label: 'Semi-annual' },
+  { value: 'annual', label: 'Annual' },
+] as const;
+
+export const postIncidentReviewWindowOptions = [
+  { value: '24h', label: 'Within 24 hours' },
+  { value: '48h', label: 'Within 48 hours' },
+  { value: '1-week', label: 'Within 1 week' },
+  { value: '2-weeks', label: 'Within 2 weeks' },
+] as const;
+
+export const incidentPlaybookTypeOptions = [
+  { value: 'ransomware', label: 'Ransomware' },
+  { value: 'data-breach', label: 'Data breach' },
+  { value: 'insider-threat', label: 'Insider threat' },
+  { value: 'ddos', label: 'Distributed denial-of-service' },
+  { value: 'account-compromise', label: 'Account compromise' },
+  { value: 'supply-chain', label: 'Supply chain compromise' },
+] as const;
+
+export const phiElementOptions = [
+  { value: 'name', label: 'Name' },
+  { value: 'dob', label: 'Date of birth' },
+  { value: 'ssn', label: 'Social Security number' },
+  { value: 'diagnosis-codes', label: 'Diagnosis codes' },
+  { value: 'insurance-info', label: 'Insurance information' },
+  { value: 'medication', label: 'Medication history' },
+  { value: 'lab-results', label: 'Lab results' },
+  { value: 'other', label: 'Other PHI elements' },
+] as const;
+
+export const phiIngestionMethodOptions = [
+  { value: 'api', label: 'API' },
+  { value: 'file-upload', label: 'File upload' },
+  { value: 'hl7-fhir', label: 'HL7 / FHIR' },
+  { value: 'manual-entry', label: 'Manual entry' },
+  { value: 'edi', label: 'EDI' },
+] as const;
+
+export const phiStorageLocationOptions = [
+  { value: 'relational-db', label: 'Relational database' },
+  { value: 'object-storage', label: 'Object storage' },
+  { value: 'data-warehouse', label: 'Data warehouse' },
+  { value: 'backups', label: 'Backups' },
+  { value: 'logs', label: 'Logs' },
+] as const;
+
+export const minimumNecessaryApproachOptions = [
+  { value: 'rbac', label: 'Role-based access control' },
+  { value: 'attribute-based', label: 'Attribute-based access control' },
+  { value: 'manual-review', label: 'Manual review / approval' },
+] as const;
+
+export const pciDataElementOptions = [
+  { value: 'pan', label: 'Primary account number (PAN)' },
+  { value: 'cardholder-name', label: 'Cardholder name' },
+  { value: 'expiration-date', label: 'Expiration date' },
+  { value: 'service-code', label: 'Service code' },
+  { value: 'cvv', label: 'CVV / CVC / CID' },
+  { value: 'track-data', label: 'Full track data' },
+  { value: 'pin-data', label: 'PIN / PIN block' },
+  { value: 'tokenized-pan', label: 'Tokenized PAN or network token' },
+] as const;
+
+export const financialSystemScopeOptions = [
+  { value: 'erp', label: 'ERP' },
+  { value: 'gl', label: 'General ledger' },
+  { value: 'ar', label: 'Accounts receivable' },
+  { value: 'ap', label: 'Accounts payable' },
+  { value: 'payroll', label: 'Payroll' },
+  { value: 'consolidation', label: 'Consolidation' },
+  { value: 'reporting', label: 'Reporting' },
+  { value: 'crm-with-revenue', label: 'Customer relationship management with revenue impact' },
+] as const;
+
+export const accessCertificationCadenceOptions = [
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'quarterly', label: 'Quarterly' },
+  { value: 'semi-annual', label: 'Semi-annual' },
+  { value: 'annual', label: 'Annual' },
+] as const;
+
+export const itgcRatingApproachOptions = [
+  { value: 'self-assessment', label: 'Self-assessment' },
+  { value: 'internal-audit', label: 'Internal audit' },
+  { value: 'external-audit', label: 'External audit' },
+] as const;
+
+export const pciSaqLevelOptions = [
+  { value: 'SAQ-A', label: 'SAQ-A' },
+  { value: 'SAQ-A-EP', label: 'SAQ-A-EP' },
+  { value: 'SAQ-B', label: 'SAQ-B' },
+  { value: 'SAQ-C', label: 'SAQ-C' },
+  { value: 'SAQ-D', label: 'SAQ-D' },
+  { value: 'ROC', label: 'Report on Compliance (ROC)' },
+] as const;
+
+export const pciComplianceLevelOptions = [
+  { value: 'level-1', label: 'Level 1' },
+  { value: 'level-2', label: 'Level 2' },
+  { value: 'level-3', label: 'Level 3' },
+  { value: 'level-4', label: 'Level 4' },
+] as const;
+
+export const cdeNetworkSegmentationOptions = [
+  { value: 'hard', label: 'Hard segmentation (firewall / VLAN)' },
+  { value: 'soft', label: 'Soft segmentation (security groups / ACLs)' },
+  { value: 'none', label: 'No formal segmentation' },
+] as const;
+
+export const cvssRemediationThresholdOptions = [
+  { value: '7.0', label: 'CVSS 7.0 and above' },
+  { value: '4.0', label: 'CVSS 4.0 and above' },
+  { value: 'all-findings', label: 'All findings' },
+] as const;
+
+export const pciPenetrationTestCadenceOptions = [
+  { value: 'annual', label: 'Annual' },
+  { value: 'semi-annual', label: 'Semi-annual' },
+] as const;
+
+export const threatModelingApproachOptions = [
+  { value: 'stride', label: 'STRIDE' },
+  { value: 'pasta', label: 'PASTA' },
+  { value: 'attack-tree', label: 'Attack tree' },
+  { value: 'informal', label: 'Informal review' },
+] as const;
+
+export const threatModelingCadenceOptions = [
+  { value: 'per-feature', label: 'Per feature or major design change' },
+  { value: 'quarterly', label: 'Quarterly' },
+  { value: 'annually', label: 'Annually' },
+  { value: 'as-needed', label: 'As needed' },
+] as const;
+
 export const securityAssessmentReadinessOptions = [
   { value: 'not-started', label: 'Not started — no formal process yet' },
   { value: 'in-progress', label: 'In progress — partially implemented' },
@@ -766,11 +1119,18 @@ export function selectedTscLabels(data: WizardData) {
   ];
 }
 
+export function hasSoxApplicability(data: Pick<WizardData, 'company'> | WizardData) {
+  const company = 'company' in data ? data.company : data;
+  return company.soxApplicability !== 'none';
+}
+
 export function selectedCriteriaCodes(data: WizardData) {
   const criteria = new Set<string>(['CC1', 'CC2', 'CC3', 'CC4', 'CC5', 'CC6', 'CC7', 'CC8', 'CC9']);
 
   criteria.add('COMMON');
-  criteria.add('ISO27001');
+  if (data.governance.iso27001.targeted) {
+    criteria.add('ISO27001');
+  }
 
   if (data.tscSelections.availability) {
     criteria.add('A1');
@@ -796,6 +1156,9 @@ export function selectedCriteriaCodes(data: WizardData) {
   }
   if (data.scope.hasCardholderDataEnvironment) {
     criteria.add('PCI');
+  }
+  if (hasSoxApplicability(data)) {
+    criteria.add('SOX');
   }
 
   return [...criteria];

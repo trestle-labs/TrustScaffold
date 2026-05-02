@@ -56,7 +56,7 @@ export default async function SignupPage({
           </p>
         </CardContent>
       </Card>
-      <section className="rounded-[2rem] border border-white/60 bg-white/70 p-10 backdrop-blur">
+      <section className="rounded-[2rem] border border-border/60 bg-page-grid bg-grid bg-[size:24px_24px] p-10">
         <div className="flex items-center gap-3">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">Phase 2 MVP</p>
           <Badge variant="outline" className="text-[10px]">{APP_VERSION_LABEL}</Badge>

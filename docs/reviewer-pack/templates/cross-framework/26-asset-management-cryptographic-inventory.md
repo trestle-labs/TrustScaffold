@@ -2,13 +2,13 @@
 
 > Baseline reviewer copy. Handlebars placeholders such as `{{organization_name}}` are intentionally preserved so this can be reviewed before organization-specific answers are inserted.
 
-<!-- Mapping: C1.1, C1.2, CC6.1, CC6.2, CC6.3, CC6.4, CC6.5, CC6.6, CC6.7, CC6.8, CC7.1, CC7.2, CC7.3, CC7.4, CC7.5, COMMON, ISO27001, PCI -->
+<!-- Mapping: C1.1, C1.2, CC6.1, CC6.2, CC6.3, CC6.4, CC6.5, CC6.6, CC6.7, CC6.8, CC7.1, CC7.2, CC7.3, CC7.4, CC7.5, COMMON, ISO27001, PCI, SOX -->
 
 | Field | Value |
 | --- | --- |
 | Template slug | `asset-management-cryptographic-inventory` |
 | TSC category | Universal |
-| Criteria mapped | COMMON, CC6, CC7, C1, ISO27001, PCI |
+| Criteria mapped | COMMON, CC6, CC7, C1, ISO27001, PCI, SOX |
 | Purpose | Universal common-control inventory for assets, data stores, encryption mechanisms, keys, certificates, and owners. |
 | Output filename | `26-asset-management-cryptographic-inventory.md` |
 
@@ -19,18 +19,19 @@ title: Asset Management and Cryptographic Inventory
 slug: asset-management-cryptographic-inventory
 tsc_category: Universal
 criteria_mapped:
-	- COMMON
-	- CC6
-	- CC7
-	- C1
-	- ISO27001
-	- PCI
+  - COMMON
+  - CC6
+  - CC7
+  - C1
+  - ISO27001
+  - PCI
+  - SOX
 generated_for: {{organization_name}}
 effective_date: {{effective_date}}
 version: {{policy_version}}
 ---
 
-<!-- Mapping: COMMON, CC6, CC7, C1, ISO27001, PCI -->
+<!-- Mapping: COMMON, CC6, CC7, C1, ISO27001, PCI, SOX -->
 
 # Asset Management and Cryptographic Inventory
 
@@ -40,7 +41,7 @@ version: {{policy_version}}
 
 
 ## Purpose
-{{organization_name}} maintains an asset and cryptographic inventory to support SOC 2, ISO 27001, PCI-DSS, HIPAA, and privacy control expectations.
+{{organization_name}} maintains an asset and cryptographic inventory to support SOC 2, ISO 27001, SOX / ITGC, PCI-DSS, HIPAA, and privacy control expectations.
 
 ## Asset Inventory
 | Asset / System | Type | Environment | Data Classification | Owner | Criticality | Evidence Location |

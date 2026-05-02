@@ -2,6 +2,7 @@ import 'server-only';
 
 import { cache } from 'react';
 
+import { isRecoverableSupabaseAuthErrorMessage } from '@/lib/auth/supabase-auth-errors';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import type { DashboardContext, OrganizationSummary } from '@/lib/types';
 
@@ -22,6 +23,10 @@ export const getDashboardContext = cache(async (): Promise<DashboardContext | nu
     .order('created_at', { ascending: true });
 
   if (error) {
+    if (isRecoverableSupabaseAuthErrorMessage(error.message)) {
+      return null;
+    }
+
     throw new Error(`Unable to load organization membership: ${error.message}`);
   }
 

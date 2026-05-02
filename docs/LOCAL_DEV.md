@@ -105,14 +105,14 @@ npm run start -- --hostname 127.0.0.1 -p 3000
 4. Visit the signup URL printed by the setup script, or read `PORT` from `.env.local`.
 5. Create a new account with a fresh email and organization name.
 6. Confirm you land on `/dashboard` and see the generated organization ID and `admin` role.
-7. Visit `/wizard`, complete all seven steps, and click generate.
+7. Visit `/wizard`, complete all ten steps, and click generate.
 8. Confirm the compiled Markdown drafts appear on `/generated-docs`.
 
 ---
 
 ## Run the E2E Test Suite
 
-The full E2E suite (51 tests across 5 suites) and the red team adversarial suite (33 tests) require:
+The full E2E suite (55 tests across 6 suites) and the red team adversarial suite (33 tests) require:
 
 1. Supabase running locally
 2. Staging seed applied
@@ -138,6 +138,7 @@ npx tsx tests/e2e/02-wizard-compilation.ts
 npx tsx tests/e2e/03-control-graph.ts
 npx tsx tests/e2e/04-evidence-crypto.ts
 npx tsx tests/e2e/05-auditor-portal.ts
+npx tsx tests/e2e/06-regulated-scope-smoke.ts
 
 # Run the red team adversarial suite
 npx tsx tests/e2e/red-team.ts

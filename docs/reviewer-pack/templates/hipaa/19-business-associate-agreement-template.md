@@ -19,7 +19,7 @@ title: Business Associate Agreement Template
 slug: business-associate-agreement-template
 tsc_category: HIPAA
 criteria_mapped:
-	- HIPAA
+  - HIPAA
 generated_for: {{organization_name}}
 effective_date: {{effective_date}}
 version: {{policy_version}}

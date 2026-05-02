@@ -19,7 +19,7 @@ title: Tokenization and Cardholder Data Policy
 slug: tokenization-cardholder-data-policy
 tsc_category: PCI-DSS
 criteria_mapped:
-	- PCI
+  - PCI
 generated_for: {{organization_name}}
 effective_date: {{effective_date}}
 version: {{policy_version}}
@@ -37,7 +37,11 @@ version: {{policy_version}}
 ## Purpose
 {{organization_name}} protects cardholder data (CHD) by minimizing storage, using tokenization where feasible, masking display values, and restricting all CHD handling to the approved cardholder data environment (CDE).
 
+## PCI Scope Baseline
+- Cardholder data in scope: {{cardholder_data_elements_text}}
+
 ## Policy Requirements
+- Only the approved in-scope PCI data elements ({{cardholder_data_elements_text}}) may enter the CDE or connected scanning boundary.
 - Raw primary account numbers (PANs) may not be stored outside the approved CDE.
 - Sensitive authentication data, including full track data, CVV/CVC, and PIN data, may not be stored after authorization.
 - PAN display is masked except for personnel with documented business need.
@@ -46,7 +50,7 @@ version: {{policy_version}}
 - Encryption and key management follow approved algorithms: {{approved_encryption_algorithms}}.
 
 ## Tokenization Procedure
-1. Payment workflows identify whether raw CHD is received, transmitted, processed, stored, or tokenized by a payment processor.
+1. Payment workflows identify whether {{cardholder_data_elements_text}} are received, transmitted, processed, stored, or tokenized by a payment processor.
 2. Raw CHD is routed only through approved payment components and service providers.
 3. Tokens are stored in application systems instead of raw PAN wherever feasible.
 4. Logs, support tickets, telemetry, and exports are monitored to prevent CHD leakage.

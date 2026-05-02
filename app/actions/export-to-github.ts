@@ -20,9 +20,12 @@ type ExportResult =
 
 export async function exportApprovedDocsToGithubAction(formData: FormData): Promise<ExportResult> {
   try {
-    const { supabase, integration, token, docs } = await loadExportContext('github', formData);
+    const { context, supabase, integration, token, docs, bridgeLetterPrimaryAudienceOverride } = await loadExportContext('github', formData);
     const octokit = new Octokit({ auth: token });
-    const files = buildExportFiles(docs);
+    const files = buildExportFiles(docs, {
+      workspaceOrganizationName: context.organization?.name ?? null,
+      bridgeLetterPrimaryAudienceOverride,
+    });
     const branchName = `trustscaffold-soc2-update-${Date.now()}`;
 
     const { data: repo } = await octokit.repos.get({

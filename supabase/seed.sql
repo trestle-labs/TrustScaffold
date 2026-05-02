@@ -30,7 +30,32 @@ title: Information Security Policy
 slug: information-security-policy
 tsc_category: Security
 criteria_mapped:
+      "iso27001_targeted": true,
+      "iso27001_program_status": "Targeted for ISO 27001 certification",
+      "iso27001_scope_statement": "The Example Corp production platform, its supporting engineering and security processes, and the cloud infrastructure used to deliver the service.",
+      "iso27001_certification_body": "Not yet selected",
+      "iso27001_exclusion_rationale": "No Annex A exclusions have been formally approved yet.",
   - CC1
+      "iso_annex_domain_rows": [
+        {
+          "domain": "Organizational controls",
+          "applicability": "Applicable",
+          "rationale": "Governance, risk, supplier, incident, and legal controls are required for the ISMS regardless of certification timing.",
+          "support": "Information Security Policy; Risk Management Policy; Vendor Management Policy; Legal and Regulatory Registry",
+          "owner": "Example Owner",
+          "status": "In active certification scope"
+        }
+      ],
+      "iso_derived_control_rows": [
+        {
+          "control": "A.8.24 Use of cryptography",
+          "applicability": "Applicable",
+          "rationale": "Sensitive or regulated data types in scope require encryption and key-management controls.",
+          "support": "Encryption Policy; Cryptographic Inventory",
+          "owner": "Example Owner",
+          "status": "Seeded from wizard answers"
+        }
+      ],
   - CC2
   - CC5
   - CC6
@@ -899,28 +924,69 @@ version: {{policy_version}}
 ## Objective
 {{organization_name}} integrates security controls into design, development, testing, and release workflows.
 
+## Secure Design
+{{#if has_threat_modeling}}
+- Threat modeling is performed using the {{threat_modeling_approach}} approach on a {{threat_modeling_cadence}} cadence for new features, architectural changes, or other material delivery risk.
+{{else}}
+- Formal threat modeling is not yet consistently performed; engineering leadership uses code review, vulnerability triage, and release review to identify design and implementation risk.
+{{/if}}
+{{#if has_security_champion_program}}
+- A designated security champion or equivalent engineering security owner supports secure design and remediation decisions.
+{{/if}}
+
 ## Engineering Controls
-- Code changes require peer review before merge.
-- Dependencies are reviewed and patched based on severity.
+- Code changes follow documented review expectations before production release.
+- Dependencies are reviewed and patched based on severity and exploitability.
 - Security issues are tracked through remediation to closure.
 
 ## Validation
-{{#if runs_sast}}
-- Static analysis is executed on pull requests or pre-release builds.
+{{#if has_sast}}
+- Static analysis is executed using {{sast_tool}} on pull requests or pre-release builds.
 {{/if}}
-{{#if runs_dependency_scanning}}
-- Dependency scanning is executed to identify known vulnerabilities.
+{{#if has_secrets_scanning}}
+- Secrets scanning is executed using {{secrets_scanning_tool}} to detect committed credentials and tokens.
+{{/if}}
+{{#if has_dependency_scanning}}
+- Dependency scanning is executed using {{dependency_scanning_tool}} to identify known vulnerabilities and supply-chain risk.
+{{/if}}
+{{#if has_dast}}
+- Dynamic application security testing is performed against running application surfaces or pre-production environments.
 {{/if}}
 {{#if has_production_change_reviews}}
 - Production-affecting changes require release approval and rollback planning.
+{{/if}}
+
+## Remediation Expectations
+- Critical security findings are remediated within {{remediation_sla_critical_days}} days.
+- High-severity security findings are remediated within {{remediation_sla_high_days}} days.
+- Findings remain tracked until remediation, exception approval, or documented risk acceptance is completed.
+
+## External Reporting
+{{#if has_vulnerability_disclosure}}
+- {{organization_name}} accepts externally reported vulnerabilities through {{vulnerability_disclosure_channel}} and routes validated reports into the remediation workflow.
+{{else}}
+- {{organization_name}} does not maintain a public vulnerability disclosure program today; security issues are primarily identified through internal review, testing, and vendor or customer escalation.
 {{/if}}
 $$,
     '{
       "organization_name": "Example Corp",
       "effective_date": "2026-04-18",
       "policy_version": "v0.1",
-      "runs_sast": true,
-      "runs_dependency_scanning": true,
+      "has_sast": true,
+      "sast_tool": "CodeQL",
+      "has_secrets_scanning": true,
+      "secrets_scanning_tool": "GitHub Secret Scanning",
+      "has_dependency_scanning": true,
+      "dependency_scanning_tool": "Dependabot",
+      "has_threat_modeling": true,
+      "threat_modeling_approach": "STRIDE",
+      "threat_modeling_cadence": "per feature or major design change",
+      "has_security_champion_program": true,
+      "remediation_sla_critical_days": 7,
+      "remediation_sla_high_days": 30,
+      "has_vulnerability_disclosure": true,
+      "vulnerability_disclosure_channel": "security@example.com",
+      "has_dast": true,
       "has_production_change_reviews": true
     }'::jsonb,
     true
@@ -2427,7 +2493,11 @@ version: {{policy_version}}
 ## Purpose
 {{organization_name}} protects cardholder data (CHD) by minimizing storage, using tokenization where feasible, masking display values, and restricting all CHD handling to the approved cardholder data environment (CDE).
 
+## PCI Scope Baseline
+- Cardholder data in scope: {{cardholder_data_elements_text}}
+
 ## Policy Requirements
+- Only the approved in-scope PCI data elements ({{cardholder_data_elements_text}}) may enter the CDE or connected scanning boundary.
 - Raw primary account numbers (PANs) may not be stored outside the approved CDE.
 - Sensitive authentication data, including full track data, CVV/CVC, and PIN data, may not be stored after authorization.
 - PAN display is masked except for personnel with documented business need.
@@ -2436,7 +2506,7 @@ version: {{policy_version}}
 - Encryption and key management follow approved algorithms: {{approved_encryption_algorithms}}.
 
 ## Tokenization Procedure
-1. Payment workflows identify whether raw CHD is received, transmitted, processed, stored, or tokenized by a payment processor.
+1. Payment workflows identify whether {{cardholder_data_elements_text}} are received, transmitted, processed, stored, or tokenized by a payment processor.
 2. Raw CHD is routed only through approved payment components and service providers.
 3. Tokens are stored in application systems instead of raw PAN wherever feasible.
 4. Logs, support tickets, telemetry, and exports are monitored to prevent CHD leakage.
@@ -2481,13 +2551,16 @@ version: {{policy_version}}
 ## Purpose
 {{organization_name}} performs recurring vulnerability scans for systems in or connected to the CDE and retains evidence needed for PCI-DSS readiness.
 
+## Scan Program Baseline
+- PCI data elements in scope: {{cardholder_data_elements_text}}
+
 ## Scan Cadence
 - External ASV scans are performed {{asv_scan_frequency}} and after significant CDE changes.
 - Internal vulnerability scans are performed {{pci_scan_frequency}} for CDE systems and connected services.
 - Failed scans are remediated and rescanned until passing results are obtained.
 
 ## Procedure
-1. Confirm current CDE scope, internet-facing assets, connected systems, and payment-provider integrations.
+1. Confirm current CDE scope, in-scope PCI data elements ({{cardholder_data_elements_text}}), internet-facing assets, connected systems, and payment-provider integrations.
 2. Schedule ASV scans and internal authenticated scans.
 3. Triage results by severity, exploitability, exposure, and CDE impact.
 4. Track remediation in {{ticketing_system}} with owner, due date, evidence, and rescan result.
@@ -2565,7 +2638,7 @@ $$,
     'Legal and Regulatory Registry',
     'ISO 27001-oriented registry of legal, regulatory, statutory, contractual, and framework obligations.',
     'ISO 27001',
-    array['ISO27001', 'GDPR', 'CCPA', 'HIPAA', 'PCI'],
+    array['ISO27001', 'GDPR', 'CCPA', 'HIPAA', 'PCI', 'SOX'],
     '24-legal-regulatory-registry.md',
     $$---
 title: Legal and Regulatory Registry
@@ -2577,6 +2650,7 @@ criteria_mapped:
   - CCPA
   - HIPAA
   - PCI
+  - SOX
 generated_for: {{organization_name}}
 effective_date: {{effective_date}}
 version: {{policy_version}}
@@ -2596,6 +2670,9 @@ version: {{policy_version}}
 | CCPA / CPRA | {{#if website_targets_california_residents}}Yes{{else}}{{#if website_sells_or_shares_personal_information}}Yes{{else}}Review needed{{/if}}{{/if}} | California residents, sale/share, targeted advertising, or consumer privacy requests | {{privacy_contact_email}} | Privacy notice, opt-out links, DSAR log, retention schedule | {{legal_registry_review_frequency}} |  |
 | HIPAA | {{#if stores_phi}}Yes{{else}}No PHI indicated{{/if}} | PHI handled by system or vendors | {{privacy_contact_email}} | BAA, PHI inventory, security incident records | {{legal_registry_review_frequency}} |  |
 | PCI-DSS | {{#if has_cardholder_data_environment}}Yes{{else}}No CDE indicated{{/if}} | CDE stores, processes, transmits, or connects to CHD | {{policy_owner}} | CDE inventory, ASV scans, tokenization policy | Quarterly |  |
+{{#if is_sox_applicable}}
+| SOX / ICFR | {{sox_applicability_label}} | Public company obligations, IPO readiness, parent-company controls, or systems that feed financial reporting | {{finance_system_owner}} | SOX ITGC matrix, access review evidence, change tickets, key report inventory | {{sox_review_frequency}} | Confirm whether {{primary_product_name}} or connected systems are in scope for financial reporting. |
+{{/if}}
 | Cookie / tracking consent | {{#if website_uses_cookies_analytics}}Review needed{{else}}No tracking indicated{{/if}} | Cookies, analytics, ads, pixels, session replay, or similar tracking | {{privacy_contact_email}} | Cookie banner, preference center, vendor list, consent log | {{legal_registry_review_frequency}} | Banner present: {{#if website_has_cookie_banner}}Yes{{else}}No{{/if}} |
 | Children's privacy | {{#if website_allows_children_under_13}}Review needed{{else}}No child-directed use indicated{{/if}} | Site directed to children or knowingly collecting data from children under 13 | {{privacy_contact_email}} | Parental consent, age-screening, retention and deletion workflow | {{legal_registry_review_frequency}} |  |
 
@@ -2611,8 +2688,12 @@ $$,
       "effective_date": "2026-04-18",
       "policy_version": "v0.1",
       "policy_owner": "Security Owner",
+      "finance_system_owner": "Controller",
       "privacy_contact_email": "privacy@example.com",
       "legal_registry_review_frequency": "quarterly",
+      "is_sox_applicable": false,
+      "sox_applicability_label": "No current SOX / ITGC driver",
+      "sox_review_frequency": "quarterly",
       "ticketing_system": "Jira",
       "company_website": "https://example.com",
       "scope_includes_privacy": true,
@@ -2707,7 +2788,7 @@ $$,
     'Asset Management and Cryptographic Inventory',
     'Universal common-control inventory for assets, data stores, encryption mechanisms, keys, certificates, and owners.',
     'Universal',
-    array['COMMON', 'CC6', 'CC7', 'C1', 'ISO27001', 'PCI'],
+    array['COMMON', 'CC6', 'CC7', 'C1', 'ISO27001', 'PCI', 'SOX'],
     '26-asset-management-cryptographic-inventory.md',
     $$---
 title: Asset Management and Cryptographic Inventory
@@ -2720,6 +2801,7 @@ criteria_mapped:
   - C1
   - ISO27001
   - PCI
+  - SOX
 generated_for: {{organization_name}}
 effective_date: {{effective_date}}
 version: {{policy_version}}
@@ -2728,7 +2810,7 @@ version: {{policy_version}}
 # Asset Management and Cryptographic Inventory
 
 ## Purpose
-{{organization_name}} maintains an asset and cryptographic inventory to support SOC 2, ISO 27001, PCI-DSS, HIPAA, and privacy control expectations.
+{{organization_name}} maintains an asset and cryptographic inventory to support SOC 2, ISO 27001, SOX / ITGC, PCI-DSS, HIPAA, and privacy control expectations.
 
 ## Asset Inventory
 | Asset / System | Type | Environment | Data Classification | Owner | Criticality | Evidence Location |
@@ -2762,6 +2844,871 @@ $$,
       "minimum_tls_version": "1.2",
       "key_rotation_frequency": "annually or upon suspected compromise",
       "cryptographic_inventory_review_frequency": "quarterly"
+    }'::jsonb,
+    true
+  ),
+  (
+    'sox-itgc-control-matrix',
+    'SOX IT General Controls Matrix',
+    'SOX-oriented IT general controls matrix for entity-level governance, access, change management, and system operations.',
+    'SOX / ITGC',
+    array['COMMON', 'SOX'],
+    '27-sox-itgc-control-matrix.md',
+    $$---
+title: SOX IT General Controls Matrix
+slug: sox-itgc-control-matrix
+tsc_category: SOX / ITGC
+criteria_mapped:
+  - COMMON
+  - SOX
+generated_for: {{organization_name}}
+effective_date: {{effective_date}}
+version: {{policy_version}}
+---
+
+# SOX IT General Controls Matrix
+
+## Purpose
+{{organization_name}} maintains this matrix to map IT general controls that may support Sarbanes-Oxley (SOX) internal control over financial reporting (ICFR), IPO readiness, parent-company control requests, and internal-audit evidence collection.
+
+## Scoping Note
+- This is a baseline ITGC matrix, not a legal determination that {{primary_product_name}} is in scope for SOX.
+- Selected SOX / ITGC driver: {{sox_applicability_label}}.
+- Finance, controllership, internal audit, and system owners should confirm whether the product, connected systems, key reports, interfaces, or spreadsheets affect financial reporting.
+
+## ITGC Matrix
+| Control Domain | Control Objective | TrustScaffold Baseline | Typical Evidence | Owner | Review Frequency | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| Entity-level governance | Management assigns control ownership, review cadence, and escalation for ITGC issues. | Policy governance, internal audit cadence, and management review operate through the security baseline. | Policy approvals, governance meeting minutes, deficiency log | {{sox_control_owner}} | {{sox_review_frequency}} | Draft |
+| User provisioning | Access to in-scope systems is approved before access is granted. | Access requests, approvals, and onboarding flow are documented through the access-control policy and {{hris_provider}} lifecycle process. | Access tickets, approval records, onboarding evidence | {{control_operator}} | {{sox_access_review_frequency}} | Draft |
+| Access modification and removal | Role changes and terminations are reflected promptly in connected systems. | Joiner / mover / leaver control relies on {{hris_provider}}, {{idp_provider}}, and the offboarding SLA. | HR change record, termination ticket, deprovisioning screenshots | {{control_operator}} | {{sox_access_review_frequency}} | Draft |
+| Privileged access | Elevated access is limited, approved, and reviewed. | MFA, privileged-access restriction, and periodic review expectations are part of the baseline control set. | Admin roster, privileged group export, MFA policy, review sign-off | {{control_operator}} | {{sox_access_review_frequency}} | Draft |
+| Access recertification | Management reviews access for key systems on a recurring basis. | Quarterly access review cadence is expected for systems with material operational or reporting impact. | Access review workbook, reviewer sign-off, remediation tickets | {{sox_control_owner}} | {{sox_access_review_frequency}} | Draft |
+| Change management | Changes are authorized, tested, reviewed, and promoted through controlled workflows. | Changes to {{primary_product_name}} move through {{source_control_tool}} and {{ticketing_system}} with peer review and approval expectations. | Change ticket, pull request, test evidence, deployment log | {{control_operator}} | {{sox_change_review_frequency}} | Draft |
+| Emergency changes | Emergency changes are separately identified, approved, and retrospectively reviewed. | Emergency changes follow the baseline change policy and require after-the-fact review. | Emergency ticket, incident reference, post-change approval | {{control_operator}} | {{sox_change_review_frequency}} | Draft |
+| Job operations and monitoring | Scheduled jobs, incident response, and production exceptions are monitored and resolved. | Incident, monitoring, and backup controls create the baseline operating evidence set. | Monitoring alerts, incident tickets, failed-job log, backup results | {{control_operator}} | {{sox_review_frequency}} | Draft |
+| Interfaces and key reports | Systems and reports used in reporting or reconciliations are inventoried and reviewed. | To be completed during finance and internal-audit scoping. | Report inventory, interface list, reconciliation evidence | {{finance_system_owner}} | {{sox_review_frequency}} | To be scoped |
+
+## Next Steps
+1. Mark systems, reports, integrations, and data extracts that affect ICFR.
+2. Assign owners for each access, change, and operations control.
+3. Link each control to evidence retained in {{ticketing_system}}, {{source_control_tool}}, {{idp_provider}}, and related systems.
+4. Add compensating controls where segregation of duties or automation is limited.
+$$,
+    '{
+      "organization_name": "Example Corp",
+      "primary_product_name": "Example Cloud",
+      "effective_date": "2026-04-26",
+      "policy_version": "v0.1",
+      "sox_control_owner": "Head of Internal Controls",
+      "finance_system_owner": "Controller",
+      "control_operator": "Security Operations Lead",
+      "sox_applicability_label": "Public company or IPO readiness",
+      "sox_review_frequency": "quarterly",
+      "sox_access_review_frequency": "quarterly",
+      "sox_change_review_frequency": "per release with quarterly control-owner review",
+      "hris_provider": "Workday",
+      "idp_provider": "Okta",
+      "source_control_tool": "GitHub",
+      "ticketing_system": "Jira"
+    }'::jsonb,
+    true
+  ),
+  (
+    'sox-evidence-request-list',
+    'SOX Access and Change Evidence Request List',
+    'SOX-oriented evidence request list for access management, change management, privileged access, and key-report controls.',
+    'SOX / ITGC',
+    array['COMMON', 'SOX'],
+    '28-sox-evidence-request-list.md',
+    $$---
+title: SOX Access and Change Evidence Request List
+slug: sox-evidence-request-list
+tsc_category: SOX / ITGC
+criteria_mapped:
+  - COMMON
+  - SOX
+generated_for: {{organization_name}}
+effective_date: {{effective_date}}
+version: {{policy_version}}
+---
+
+# SOX Access and Change Evidence Request List
+
+## Purpose
+This checklist helps {{organization_name}} collect the evidence commonly requested for SOX ITGC reviews across access provisioning, privileged access, access recertification, change management, deployments, and key-report controls for the selected driver: {{sox_applicability_label}}.
+
+## Access Management Evidence
+- [ ] Current user listings for in-scope systems from {{idp_provider}} and connected applications.
+- [ ] New-access requests with documented approval.
+- [ ] Role-change requests and approvals.
+- [ ] Termination / offboarding samples showing revocation within {{termination_sla_hours}} hours.
+- [ ] Privileged-access roster and business justification.
+- [ ] MFA policy screenshots or configuration exports.
+- [ ] Quarterly access review sign-off package covering key systems.
+
+## Change Management Evidence
+- [ ] Change tickets from {{ticketing_system}} tied to releases or production changes.
+- [ ] Pull requests or merge requests from {{source_control_tool}} showing reviewer approval.
+- [ ] Test evidence for selected changes.
+- [ ] Deployment log or release record.
+- [ ] Emergency-change list with retrospective approval.
+- [ ] Segregation-of-duties exceptions and compensating controls, if any.
+
+## Operations and Monitoring Evidence
+- [ ] Monitoring alerts and incident tickets for material production events.
+- [ ] Backup success / restore evidence for critical environments.
+- [ ] Problem-management or recurring-issue tracking for failed jobs, integrations, or reconciliations.
+
+## Key Reports and Interfaces
+- [ ] Inventory of key reports, data extracts, spreadsheets, and interfaces used in financial reporting or management review.
+- [ ] Evidence showing report logic or query ownership.
+- [ ] Review or reconciliation evidence for report completeness and accuracy.
+- [ ] Change evidence when report logic, interface mappings, or spreadsheet formulas change.
+
+## Review Notes
+- Access evidence should be refreshed {{sox_access_review_frequency}}.
+- Change-control evidence should be retained {{sox_change_review_frequency}}.
+- Internal audit, finance, and system owners should confirm whether additional population exports or reconciliations are required for ICFR scoping.
+$$,
+    '{
+      "organization_name": "Example Corp",
+      "effective_date": "2026-04-26",
+      "policy_version": "v0.1",
+      "idp_provider": "Okta",
+      "source_control_tool": "GitHub",
+      "ticketing_system": "Jira",
+      "termination_sla_hours": 24,
+      "sox_applicability_label": "Public company or IPO readiness",
+      "sox_access_review_frequency": "quarterly",
+      "sox_change_review_frequency": "per release with quarterly control-owner review"
+    }'::jsonb,
+    true
+  ),
+  (
+    'sox-key-report-inventory',
+    'SOX Key Report Inventory',
+    'SOX-oriented inventory of key reports, spreadsheet dependencies, management reviews, and evidence owners.',
+    'SOX / ITGC',
+    array['COMMON', 'SOX'],
+    '29-sox-key-report-inventory.md',
+    $$---
+title: SOX Key Report Inventory
+slug: sox-key-report-inventory
+tsc_category: SOX / ITGC
+criteria_mapped:
+  - COMMON
+  - SOX
+generated_for: {{organization_name}}
+effective_date: {{effective_date}}
+version: {{policy_version}}
+---
+
+# SOX Key Report Inventory
+
+## Purpose
+{{organization_name}} maintains this inventory to identify key reports, data extracts, spreadsheets, and management-review artifacts that may support financial reporting controls for {{sox_applicability_label}}.
+
+## Key Report Register
+| Report / Spreadsheet | Business Purpose | Source System | Owner | Logic Owner | Review Control | Evidence Location |
+| --- | --- | --- | --- | --- | --- | --- |
+| Revenue or billing exception report | Detect unusual billing events or missing approvals | {{primary_product_name}} or connected finance workflow | {{finance_system_owner}} | {{control_operator}} | Management review with sign-off | {{ticketing_system}} or finance evidence folder |
+| Access review population export | Support quarterly access recertification | {{idp_provider}} and in-scope applications | {{sox_control_owner}} | {{control_operator}} | Reviewer sign-off and remediation tracking | {{ticketing_system}} |
+| Change approval population | Support release and deployment review | {{source_control_tool}} and {{ticketing_system}} | {{control_operator}} | {{control_operator}} | Control-owner review | {{ticketing_system}} |
+
+## Review Guidance
+- Confirm whether the report is complete and accurate enough to support management review.
+- Record where the logic lives: query, report builder, spreadsheet formula, BI layer, or manual extract.
+- Capture changes to logic, source fields, or reconciliation expectations through change management.
+- Revalidate the inventory {{sox_review_frequency}} and after material report changes.
+$$,
+    '{
+      "organization_name": "Example Corp",
+      "effective_date": "2026-04-26",
+      "policy_version": "v0.1",
+      "primary_product_name": "Example Cloud",
+      "finance_system_owner": "Controller",
+      "sox_control_owner": "Head of Internal Controls",
+      "control_operator": "Security Operations Lead",
+      "ticketing_system": "Jira",
+      "idp_provider": "Okta",
+      "source_control_tool": "GitHub",
+      "sox_applicability_label": "Public company or IPO readiness",
+      "sox_review_frequency": "quarterly"
+    }'::jsonb,
+    true
+  ),
+  (
+    'sox-interface-control-register',
+    'SOX Interface Control Register',
+    'SOX-oriented register for inbound and outbound interfaces, reconciliations, exception handling, and change ownership.',
+    'SOX / ITGC',
+    array['COMMON', 'SOX'],
+    '30-sox-interface-control-register.md',
+    $$---
+title: SOX Interface Control Register
+slug: sox-interface-control-register
+tsc_category: SOX / ITGC
+criteria_mapped:
+  - COMMON
+  - SOX
+generated_for: {{organization_name}}
+effective_date: {{effective_date}}
+version: {{policy_version}}
+---
+
+# SOX Interface Control Register
+
+## Purpose
+{{organization_name}} maintains this register to document interfaces, file transfers, and system dependencies that may affect financial reporting or management-review controls for {{sox_applicability_label}}.
+
+## Interface Register
+| Interface | Direction | Data / Purpose | Source | Destination | Control Owner | Reconciliation / Monitoring | Change Evidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Product-to-finance export | Outbound | Usage, billing, or adjustment data | {{primary_product_name}} | Finance workflow or data mart | {{finance_system_owner}} | Scheduled reconciliation, exception review, and ticket escalation | Pull request, ticket, deployment log |
+| Identity-to-access review export | Outbound | User and privileged-access population | {{idp_provider}} | Access review package | {{sox_control_owner}} | Quarterly access review and remediation log | Ticket export and reviewer sign-off |
+| Change-management evidence feed | Inbound | Approved change, deployment, and emergency-change records | {{ticketing_system}} / {{source_control_tool}} | SOX evidence package | {{control_operator}} | Control-owner review and completeness check | Ticket, PR, and release evidence |
+
+## Control Notes
+- Record the population owner, completeness check, reconciliation owner, and exception path for each interface.
+- Changes to interfaces, mappings, schedules, or reconciliation logic should follow formal change control.
+- Failed runs, data mismatches, and manual workarounds should be tracked in {{ticketing_system}} and reviewed {{sox_review_frequency}}.
+$$,
+    '{
+      "organization_name": "Example Corp",
+      "effective_date": "2026-04-26",
+      "policy_version": "v0.1",
+      "primary_product_name": "Example Cloud",
+      "finance_system_owner": "Controller",
+      "sox_control_owner": "Head of Internal Controls",
+      "control_operator": "Security Operations Lead",
+      "ticketing_system": "Jira",
+      "idp_provider": "Okta",
+      "source_control_tool": "GitHub",
+      "sox_applicability_label": "Public company or IPO readiness",
+      "sox_review_frequency": "quarterly"
+    }'::jsonb,
+    true
+  ),
+  (
+    'complementary-user-entity-controls-matrix',
+    'Complementary User Entity Controls Matrix',
+    'Customer-operated controls that must function alongside the TrustScaffold-generated control set.',
+    'Universal',
+    array['COMMON', 'CC6', 'CC7', 'CC9'],
+    '31-complementary-user-entity-controls-matrix.md',
+    $$---
+title: Complementary User Entity Controls Matrix
+slug: complementary-user-entity-controls-matrix
+tsc_category: Universal
+criteria_mapped:
+  - COMMON
+  - CC6
+  - CC7
+  - CC9
+generated_for: {{organization_name}}
+effective_date: {{effective_date}}
+version: {{policy_version}}
+---
+
+# Complementary User Entity Controls Matrix
+
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
+## Purpose
+{{organization_name}} uses this matrix to document the controls that user entities must operate in order to rely on the services, safeguards, and monitoring described throughout the TrustScaffold readiness pack for {{primary_product_name}}.
+
+## Usage Notes
+- These controls are complementary to, not replacements for, the controls operated by {{organization_name}}.
+- User entities should evaluate these expectations during onboarding, annual review, and after material service changes.
+- This matrix should be shared with customer success, implementation, security review, and procurement stakeholders when control responsibility questions arise.
+
+## Matrix
+| Control Area | User Entity Responsibility | Why It Matters | Related TrustScaffold Controls | Example Evidence |
+| --- | --- | --- | --- | --- |
+{{#each cuec_rows}}
+| {{area}} | {{customer_responsibility}} | {{rationale}} | {{related_controls}} | {{evidence_examples}} |
+{{/each}}
+
+## Review Guidance
+- Review this matrix {{cuec_review_frequency}}.
+- Reconfirm the matrix whenever authentication, data-sharing patterns, customer-managed integrations, or major vendor dependencies materially change.
+- Escalate exceptions through the documented security or support contact path before relying on alternate customer-managed procedures.
+$$,
+    '{
+      "organization_name": "Example Corp",
+      "effective_date": "2026-05-01",
+      "policy_version": "v0.1",
+      "policy_owner": "Security Lead",
+      "control_operator": "Compliance Manager",
+      "primary_product_name": "Example Cloud",
+      "cuec_review_frequency": "annually and after material service or dependency changes",
+      "cuec_rows": [
+        {
+          "area": "Identity and access administration",
+          "customer_responsibility": "Approve user access, maintain role appropriateness, and promptly remove access that is no longer needed.",
+          "rationale": "Logical access controls rely on customer approval of users and privileges.",
+          "related_controls": "Access Control and On/Offboarding Policy; Information Security Policy",
+          "evidence_examples": "Access approval records and periodic access reviews."
+        },
+        {
+          "area": "Incident and support coordination",
+          "customer_responsibility": "Maintain current escalation contacts and validate support requesters before sensitive changes are made.",
+          "rationale": "Timely incident handling depends on approved customer contacts and support authorization.",
+          "related_controls": "Incident Response Plan; Vendor Management Policy",
+          "evidence_examples": "Escalation matrices, support authorization records, and incident communications."
+        }
+      ]
+    }'::jsonb,
+    true
+  ),
+  (
+    'complementary-subservice-organization-controls-register',
+    'Complementary Subservice Organization Controls Register',
+    'Register of material subservice organizations, assurance posture, and retained monitoring obligations.',
+    'Universal',
+    array['COMMON', 'CC3', 'CC6', 'CC9', 'ISO27001'],
+    '32-complementary-subservice-organization-controls-register.md',
+    $$---
+title: Complementary Subservice Organization Controls Register
+slug: complementary-subservice-organization-controls-register
+tsc_category: Universal
+criteria_mapped:
+  - COMMON
+  - CC3
+  - CC6
+  - CC9
+  - ISO27001
+generated_for: {{organization_name}}
+effective_date: {{effective_date}}
+version: {{policy_version}}
+---
+
+# Complementary Subservice Organization Controls Register
+
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
+## Purpose
+{{organization_name}} maintains this register to document third-party services, hosting platforms, and other subservice organizations that materially support {{primary_product_name}}, along with the control model used to evaluate those dependencies.
+
+## Dependency Summary
+- Material subservice organizations listed: {{subservice_count}}
+- Inclusive method dependencies: {{inclusive_subservice_count}}
+- Carve-out method dependencies: {{carve_out_subservice_count}}
+- Dependencies without current assurance evidence: {{subservice_without_assurance_count}}
+
+## Register
+| Subservice Organization | Service Scope | Data Shared / Dependency | Assurance Basis | Control Model | Retained {{organization_name}} Controls | Customer Monitoring Considerations | Review Cadence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+{{#each csoc_rows}}
+| {{vendor_name}} | {{service_scope}} | {{data_shared}} | {{assurance_basis}} | {{control_model}} | {{trustscaffold_controls}} | {{customer_monitoring}} | {{review_cadence}} |
+{{/each}}
+
+## Review Guidance
+- Review this register {{csoc_review_frequency}}.
+- Update the register when a new material subservice organization is onboarded, when an assurance report expires or changes method, or when a bridge period introduces compensating controls.
+- Where the control model is carve-out, confirm downstream user-control considerations are disclosed to affected customers and reflected in related CUEC materials.
+$$,
+    '{
+      "organization_name": "Example Corp",
+      "effective_date": "2026-05-01",
+      "policy_version": "v0.1",
+      "policy_owner": "Security Lead",
+      "control_operator": "Compliance Manager",
+      "primary_product_name": "Example Cloud",
+      "subservice_count": 2,
+      "inclusive_subservice_count": 1,
+      "carve_out_subservice_count": 1,
+      "subservice_without_assurance_count": 0,
+      "csoc_review_frequency": "quarterly vendor review and after material dependency changes",
+      "csoc_rows": [
+        {
+          "vendor_name": "AWS",
+          "service_scope": "Cloud hosting platform",
+          "data_shared": "Application workloads and encrypted data",
+          "assurance_basis": "SOC 2 Type II using the inclusive method",
+          "control_model": "Inclusive method",
+          "trustscaffold_controls": "Map AWS assurance coverage into the vendor review process and track any exceptions.",
+          "customer_monitoring": "Understand the dependency and confirm approved configurations remain in place.",
+          "review_cadence": "Annual review"
+        },
+        {
+          "vendor_name": "Support Vendor",
+          "service_scope": "Ticketing and support workflow",
+          "data_shared": "Support metadata and limited customer context",
+          "assurance_basis": "SOC 2 Type II using the carve-out method",
+          "control_model": "Carve-out method",
+          "trustscaffold_controls": "Retain complementary monitoring and evaluate user-control considerations from the vendor.",
+          "customer_monitoring": "Review disclosed carve-out assumptions and confirm approved configurations remain aligned.",
+          "review_cadence": "Quarterly review"
+        }
+      ]
+    }'::jsonb,
+    true
+  ),
+  (
+    'management-assertion-letter',
+    'Management Assertion Letter',
+    'Draft management assertion summarizing scope, control responsibility, and current focus areas for the generated reviewer pack.',
+    'Universal',
+    array['COMMON', 'CC1', 'CC2', 'CC3', 'CC4'],
+    '33-management-assertion-letter.md',
+    $$---
+title: Management Assertion Letter
+slug: management-assertion-letter
+tsc_category: Universal
+criteria_mapped:
+  - COMMON
+  - CC1
+  - CC2
+  - CC3
+  - CC4
+generated_for: {{organization_name}}
+effective_date: {{effective_date}}
+version: {{policy_version}}
+---
+
+# Management Assertion Letter
+
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+- Executive Sponsor: {{executive_sponsor_name}}
+
+## Draft Assertion
+Management of {{organization_name}} is responsible for establishing, implementing, and maintaining controls over {{primary_product_name}} and the supporting processes, infrastructure, people, and dependencies described in the TrustScaffold reviewer pack.
+
+{{management_assertion_coverage_statement}}
+
+Management asserts that:
+- The system description, complementary control materials, and generated policy set describe the current intended operating model for {{primary_product_name}} as of {{effective_date}}.
+- Control responsibilities that remain with customers, vendors, and subservice organizations are identified in the generated reviewer-pack materials where applicable.
+- The attached documentation set is intended to support readiness discussions, auditor scoping, customer security reviews, and formal remediation planning.
+
+## Scope Summary
+- Selected trust service categories and related frameworks: {{selected_trust_service_categories_text}}
+- Generated reviewer-pack documents: {{generated_document_count}}
+- Primary system owner: {{system_owner_name}}
+- Security contact: {{security_contact_email}}
+
+## Included Generated Documents
+| Document | TSC / Framework | Criteria Hint | Output |
+| --- | --- | --- | --- |
+{{#each generated_document_rows}}
+| {{name}} | {{tsc}} | {{criteria_hint}} | {{output_filename}} |
+{{/each}}
+
+## Current Management Focus Areas
+{{#if management_assertion_focus_area_count}}
+{{#each management_assertion_focus_areas}}
+### {{title}}
+- Wizard step: {{step}}
+- Current signal: {{summary}}
+- Management follow-up: {{recommendation}}
+{{/each}}
+{{else}}
+Management did not identify any active focus areas from the current wizard decision trace at the time this draft was produced.
+{{/if}}
+
+## Limitations of This Draft
+- This letter is a draft management assertion generated from current wizard answers and should be reviewed against actual operating evidence before external use.
+- If the operating model, control ownership, vendor profile, or scope changes materially, management should regenerate the reviewer pack and reconfirm the assertions above.
+$$,
+    '{
+      "organization_name": "Example Corp",
+      "effective_date": "2026-05-01",
+      "policy_version": "v0.1",
+      "policy_owner": "Security Lead",
+      "control_operator": "Compliance Manager",
+      "executive_sponsor_name": "Chief Operating Officer",
+      "primary_product_name": "Example Cloud",
+      "management_assertion_coverage_statement": "Example Corp prepared documentation covering Security, Availability, and Confidentiality based on the current wizard profile and supporting operating assumptions.",
+      "selected_trust_service_categories_text": "Security, Availability, and Confidentiality",
+      "generated_document_count": 3,
+      "system_owner_name": "Platform Owner",
+      "security_contact_email": "security@example.com",
+      "generated_document_rows": [
+        {
+          "name": "System Description (DC 200)",
+          "tsc": "Security",
+          "criteria_hint": "All Security common criteria",
+          "output_filename": "00-system-description.md"
+        },
+        {
+          "name": "Complementary User Entity Controls Matrix",
+          "tsc": "Universal",
+          "criteria_hint": "Common criteria, logical access, incident response, and vendor dependencies",
+          "output_filename": "31-complementary-user-entity-controls-matrix.md"
+        },
+        {
+          "name": "Complementary Subservice Organization Controls Register",
+          "tsc": "Universal",
+          "criteria_hint": "Common criteria, vendor risk, access, supplier dependencies, and ISO supplier governance",
+          "output_filename": "32-complementary-subservice-organization-controls-register.md"
+        }
+      ],
+      "management_assertion_focus_area_count": 2,
+      "management_assertion_focus_areas": [
+        {
+          "title": "MFA is not currently required",
+          "step": "Operations",
+          "summary": "MFA is one of the first technically-enforced controls auditors look for.",
+          "recommendation": "Capture the real blocker now so the remediation plan can be specific instead of generic."
+        },
+        {
+          "title": "No formal oversight body selected",
+          "step": "Governance",
+          "summary": "No board or advisory group means the wizard should ask how security and risk oversight actually happens today.",
+          "recommendation": "Document the real oversight path so generated governance language stays truthful."
+        }
+      ]
+    }'::jsonb,
+    true
+  ),
+  (
+    'points-of-focus-gap-analysis',
+    'Points of Focus Gap Analysis',
+    'Rule-matrix-driven remediation and evidence worklist linked to generated document coverage.',
+    'Universal',
+    array['COMMON', 'CC1', 'CC2', 'CC3', 'CC4', 'CC6', 'CC7', 'CC8', 'CC9'],
+    '34-points-of-focus-gap-analysis.md',
+    $$---
+title: Points of Focus Gap Analysis
+slug: points-of-focus-gap-analysis
+tsc_category: Universal
+criteria_mapped:
+  - COMMON
+  - CC1
+  - CC2
+  - CC3
+  - CC4
+  - CC6
+  - CC7
+  - CC8
+  - CC9
+generated_for: {{organization_name}}
+effective_date: {{effective_date}}
+version: {{policy_version}}
+---
+
+# Points of Focus Gap Analysis
+
+## Control Ownership
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
+## Purpose
+{{organization_name}} uses this gap analysis to translate active wizard findings into an assessor-style readiness matrix covering criterion intent, evidence expectations, and concrete remediation before an auditor or customer relies on the generated pack.
+
+## Analysis Basis
+- Active points of focus identified: {{points_of_focus_gap_count}}
+- Selected criteria in scope: {{selected_criteria_codes}}
+- Generated reviewer-pack documents considered: {{generated_document_count}}
+
+## Assessor Readiness Matrix
+{{#if points_of_focus_gap_count}}
+| Priority | Primary Criterion | Criterion Theme | Point of Focus | Wizard Step | Focus Area | Severity | Owner | Status | Signal Type | Assessment Basis | Expected Evidence | Target State | Related Generated Documents |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+{{#each points_of_focus_gap_rows}}
+| {{priority_rank}} | {{primary_criterion}} | {{criterion_title}} | {{point_of_focus}} | {{step}} | {{focus_area}} | {{severity}} | {{owner}} | {{status}} | {{signal_type}} | {{assessment_basis}} | {{expected_evidence}} | {{target_state}} | {{related_documents}} |
+{{/each}}
+{{else}}
+No active readiness gaps or evidence prompts were identified from the current wizard decision trace at the time this matrix was generated.
+{{/if}}
+
+## How To Use This Matrix
+- Start with the lowest-numbered rows and any entries marked `High` severity, then confirm the `Expected Evidence` exists before treating the mapped criterion as audit-ready.
+- Use the `Point of Focus` and `Target State` columns as the assessor-style statement of what management should be able to demonstrate for that row.
+- Where multiple rows point to the same generated document, update the source policy or supporting evidence once and record how the change satisfies each mapped criterion.
+- Re-run the wizard and regenerate the reviewer pack after material remediation so this matrix reflects the current operating model rather than stale decisions.
+$$,
+    '{
+      "organization_name": "Example Corp",
+      "effective_date": "2026-05-01",
+      "policy_version": "v0.1",
+      "policy_owner": "Security Lead",
+      "control_operator": "Compliance Manager",
+      "points_of_focus_gap_count": 2,
+      "selected_criteria_codes": ["COMMON", "CC6", "CC8"],
+      "generated_document_count": 3,
+      "points_of_focus_gap_rows": [
+        {
+          "priority_rank": 1,
+          "step": "Operations",
+          "primary_criterion": "CC6.1",
+          "criterion_title": "Logical and Physical Access Controls",
+          "point_of_focus": "Identity, access, configuration, and data-handling controls are enforced across the shared-responsibility boundary.",
+          "focus_area": "MFA is not currently required",
+          "severity": "High",
+          "owner": "Security Lead",
+          "status": "Needs remediation",
+          "signal_type": "Gap signal",
+          "criteria": "CC6.1",
+          "assessment_basis": "MFA is one of the first technically-enforced controls auditors look for.",
+          "current_state": "MFA is one of the first technically-enforced controls auditors look for.",
+          "expected_evidence": "Access approvals, MFA settings, tenant hardening records, joiner/mover/leaver tickets, and configuration evidence.",
+          "target_state": "Capture the real blocker now so the remediation plan can be specific instead of generic.",
+          "recommended_action": "Capture the real blocker now so the remediation plan can be specific instead of generic.",
+          "related_documents": "Access Control and On/Offboarding Policy; Complementary User Entity Controls Matrix"
+        },
+        {
+          "priority_rank": 2,
+          "step": "Governance",
+          "primary_criterion": "CC1.2",
+          "criterion_title": "Control Environment",
+          "point_of_focus": "Governance structure, control ownership, and oversight responsibilities are defined and evidenced.",
+          "focus_area": "No formal oversight body selected",
+          "severity": "Medium",
+          "owner": "Security Lead",
+          "status": "Needs evidence and decision",
+          "signal_type": "Evidence prompt",
+          "criteria": "CC1.2",
+          "assessment_basis": "No board or advisory group means the wizard should ask how security and risk oversight actually happens today.",
+          "current_state": "No board or advisory group means the wizard should ask how security and risk oversight actually happens today.",
+          "expected_evidence": "Board or management-review records, org chart, role ownership assignments, policy acknowledgements, and governance meeting notes.",
+          "target_state": "Document the real oversight path so generated governance language stays truthful.",
+          "recommended_action": "Document the real oversight path so generated governance language stays truthful.",
+          "related_documents": "Information Security Policy; Management Assertion Letter"
+        }
+      ]
+    }'::jsonb,
+    true
+  ),
+  (
+    'bridge-letter-comfort-letter',
+    'Bridge Letter / Comfort Letter',
+    'Customer-facing current-state letter summarizing available documentation, active remediation priorities, and the next planned review date.',
+    'Universal',
+    array['COMMON', 'CC2', 'CC3', 'CC4'],
+    '35-bridge-letter-comfort-letter.md',
+    $$---
+title: Bridge Letter / Comfort Letter
+slug: bridge-letter-comfort-letter
+tsc_category: Universal
+criteria_mapped:
+  - COMMON
+  - CC2
+  - CC3
+  - CC4
+generated_for: {{organization_name}}
+effective_date: {{effective_date}}
+version: {{policy_version}}
+---
+
+# Bridge Letter / Comfort Letter
+
+## Control Ownership
+- Executive Sponsor: {{executive_sponsor_name}}
+- Policy Owner: {{policy_owner}}
+- Control Operator: {{control_operator}}
+
+## Current Status Summary
+As of {{effective_date}}, {{organization_name}} has prepared the attached TrustScaffold reviewer-pack materials for {{primary_product_name}} to support customer diligence, readiness conversations, and current-state control communication.
+
+{{bridge_letter_program_status}}
+
+The current documentation set covers {{selected_trust_service_categories_text}} and includes {{generated_document_count}} generated documents describing the system boundary, policy framework, complementary controls, and current management follow-up priorities.
+
+This customer-facing status view is scoped to {{bridge_letter_active_frameworks_text}} so privacy-oriented recipients see privacy-relevant follow-up items while HIPAA, PCI-DSS, or other framework-specific items appear only when those frameworks are relevant to the current pack.
+
+## Customer Communication Notes
+- This letter is intended to bridge the period between formal assessments, refreshed evidence requests, or customer-specific diligence reviews.
+- The attached materials describe management’s current understanding of the operating model, control ownership, and prioritized remediation items.
+- Customers should review the complementary user-entity and subservice-organization control materials alongside this letter when evaluating shared responsibility assumptions.
+
+## Available Documentation Snapshot
+| Document | TSC / Framework | Output |
+| --- | --- | --- |
+{{#each generated_document_rows}}
+| {{name}} | {{tsc}} | {{output_filename}} |
+{{/each}}
+
+## Highest-Priority Active Follow-Up Items
+{{#if bridge_letter_customer_priority_count}}
+| Priority | Focus Area | Framework Scope | Customer View | Review Owner | Current Follow-Up |
+| --- | --- | --- | --- | --- | --- |
+{{#each bridge_letter_customer_priorities}}
+| {{priority_rank}} | {{focus_area}} | {{framework_scope}} | {{priority_band}} | {{review_owner}} | {{customer_follow_up}} |
+{{/each}}
+{{else}}
+No active follow-up items were identified from the current wizard decision trace at the time this letter was generated.
+{{/if}}
+
+## Primary Audience View
+{{#if bridge_letter_has_primary_audience}}
+### {{bridge_letter_primary_audience.label}}
+- Audience scope: {{bridge_letter_primary_audience.framework_scope_text}}
+- Why this view exists: {{bridge_letter_primary_audience.description}}
+{{#if bridge_letter_primary_audience.priority_count}}
+| Priority | Focus Area | Framework Scope | Customer View | Review Owner |
+| --- | --- | --- | --- | --- |
+{{#each bridge_letter_primary_audience.priorities}}
+| {{priority_rank}} | {{focus_area}} | {{framework_scope}} | {{customer_view}} | {{review_owner}} |
+{{/each}}
+{{else}}
+No customer-facing priorities currently map to the primary audience profile.
+{{/if}}
+{{else}}
+No primary audience profile is currently derived from the active framework profile.
+{{/if}}
+
+## Additional Audience Views
+{{#if bridge_letter_additional_audience_count}}
+{{#each bridge_letter_additional_audiences}}
+### {{label}}
+- Audience scope: {{framework_scope_text}}
+- Why this view exists: {{description}}
+{{#if priority_count}}
+| Priority | Focus Area | Framework Scope | Customer View | Review Owner |
+| --- | --- | --- | --- | --- |
+{{#each priorities}}
+| {{priority_rank}} | {{focus_area}} | {{framework_scope}} | {{customer_view}} | {{review_owner}} |
+{{/each}}
+{{else}}
+No customer-facing priorities currently map to this audience profile.
+{{/if}}
+{{/each}}
+{{else}}
+No additional audience-specific views are currently derived beyond the primary audience profile.
+{{/if}}
+
+## Next Review Date
+Management expects to review and refresh this bridge letter, the associated prioritized gap register, and the supporting generated documentation no later than {{bridge_letter_next_review_date}}, or earlier if the system boundary, customer commitments, or control environment changes materially.
+$$,
+    '{
+      "organization_name": "Example Corp",
+      "effective_date": "2026-05-01",
+      "policy_version": "v0.1",
+      "executive_sponsor_name": "Chief Operating Officer",
+      "policy_owner": "Security Lead",
+      "control_operator": "Compliance Manager",
+      "primary_product_name": "Example Cloud",
+      "bridge_letter_program_status": "Control environment is active and maturing, with customer-relevant diligence items currently being tracked by management.",
+      "bridge_letter_active_frameworks_text": "Security and Privacy",
+      "bridge_letter_has_primary_audience": true,
+      "bridge_letter_primary_audience": {
+        "label": "Privacy-sensitive customer",
+        "description": "Customer-facing view for customers focused on personal-data handling, privacy notices, and privacy program obligations.",
+        "framework_scope_text": "Security and Privacy",
+        "priority_count": 1,
+        "priorities": [
+          {
+            "priority_rank": 1,
+            "focus_area": "Cookies or analytics without consent tooling",
+            "framework_scope": "Privacy",
+            "customer_view": "Immediate customer diligence item",
+            "review_owner": "Security Lead"
+          }
+        ]
+      },
+      "bridge_letter_additional_audience_count": 1,
+      "bridge_letter_additional_audiences": [
+        {
+          "label": "General security customer",
+          "description": "Default customer-facing status view for customers reviewing baseline security and shared-responsibility expectations.",
+          "framework_scope_text": "Security",
+          "priority_count": 2,
+          "priorities": [
+            {
+              "priority_rank": 1,
+              "focus_area": "MFA is not currently required",
+              "framework_scope": "Security",
+              "customer_view": "Immediate customer diligence item",
+              "review_owner": "Security Lead"
+            },
+            {
+              "priority_rank": 2,
+              "focus_area": "No formal oversight body selected",
+              "framework_scope": "Security",
+              "customer_view": "Shared-responsibility follow-up",
+              "review_owner": "Chief Operating Officer"
+            }
+          ]
+        }
+      ],
+      "bridge_letter_audience_profile_count": 2,
+      "bridge_letter_audience_profiles": [
+        {
+          "label": "General security customer",
+          "description": "Default customer-facing status view for customers reviewing baseline security and shared-responsibility expectations.",
+          "framework_scope_text": "Security",
+          "priority_count": 2,
+          "priorities": [
+            {
+              "priority_rank": 1,
+              "focus_area": "MFA is not currently required",
+              "framework_scope": "Security",
+              "customer_view": "Immediate customer diligence item",
+              "review_owner": "Security Lead"
+            },
+            {
+              "priority_rank": 2,
+              "focus_area": "No formal oversight body selected",
+              "framework_scope": "Security",
+              "customer_view": "Shared-responsibility follow-up",
+              "review_owner": "Chief Operating Officer"
+            }
+          ]
+        },
+        {
+          "label": "Privacy-sensitive customer",
+          "description": "Customer-facing view for customers focused on personal-data handling, privacy notices, and privacy program obligations.",
+          "framework_scope_text": "Security and Privacy",
+          "priority_count": 1,
+          "priorities": [
+            {
+              "priority_rank": 1,
+              "focus_area": "Cookies or analytics without consent tooling",
+              "framework_scope": "Privacy",
+              "customer_view": "Immediate customer diligence item",
+              "review_owner": "Security Lead"
+            }
+          ]
+        }
+      ],
+      "selected_trust_service_categories_text": "Security, Availability, and Confidentiality",
+      "generated_document_count": 3,
+      "generated_document_rows": [
+        {
+          "name": "System Description (DC 200)",
+          "tsc": "Security",
+          "output_filename": "00-system-description.md"
+        },
+        {
+          "name": "Points of Focus Gap Analysis",
+          "tsc": "Universal",
+          "output_filename": "34-points-of-focus-gap-analysis.md"
+        },
+        {
+          "name": "Management Assertion Letter",
+          "tsc": "Universal",
+          "output_filename": "33-management-assertion-letter.md"
+        }
+      ],
+      "bridge_letter_customer_priority_count": 2,
+      "bridge_letter_customer_priorities": [
+        {
+          "priority_rank": 1,
+          "focus_area": "MFA is not currently required",
+          "framework_scope": "Security",
+          "priority_band": "Immediate customer diligence item",
+          "review_owner": "Security Lead",
+          "customer_follow_up": "Management is tracking capture the real blocker now so the remediation plan can be specific instead of generic."
+        },
+        {
+          "priority_rank": 2,
+          "focus_area": "No formal oversight body selected",
+          "framework_scope": "Security",
+          "priority_band": "Shared-responsibility follow-up",
+          "review_owner": "Chief Operating Officer",
+          "customer_follow_up": "Management is monitoring this area and incorporating the follow-up into the readiness workplan."
+        }
+      ],
+      "bridge_letter_next_review_date": "2026-07-30"
     }'::jsonb,
     true
   )

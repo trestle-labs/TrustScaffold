@@ -4,6 +4,7 @@ import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { decryptIntegrationToken } from '@/lib/integrations/token-crypto';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import type { IntegrationProvider } from '@/lib/types';
+import { isBridgeLetterPrimaryAudienceId, type BridgeLetterPrimaryAudienceId } from '@/lib/wizard/template-payload';
 
 import type { ExportableDoc } from './export-helpers';
 
@@ -22,6 +23,16 @@ export async function loadExportContext(provider: IntegrationProvider, formData:
     .getAll('selected_doc_ids')
     .map((value) => String(value).trim())
     .filter(Boolean);
+  const bridgeLetterPrimaryAudienceOverrideInput = String(formData.get('bridge_letter_primary_audience_override') ?? '').trim();
+  let bridgeLetterPrimaryAudienceOverride: BridgeLetterPrimaryAudienceId | null = null;
+
+  if (bridgeLetterPrimaryAudienceOverrideInput && bridgeLetterPrimaryAudienceOverrideInput !== 'auto') {
+    if (!isBridgeLetterPrimaryAudienceId(bridgeLetterPrimaryAudienceOverrideInput)) {
+      throw new Error('Invalid bridge letter audience override');
+    }
+
+    bridgeLetterPrimaryAudienceOverride = bridgeLetterPrimaryAudienceOverrideInput;
+  }
 
   const supabase = await createSupabaseServerClient();
   const { data: integration, error: integrationError } = await supabase
@@ -43,7 +54,7 @@ export async function loadExportContext(provider: IntegrationProvider, formData:
 
   let docsQuery = supabase
     .from('generated_docs')
-    .select('id, title, file_name, content_markdown, version, input_payload, templates(slug, name)')
+    .select('id, title, file_name, content_markdown, version, input_payload, templates(slug, name, output_filename_pattern, markdown_template, default_variables)')
     .eq('organization_id', context.organization.id)
     .eq('status', 'approved')
     .order('title', { ascending: true });
@@ -68,5 +79,6 @@ export async function loadExportContext(provider: IntegrationProvider, formData:
     integration,
     token,
     docs: docs as ExportableDoc[],
+    bridgeLetterPrimaryAudienceOverride,
   };
 }

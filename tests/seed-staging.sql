@@ -416,17 +416,18 @@ DECLARE
   doc_count int;
   rev_count int;
 BEGIN
-  SELECT count(*) INTO org_count FROM organizations WHERE metadata->>'test_org' = 'true';
+  SELECT count(*) INTO org_count FROM organizations
+    WHERE id IN ('a0000000-0000-4000-a000-000000000001', 'b0000000-0000-4000-b000-000000000002', 'c0000000-0000-4000-c000-000000000003');
   SELECT count(*) INTO user_count FROM organization_members om
     JOIN organizations o ON o.id = om.organization_id
-    WHERE o.metadata->>'test_org' = 'true';
+    WHERE o.id IN ('a0000000-0000-4000-a000-000000000001', 'b0000000-0000-4000-b000-000000000002', 'c0000000-0000-4000-c000-000000000003');
   SELECT count(*) INTO doc_count FROM generated_docs gd
     JOIN organizations o ON o.id = gd.organization_id
-    WHERE o.metadata->>'test_org' = 'true';
+    WHERE o.id IN ('a0000000-0000-4000-a000-000000000001', 'b0000000-0000-4000-b000-000000000002', 'c0000000-0000-4000-c000-000000000003');
   SELECT count(*) INTO rev_count FROM document_revisions dr
     JOIN generated_docs gd ON gd.id = dr.document_id
     JOIN organizations o ON o.id = gd.organization_id
-    WHERE o.metadata->>'test_org' = 'true';
+    WHERE o.id IN ('a0000000-0000-4000-a000-000000000001', 'b0000000-0000-4000-b000-000000000002', 'c0000000-0000-4000-c000-000000000003');
 
   RAISE NOTICE '═══ Staging Seed Verification ═══';
   RAISE NOTICE '  Organizations: % (expected 3)', org_count;

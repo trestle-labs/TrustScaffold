@@ -5,14 +5,18 @@
  * constants for staging seed UUIDs, and assertion utilities.
  */
 
+import { loadEnvConfig } from '@next/env';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+
+loadEnvConfig(process.cwd());
 
 // ── Environment ──────────────────────────────────────────────────────────────
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321';
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
-const APP_URL = process.env.APP_URL ?? 'http://127.0.0.1:3000';
+const APP_PORT = process.env.PORT ?? process.env.APP_PORT ?? '3010';
+const APP_URL = process.env.APP_URL ?? `http://127.0.0.1:${APP_PORT}`;
 
 if (!SUPABASE_ANON_KEY) throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required');
 if (!SUPABASE_SERVICE_ROLE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY is required');

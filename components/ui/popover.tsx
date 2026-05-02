@@ -3,6 +3,7 @@
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 import * as React from 'react';
 
+import { popoverSurfaceClassName } from '@/lib/ui/floating-surface';
 import { cn } from '@/lib/utils';
 
 const Popover = PopoverPrimitive.Root;
@@ -18,11 +19,7 @@ const PopoverContent = React.forwardRef<
       align={align}
       sideOffset={sideOffset}
       className={cn(
-        'z-50 w-80 rounded-2xl border border-border bg-white p-4 text-slate-900 shadow-lg outline-none',
-        'data-[state=open]:animate-in data-[state=closed]:animate-out',
-        'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
-        'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-        'data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2',
+        popoverSurfaceClassName,
         className,
       )}
       {...props}

@@ -1,11 +1,25 @@
 import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
+import { nestedPanelSurfaceClassName } from '@/lib/ui/card-surfaces';
 
-export function Card({ className, ...props }: React.ComponentProps<'div'>) {
+const cardVariants = cva('rounded-[1.5rem] border border-border/80 text-card-foreground', {
+  variants: {
+    variant: {
+      default: 'bg-card/85 shadow-panel backdrop-blur',
+      panel: nestedPanelSurfaceClassName,
+    },
+  },
+  defaultVariants: {
+    variant: 'default',
+  },
+});
+
+export function Card({ className, variant, ...props }: React.ComponentProps<'div'> & VariantProps<typeof cardVariants>) {
   return (
     <div
-      className={cn('rounded-[1.5rem] border border-border/80 bg-card/85 text-card-foreground shadow-panel backdrop-blur', className)}
+      className={cn(cardVariants({ variant }), className)}
       {...props}
     />
   );

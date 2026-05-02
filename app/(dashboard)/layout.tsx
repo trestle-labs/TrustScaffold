@@ -2,9 +2,11 @@ import { redirect } from 'next/navigation';
 
 import { DashboardHeader } from '@/components/layout/dashboard-header';
 import { DashboardSidebar } from '@/components/layout/dashboard-sidebar';
+import { GlossaryHoverLayer } from '@/components/glossary/glossary-hover-layer';
 import { OrgProvider } from '@/components/providers/org-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { APP_GIT_COMMIT, APP_VERSION_LABEL } from '@/lib/app-version';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 
@@ -40,15 +42,19 @@ export default async function DashboardLayout({ children }: Readonly<{ children:
 
   return (
     <OrgProvider value={context}>
-      <main className="flex min-h-screen">
-        <DashboardSidebar />
-        <div className="flex min-h-screen flex-1 flex-col">
-          <DashboardHeader appVersion={APP_VERSION_LABEL} appCommit={APP_GIT_COMMIT} />
-          <section className="flex-1 px-4 py-6 sm:px-8">
-            {children}
-          </section>
-        </div>
-      </main>
+      <TooltipProvider delayDuration={250}>
+        <GlossaryHoverLayer delayMs={800}>
+          <main className="flex min-h-screen">
+            <DashboardSidebar />
+            <div className="flex min-h-screen flex-1 flex-col">
+              <DashboardHeader appVersion={APP_VERSION_LABEL} appCommit={APP_GIT_COMMIT} />
+              <section className="flex-1 px-4 py-6 sm:px-8">
+                {children}
+              </section>
+            </div>
+          </main>
+        </GlossaryHoverLayer>
+      </TooltipProvider>
     </OrgProvider>
   );
 }

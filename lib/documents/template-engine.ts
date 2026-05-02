@@ -5,6 +5,13 @@ const engine = Handlebars.create();
 engine.registerHelper('eq', (left: unknown, right: unknown) => left === right);
 engine.registerHelper('includes', (arr: unknown, value: unknown) => Array.isArray(arr) && arr.includes(value));
 
+export function stripMappingMetadata(markdown: string): string {
+  return markdown
+    .replace(/^\s*<!--\s*Mapping:[^\n]*-->\s*\n?/gim, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export function renderTemplate(source: string, variables: Record<string, unknown>, templateName?: string): string {
   try {
     return engine.compile(source, { noEscape: true })(variables);

@@ -19,6 +19,28 @@ const root = process.cwd();
 const outputRoot = path.join(root, 'docs', 'reviewer-pack');
 const templatesDir = path.join(outputRoot, 'templates');
 
+function templateSubdirectory(template: TemplateRow) {
+  const category = template.tsc_category.trim().toLowerCase();
+
+  if (category.includes('sox')) return 'sox';
+  if (category.includes('hipaa')) return 'hipaa';
+  if (category.includes('pci')) return 'pci-dss';
+  if (category.includes('iso 27001')) return 'iso27001';
+  if (category.includes('gdpr') || category.includes('privacy')) return 'privacy';
+  if (category.includes('availability')) return 'availability';
+  if (category.includes('confidentiality')) return 'confidentiality';
+  if (category.includes('processing integrity')) return 'processing-integrity';
+  if (category.includes('security')) return 'security';
+  if (category.includes('universal')) return 'cross-framework';
+
+  return 'other';
+}
+
+function templateRelativePath(template: TemplateRow) {
+  const fileName = template.output_filename_pattern.replace(/{{.*?}}/g, template.slug);
+  return path.join(templateSubdirectory(template), fileName).replace(/\\/g, '/');
+}
+
 function loadLocalEnv() {
   const envPath = path.join(root, '.env.local');
   const env = readFileSync(envPath, 'utf8');
@@ -153,7 +175,8 @@ function type1DocumentationExpectation(criterionCode: string) {
 
 function writeTemplateFiles(templates: TemplateRow[]) {
   for (const template of templates) {
-    const filePath = path.join(templatesDir, template.output_filename_pattern.replace(/{{.*?}}/g, template.slug));
+    const filePath = path.join(templatesDir, templateRelativePath(template));
+    mkdirSync(path.dirname(filePath), { recursive: true });
     const expandedCriteria = expandCriteriaCodes(template.criteria_mapped).join(', ');
     const body = `# ${template.name}\n\n` +
       `> Baseline reviewer copy. Handlebars placeholders such as \`{{organization_name}}\` are intentionally preserved so this can be reviewed before organization-specific answers are inserted.\n\n` +
@@ -311,8 +334,8 @@ function writeReviewerFindingsTemplate() {
 
 function writeTemplateIndex(templates: TemplateRow[]) {
   const rows = templates.map((template) => {
-    const fileName = template.output_filename_pattern.replace(/{{.*?}}/g, template.slug);
-    return `| [${template.name}](templates/${fileName}) | \`${template.slug}\` | ${template.tsc_category} | ${template.criteria_mapped.join(', ')} | ${template.description} |`;
+    const relativePath = templateRelativePath(template);
+    return `| [${template.name}](templates/${relativePath}) | \`${template.slug}\` | ${template.tsc_category} | ${template.criteria_mapped.join(', ')} | ${template.description} |`;
   });
 
   writeFileSync(

@@ -18,7 +18,7 @@ export type CloudConfig = {
 
 export type OrganizationRole = 'admin' | 'editor' | 'viewer' | 'approver';
 
-export type IntegrationProvider = 'github' | 'azure_devops';
+export type IntegrationProvider = 'github' | 'azure_devops' | 'sharepoint' | 'confluence';
 
 export type RevisionSource = 'generated' | 'reviewer_edited' | 'approved' | 'exported' | 'merged';
 
@@ -90,4 +90,28 @@ export type AuditorPortalToken = {
   created_by: string | null;
   created_at: string;
   last_accessed_at: string | null;
+};
+
+export type PublicationFormat = 'pdf' | 'docx' | 'html' | 'confluence_page';
+
+export type PublicationStatus = 'queued' | 'published' | 'failed' | 'superseded';
+
+export type DocumentPublication = {
+  id: string;
+  organization_id: string;
+  document_id: string;
+  revision_id: string;
+  integration_id: string;
+  provider: IntegrationProvider;
+  format: PublicationFormat;
+  status: PublicationStatus;
+  external_document_id: string | null;
+  external_url: string | null;
+  external_version: string | null;
+  published_by: string | null;
+  published_at: string | null;
+  error_message: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
 };

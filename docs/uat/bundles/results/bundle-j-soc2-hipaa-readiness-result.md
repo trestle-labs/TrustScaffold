@@ -15,6 +15,7 @@
 - System Scope: pass | partial | fail
   - Healthcare-regulated description used:
   - PHI field captured correctly:
+  - PHI data elements selected: `Name`, `Date of birth`, `Diagnosis codes`, `Insurance information`, `Medication history`, `Lab results`
   - CDE field captured correctly:
   - Vendors entered:
 
@@ -30,6 +31,7 @@
 
 - Review: pass | partial | fail
   - PHI in scope shown as `Yes`:
+  - PHI data-type detail shown in generated HIPAA inventory:
   - CDE in scope shown as `No`:
   - HIPAA administrative safeguards preview shown:
   - Healthcare language preserved:

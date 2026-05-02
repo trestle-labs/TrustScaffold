@@ -68,6 +68,7 @@ const seedSql = readFileSync(resolve(process.cwd(), 'supabase/seed.sql'), 'utf8'
 const systemDescriptionTemplate = extractTemplate(seedSql, 'system-description');
 const privacyTemplate = extractTemplate(seedSql, 'privacy-notice-consent-policy');
 const dataClassificationTemplate = extractTemplate(seedSql, 'data-classification-handling-policy');
+const pciTokenizationTemplate = extractTemplate(seedSql, 'tokenization-cardholder-data-policy');
 
 run('Bundle J smoke path surfaces PHI review state and generated PHI language', () => {
   const data = makeWizardData({
@@ -83,6 +84,10 @@ run('Bundle J smoke path surfaces PHI review state and generated PHI language', 
       dataTypesHandled: ['Customer PII', 'Employee data', 'Authentication secrets'],
       containsPhi: true,
       hasCardholderDataEnvironment: false,
+      hipaa: {
+        ...defaultWizardValues.scope.hipaa,
+        phiElements: ['name', 'dob', 'diagnosis-codes', 'insurance-info', 'medication', 'lab-results'],
+      },
     },
     tscSelections: {
       security: true,
@@ -106,6 +111,7 @@ run('Bundle J smoke path surfaces PHI review state and generated PHI language', 
   assertIncludes(renderedPrivacy, '## HIPAA Administrative Safeguards', 'privacy template HIPAA section heading');
   assertIncludes(renderedPrivacy, 'Access changes and terminations are coordinated through', 'privacy template HIPAA safeguard detail');
   assertIncludes(renderedPrivacy, 'handles protected health information', 'privacy template PHI language');
+  assertIncludes(payload.phi_elements_text, 'Diagnosis codes', 'payload should retain selected PHI element labels');
 });
 
 run('Bundle K smoke path surfaces CDE review state and generated CDE language', () => {
@@ -122,6 +128,10 @@ run('Bundle K smoke path surfaces CDE review state and generated CDE language', 
       dataTypesHandled: ['Payment data', 'Customer PII', 'Authentication secrets'],
       containsPhi: false,
       hasCardholderDataEnvironment: true,
+      pci: {
+        ...defaultWizardValues.scope.pci,
+        cardholderDataElements: ['pan', 'cardholder-name', 'expiration-date', 'tokenized-pan'],
+      },
     },
     tscSelections: {
       security: true,
@@ -140,11 +150,13 @@ run('Bundle K smoke path surfaces CDE review state and generated CDE language', 
   const payload = buildTemplatePayload(data, { workspaceOrganizationName: data.company.name });
   const renderedSystem = renderTemplate(systemDescriptionTemplate, payload, 'system-description');
   const renderedClassification = renderTemplate(dataClassificationTemplate, payload, 'data-classification-handling-policy');
+  const renderedPciTokenization = renderTemplate(pciTokenizationTemplate, payload, 'tokenization-cardholder-data-policy');
 
   assertIncludes(renderedSystem, 'cardholder data environment (CDE) is explicitly defined', 'system description CDE language');
   assertIncludes(renderedSystem, '### PCI Segmentation Responsibilities', 'system description PCI section heading');
   assertIncludes(renderedSystem, 'Changes affecting segmentation controls are reviewed through', 'system description PCI responsibility detail');
   assertIncludes(renderedClassification, 'operates an in-scope cardholder data environment (CDE)', 'data classification CDE language');
+  assertIncludes(renderedPciTokenization, 'Cardholder data in scope: Primary account number (PAN), Cardholder name, Expiration date, and Tokenized PAN or network token', 'PCI tokenization template should reflect selected PCI data elements');
 });
 
 if (process.exitCode && process.exitCode !== 0) {

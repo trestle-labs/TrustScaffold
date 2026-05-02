@@ -186,7 +186,7 @@ Portal URL: `https://<your-domain>/auditor/<token>`
 TrustScaffold V1.0 is a compliance automation platform starting with SOC 2 Type II:
 
 - Authenticated multi-tenant organizations with role-based access
-- Seven-step compliance wizard with cloud profiling and SoD warnings
+- Ten-step compliance wizard with cloud profiling, governance/security deep dives, and SoD warnings
 - Server-side Handlebars compilation of 16 framework-mapped policy templates
 - System Description auto-generation (AICPA DC 200)
 - Immutable document revision ledger with hash-chained audit logging

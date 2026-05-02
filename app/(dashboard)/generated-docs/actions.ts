@@ -6,11 +6,40 @@ import { redirect } from 'next/navigation';
 
 import { exportApprovedDocsToAzureDevOpsAction } from '@/app/actions/export-to-azure-devops';
 import { exportApprovedDocsToGithubAction } from '@/app/actions/export-to-github';
-import { renderTemplate } from '@/lib/documents/template-engine';
+import { canApproveDocuments, canRejectOrRegenerateDocuments, isAdminRole } from '@/lib/auth/roles';
+import {
+  buildGeneratedDocErrorRoute,
+  buildGeneratedDocsErrorRoute,
+  buildGeneratedDocsSuccessRoute,
+  buildGeneratedDocSuccessRoute,
+} from '@/lib/documents/generated-doc-navigation';
+import { renderTemplate, stripMappingMetadata } from '@/lib/documents/template-engine';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
-import { buildTemplatePayload } from '@/lib/wizard/template-payload';
+import { buildQueuedSharePointPdfMetadata } from '@/lib/publications/sharepoint';
+import { buildTemplatePayload, isBridgeLetterPrimaryAudienceId, type BridgeLetterPrimaryAudienceId } from '@/lib/wizard/template-payload';
 import { wizardSchema } from '@/lib/wizard/schema';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+
+function parseBridgeLetterPrimaryAudienceOverride(
+  formData: FormData,
+  options?: { errorDocumentId?: string },
+): BridgeLetterPrimaryAudienceId | null {
+  const rawValue = String(formData.get('bridge_letter_primary_audience_override') ?? '').trim();
+
+  if (!rawValue || rawValue === 'auto') {
+    return null;
+  }
+
+  if (!isBridgeLetterPrimaryAudienceId(rawValue)) {
+    if (options?.errorDocumentId) {
+      redirect(buildGeneratedDocErrorRoute(options.errorDocumentId, 'Invalid bridge letter audience override'));
+    }
+
+    redirect(buildGeneratedDocsErrorRoute('Invalid bridge letter audience override'));
+  }
+
+  return rawValue;
+}
 
 async function getDocumentAndRole(documentId: string) {
   const supabase = await createSupabaseServerClient();
@@ -43,25 +72,7 @@ async function getDocumentAndRole(documentId: string) {
     throw new Error('You are not a member of this organization');
   }
 
-  return { supabase, document, role: membership.role };
-}
-
-function buildGeneratedDocRoute(documentId: string, query?: string) {
-  const basePath = `/generated-docs/${documentId}`;
-
-  if (!query) {
-    return basePath as Route;
-  }
-
-  return `${basePath}?${query}` as never;
-}
-
-function buildGeneratedDocsRoute(query?: string) {
-  if (!query) {
-    return '/generated-docs' as Route;
-  }
-
-  return `/generated-docs?${query}` as never;
+  return { supabase, document, role: membership.role, userId: user.id };
 }
 
 function getSelectedDocIds(formData: FormData) {
@@ -73,23 +84,50 @@ function getSelectedDocIds(formData: FormData) {
 
 export async function approveGeneratedDocAction(formData: FormData) {
   const documentId = String(formData.get('document_id') ?? '').trim();
+  const approvalReason = String(formData.get('approval_reason') ?? '').trim();
 
   if (!documentId) {
-    redirect('/generated-docs?error=Missing%20document%20identifier');
+    redirect(buildGeneratedDocsErrorRoute('Missing document identifier'));
   }
 
-  const { supabase, role } = await getDocumentAndRole(documentId);
-
-  if (!['admin', 'approver'].includes(role)) {
-    redirect(buildGeneratedDocRoute(documentId, 'error=Only%20admins%20and%20approvers%20can%20approve%20documents'));
+  if (approvalReason.length < 10) {
+    redirect(buildGeneratedDocErrorRoute(documentId, 'Provide a clear approval message (10+ characters).'));
   }
 
-  const { error } = await supabase.rpc('approve_generated_document', {
-    p_document_id: documentId,
-  });
+  const { supabase, document, role, userId } = await getDocumentAndRole(documentId);
+
+  if (!canApproveDocuments(role)) {
+    redirect(buildGeneratedDocErrorRoute(documentId, 'Only admins and approvers can approve documents'));
+  }
+
+  if (document.status === 'approved') {
+    redirect(buildGeneratedDocErrorRoute(documentId, 'Document is already approved'));
+  }
+
+  const { error } = await supabase
+    .from('generated_docs')
+    .update({ status: 'approved', approved_by: userId, approved_at: new Date().toISOString() })
+    .eq('id', documentId)
+    .eq('organization_id', document.organization_id);
 
   if (error) {
-    redirect(buildGeneratedDocRoute(documentId, `error=${encodeURIComponent(error.message)}`));
+    redirect(buildGeneratedDocErrorRoute(documentId, error.message));
+  }
+
+  const { error: auditError } = await supabase.rpc('append_audit_log', {
+    p_organization_id: document.organization_id,
+    p_action: 'document.approved',
+    p_entity_type: 'generated_doc',
+    p_entity_id: document.id,
+    p_details: {
+      reason: approvalReason,
+      version: document.version,
+      status: 'approved',
+    },
+  });
+
+  if (auditError) {
+    redirect(buildGeneratedDocErrorRoute(documentId, auditError.message));
   }
 
   // Create an "approved" revision in the ledger
@@ -109,20 +147,20 @@ export async function approveGeneratedDocAction(formData: FormData) {
 
   revalidatePath(`/generated-docs/${documentId}`);
   revalidatePath('/generated-docs');
-  redirect(buildGeneratedDocRoute(documentId, 'success=Document%20approved'));
+  redirect(buildGeneratedDocSuccessRoute(documentId, 'Document approved'));
 }
 
 export async function archiveGeneratedDocAction(formData: FormData) {
   const documentId = String(formData.get('document_id') ?? '').trim();
 
   if (!documentId) {
-    redirect('/generated-docs?error=Missing%20document%20identifier');
+    redirect(buildGeneratedDocsErrorRoute('Missing document identifier'));
   }
 
   const { supabase, role } = await getDocumentAndRole(documentId);
 
-  if (role !== 'admin') {
-    redirect(buildGeneratedDocRoute(documentId, 'error=Only%20admins%20can%20archive%20documents'));
+  if (!isAdminRole(role)) {
+    redirect(buildGeneratedDocErrorRoute(documentId, 'Only admins can archive documents'));
   }
 
   const { error } = await supabase.rpc('archive_generated_document', {
@@ -130,12 +168,12 @@ export async function archiveGeneratedDocAction(formData: FormData) {
   });
 
   if (error) {
-    redirect(buildGeneratedDocRoute(documentId, `error=${encodeURIComponent(error.message)}`));
+    redirect(buildGeneratedDocErrorRoute(documentId, error.message));
   }
 
   revalidatePath(`/generated-docs/${documentId}`);
   revalidatePath('/generated-docs');
-  redirect(buildGeneratedDocRoute(documentId, 'success=Document%20archived'));
+  redirect(buildGeneratedDocSuccessRoute(documentId, 'Document archived'));
 }
 
 export async function rejectGeneratedDocAction(formData: FormData) {
@@ -143,21 +181,21 @@ export async function rejectGeneratedDocAction(formData: FormData) {
   const rejectionReason = String(formData.get('rejection_reason') ?? '').trim();
 
   if (!documentId) {
-    redirect('/generated-docs?error=Missing%20document%20identifier');
+    redirect(buildGeneratedDocsErrorRoute('Missing document identifier'));
   }
 
   if (rejectionReason.length < 10) {
-    redirect(buildGeneratedDocRoute(documentId, 'error=Provide%20a%20clear%20rejection%20reason%20(10%2B%20characters).'));
+    redirect(buildGeneratedDocErrorRoute(documentId, 'Provide a clear rejection reason (10+ characters).'));
   }
 
   const { supabase, document, role } = await getDocumentAndRole(documentId);
 
-  if (!['admin', 'editor'].includes(role)) {
-    redirect(buildGeneratedDocRoute(documentId, 'error=Only%20admins%20and%20editors%20can%20reject%20drafts'));
+  if (!canRejectOrRegenerateDocuments(role)) {
+    redirect(buildGeneratedDocErrorRoute(documentId, 'Only admins and editors can reject drafts'));
   }
 
   if (document.status !== 'draft') {
-    redirect(buildGeneratedDocRoute(documentId, 'error=Only%20draft%20documents%20can%20be%20rejected'));
+    redirect(buildGeneratedDocErrorRoute(documentId, 'Only draft documents can be rejected'));
   }
 
   const { error: updateError } = await supabase
@@ -167,7 +205,7 @@ export async function rejectGeneratedDocAction(formData: FormData) {
     .eq('organization_id', document.organization_id);
 
   if (updateError) {
-    redirect(buildGeneratedDocRoute(documentId, `error=${encodeURIComponent(updateError.message)}`));
+    redirect(buildGeneratedDocErrorRoute(documentId, updateError.message));
   }
 
   const { error: auditError } = await supabase.rpc('append_audit_log', {
@@ -184,19 +222,19 @@ export async function rejectGeneratedDocAction(formData: FormData) {
   });
 
   if (auditError) {
-    redirect(buildGeneratedDocRoute(documentId, `error=${encodeURIComponent(auditError.message)}`));
+    redirect(buildGeneratedDocErrorRoute(documentId, auditError.message));
   }
 
   revalidatePath(`/generated-docs/${documentId}`);
   revalidatePath('/generated-docs');
-  redirect(buildGeneratedDocRoute(documentId, 'success=Draft%20rejected%20and%20archived%20with%20reviewer%20reason'));
+  redirect(buildGeneratedDocSuccessRoute(documentId, 'Draft rejected and archived with reviewer reason'));
 }
 
 export async function archiveSelectedGeneratedDocsAction(formData: FormData) {
   const selectedDocIds = getSelectedDocIds(formData);
 
   if (!selectedDocIds.length) {
-    redirect(buildGeneratedDocsRoute('error=Select%20at%20least%20one%20document%20to%20archive'));
+    redirect(buildGeneratedDocsErrorRoute('Select at least one document to archive'));
   }
 
   const supabase = await createSupabaseServerClient();
@@ -214,7 +252,7 @@ export async function archiveSelectedGeneratedDocsAction(formData: FormData) {
     .in('id', selectedDocIds);
 
   if (error || !docs?.length) {
-    redirect(buildGeneratedDocsRoute(`error=${encodeURIComponent(error?.message ?? 'No documents matched the selection')}`));
+    redirect(buildGeneratedDocsErrorRoute(error?.message ?? 'No documents matched the selection'));
   }
 
   const organizationId = docs[0].organization_id;
@@ -225,8 +263,8 @@ export async function archiveSelectedGeneratedDocsAction(formData: FormData) {
     .eq('user_id', user.id)
     .single();
 
-  if (membership?.role !== 'admin') {
-    redirect(buildGeneratedDocsRoute('error=Only%20admins%20can%20archive%20documents'));
+  if (!isAdminRole(membership?.role)) {
+    redirect(buildGeneratedDocsErrorRoute('Only admins can archive documents'));
   }
 
   for (const doc of docs) {
@@ -235,22 +273,23 @@ export async function archiveSelectedGeneratedDocsAction(formData: FormData) {
     });
 
     if (archiveError) {
-      redirect(buildGeneratedDocsRoute(`error=${encodeURIComponent(archiveError.message)}`));
+      redirect(buildGeneratedDocsErrorRoute(archiveError.message));
     }
   }
 
   revalidatePath('/generated-docs');
-  redirect(buildGeneratedDocsRoute(`success=Archived%20${docs.length}%20document${docs.length === 1 ? '' : 's'}`));
+  redirect(buildGeneratedDocsSuccessRoute(`Archived ${docs.length} document${docs.length === 1 ? '' : 's'}`));
 }
 
 export async function regenerateDocAction(formData: FormData) {
   const documentId = String(formData.get('document_id') ?? '').trim();
-  if (!documentId) redirect('/generated-docs?error=Missing%20document%20identifier');
+  if (!documentId) redirect(buildGeneratedDocsErrorRoute('Missing document identifier'));
+  const bridgeLetterPrimaryAudienceOverride = parseBridgeLetterPrimaryAudienceOverride(formData, { errorDocumentId: documentId });
 
   const context = await getDashboardContext();
   if (!context?.organization) redirect('/login');
-  if (!['admin', 'editor'].includes(context.organization.role)) {
-    redirect(buildGeneratedDocRoute(documentId, 'error=Only%20admins%20and%20editors%20can%20regenerate%20documents'));
+  if (!canRejectOrRegenerateDocuments(context.organization.role)) {
+    redirect(buildGeneratedDocErrorRoute(documentId, 'Only admins and editors can regenerate documents'));
   }
 
   const supabase = await createSupabaseServerClient();
@@ -262,27 +301,33 @@ export async function regenerateDocAction(formData: FormData) {
     .single();
 
   if (docError || !doc) {
-    redirect(buildGeneratedDocRoute(documentId, 'error=Document+not+found'));
+    redirect(buildGeneratedDocErrorRoute(documentId, 'Document not found'));
   }
 
   const template = Array.isArray(doc.templates) ? doc.templates[0] : doc.templates;
-  if (!template) redirect(buildGeneratedDocRoute(documentId, 'error=Template+not+found'));
+  if (!template) redirect(buildGeneratedDocErrorRoute(documentId, 'Template not found'));
 
   const parsed = wizardSchema.safeParse(doc.input_payload);
   if (!parsed.success) {
-    redirect(buildGeneratedDocRoute(documentId, 'error=Stored+wizard+payload+is+invalid+-+re-run+the+full+wizard'));
+    redirect(buildGeneratedDocErrorRoute(documentId, 'Stored wizard payload is invalid - re-run the full wizard'));
   }
 
-  const payload = { ...buildTemplatePayload(parsed.data, { workspaceOrganizationName: context.organization.name }), wizard_data: parsed.data };
+  const payload = {
+    ...buildTemplatePayload(parsed.data, {
+      workspaceOrganizationName: context.organization.name,
+      bridgeLetterPrimaryAudienceOverride,
+    }),
+    wizard_data: parsed.data,
+  };
   const mergedVariables = { ...(template.default_variables ?? {}), ...payload };
 
   let newFilename: string;
   let newContent: string;
   try {
     newFilename = renderTemplate(template.output_filename_pattern, mergedVariables, template.name);
-    newContent = renderTemplate(template.markdown_template, mergedVariables, template.name);
+    newContent = stripMappingMetadata(renderTemplate(template.markdown_template, mergedVariables, template.name));
   } catch (err) {
-    redirect(buildGeneratedDocRoute(documentId, `error=${encodeURIComponent(err instanceof Error ? err.message : 'Render failed')}`));
+    redirect(buildGeneratedDocErrorRoute(documentId, err instanceof Error ? err.message : 'Render failed'));
   }
 
   const { error: updateError } = await supabase
@@ -290,7 +335,7 @@ export async function regenerateDocAction(formData: FormData) {
     .update({ file_name: newFilename, content_markdown: newContent, status: 'draft' })
     .eq('id', documentId);
 
-  if (updateError) redirect(buildGeneratedDocRoute(documentId, `error=${encodeURIComponent(updateError.message)}`));
+  if (updateError) redirect(buildGeneratedDocErrorRoute(documentId, updateError.message));
 
   await supabase.rpc('insert_document_revision', {
     p_document_id: documentId,
@@ -300,15 +345,21 @@ export async function regenerateDocAction(formData: FormData) {
 
   revalidatePath(`/generated-docs/${documentId}`);
   revalidatePath('/generated-docs');
-  redirect(buildGeneratedDocRoute(documentId, 'success=Document+regenerated+from+saved+wizard+data'));
+  redirect(buildGeneratedDocSuccessRoute(
+    documentId,
+    bridgeLetterPrimaryAudienceOverride
+      ? 'Document regenerated from saved wizard data with bridge letter audience override'
+      : 'Document regenerated from saved wizard data',
+  ));
 }
 
-export async function regenerateAllDocsAction() {
+export async function regenerateAllDocsAction(formData: FormData) {
+  const bridgeLetterPrimaryAudienceOverride = parseBridgeLetterPrimaryAudienceOverride(formData);
   const context = await getDashboardContext();
   if (!context?.organization) redirect('/login');
 
-  if (!['admin', 'editor'].includes(context.organization.role)) {
-    redirect(buildGeneratedDocsRoute('error=Only%20admins%20and%20editors%20can%20regenerate%20documents'));
+  if (!canRejectOrRegenerateDocuments(context.organization.role)) {
+    redirect(buildGeneratedDocsErrorRoute('Only admins and editors can regenerate documents'));
   }
 
   const supabase = await createSupabaseServerClient();
@@ -320,15 +371,21 @@ export async function regenerateAllDocsAction() {
     .maybeSingle();
 
   if (!draft?.payload) {
-    redirect(buildGeneratedDocsRoute('error=No%20org%20profile%20found.%20Complete%20the%20wizard%20first.'));
+    redirect(buildGeneratedDocsErrorRoute('No org profile found. Complete the wizard first.'));
   }
 
   const parsed = wizardSchema.safeParse(draft.payload);
   if (!parsed.success) {
-    redirect(buildGeneratedDocsRoute('error=Org%20profile%20is%20invalid.%20Re-run%20the%20wizard.'));
+    redirect(buildGeneratedDocsErrorRoute('Org profile is invalid. Re-run the wizard.'));
   }
 
-  const payload = { ...buildTemplatePayload(parsed.data, { workspaceOrganizationName: context.organization.name }), wizard_data: parsed.data };
+  const payload = {
+    ...buildTemplatePayload(parsed.data, {
+      workspaceOrganizationName: context.organization.name,
+      bridgeLetterPrimaryAudienceOverride,
+    }),
+    wizard_data: parsed.data,
+  };
 
   const { data: docs } = await supabase
     .from('generated_docs')
@@ -337,7 +394,7 @@ export async function regenerateAllDocsAction() {
     .neq('status', 'archived');
 
   if (!docs?.length) {
-    redirect(buildGeneratedDocsRoute('error=No%20active%20documents%20to%20regenerate'));
+    redirect(buildGeneratedDocsErrorRoute('No active documents to regenerate'));
   }
 
   let successCount = 0;
@@ -350,7 +407,7 @@ export async function regenerateAllDocsAction() {
     let newContent: string;
     try {
       newFilename = renderTemplate(template.output_filename_pattern, mergedVariables, template.name);
-      newContent = renderTemplate(template.markdown_template, mergedVariables, template.name);
+      newContent = stripMappingMetadata(renderTemplate(template.markdown_template, mergedVariables, template.name));
     } catch {
       continue;
     }
@@ -375,28 +432,134 @@ export async function regenerateAllDocsAction() {
   const skippedCount = totalCount - successCount;
 
   if (skippedCount > 0) {
-    redirect(buildGeneratedDocsRoute(`error=Regenerated%20${successCount}%20of%20${totalCount}%20documents.%20${skippedCount}%20document${skippedCount === 1 ? '' : 's'}%20were%20skipped%20and%20may%20still%20be%20stale.`));
+    redirect(buildGeneratedDocsErrorRoute(`Regenerated ${successCount} of ${totalCount} documents. ${skippedCount} document${skippedCount === 1 ? '' : 's'} were skipped and may still be stale.`));
   }
 
-  redirect(buildGeneratedDocsRoute(`success=Regenerated%20${successCount}%20document${successCount === 1 ? '' : 's'}%20from%20current%20org%20profile`));
+  redirect(buildGeneratedDocsSuccessRoute(
+    bridgeLetterPrimaryAudienceOverride
+      ? `Regenerated ${successCount} document${successCount === 1 ? '' : 's'} from current org profile with bridge letter audience override`
+      : `Regenerated ${successCount} document${successCount === 1 ? '' : 's'} from current org profile`,
+  ));
+}
+
+export async function queueSharePointPdfPublicationAction(formData: FormData) {
+  const documentId = String(formData.get('document_id') ?? '').trim();
+
+  if (!documentId) {
+    redirect(buildGeneratedDocsErrorRoute('Missing document identifier'));
+  }
+
+  const { supabase, document, role, userId } = await getDocumentAndRole(documentId);
+
+  if (!isAdminRole(role)) {
+    redirect(buildGeneratedDocErrorRoute(documentId, 'Only admins can queue SharePoint publication'));
+  }
+
+  if (document.status !== 'approved') {
+    redirect(buildGeneratedDocErrorRoute(documentId, 'Only approved documents can be published'));
+  }
+
+  const { data: approvedRevision, error: approvedRevisionError } = await supabase
+    .from('document_revisions')
+    .select('id, content_hash')
+    .eq('document_id', documentId)
+    .eq('source', 'approved')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (approvedRevisionError || !approvedRevision) {
+    redirect(buildGeneratedDocErrorRoute(documentId, approvedRevisionError?.message ?? 'No approved revision found for publication'));
+  }
+
+  const { data: docDetails, error: docDetailsError } = await supabase
+    .from('generated_docs')
+    .select('title, file_name')
+    .eq('id', documentId)
+    .single();
+
+  if (docDetailsError || !docDetails) {
+    redirect(buildGeneratedDocErrorRoute(documentId, docDetailsError?.message ?? 'Unable to load document details'));
+  }
+
+  const { data: sharePointIntegration, error: sharePointIntegrationError } = await supabase
+    .from('organization_integrations')
+    .select('id, provider_config')
+    .eq('organization_id', document.organization_id)
+    .eq('provider', 'sharepoint')
+    .maybeSingle();
+
+  if (sharePointIntegrationError || !sharePointIntegration) {
+    redirect(buildGeneratedDocErrorRoute(documentId, sharePointIntegrationError?.message ?? 'No SharePoint integration is configured for this organization yet'));
+  }
+
+  const providerConfig = sharePointIntegration.provider_config && typeof sharePointIntegration.provider_config === 'object'
+    ? sharePointIntegration.provider_config as Record<string, unknown>
+    : {};
+
+  const metadata = buildQueuedSharePointPdfMetadata({
+    fileName: docDetails.file_name,
+    revisionId: approvedRevision.id,
+    contentHash: approvedRevision.content_hash,
+    providerConfig,
+  });
+
+  const { error: publicationError } = await supabase
+    .from('document_publications')
+    .insert({
+      organization_id: document.organization_id,
+      document_id: documentId,
+      revision_id: approvedRevision.id,
+      integration_id: sharePointIntegration.id,
+      provider: 'sharepoint',
+      format: 'pdf',
+      status: 'queued',
+      published_by: userId,
+      metadata,
+    });
+
+  if (publicationError) {
+    redirect(buildGeneratedDocErrorRoute(documentId, publicationError.message));
+  }
+
+  const { error: auditError } = await supabase.rpc('append_audit_log', {
+    p_organization_id: document.organization_id,
+    p_action: 'document.publication_queued',
+    p_entity_type: 'generated_doc',
+    p_entity_id: documentId,
+    p_details: {
+      provider: 'sharepoint',
+      format: 'pdf',
+      revision_id: approvedRevision.id,
+      target_file_name: metadata.target_file_name,
+    },
+  });
+
+  if (auditError) {
+    redirect(buildGeneratedDocErrorRoute(documentId, auditError.message));
+  }
+
+  revalidatePath(`/generated-docs/${documentId}`);
+  revalidatePath('/generated-docs');
+  redirect(buildGeneratedDocSuccessRoute(documentId, 'SharePoint PDF publication queued'));
 }
 
 export async function exportToGithubFromDashboardAction(formData: FormData) {
   const result = await exportApprovedDocsToGithubAction(formData);
 
   if (!result.ok) {
-    redirect(buildGeneratedDocsRoute(`error=${encodeURIComponent(result.error)}`));
+    redirect(buildGeneratedDocsErrorRoute(result.error));
   }
 
-  redirect(buildGeneratedDocsRoute(`success=${encodeURIComponent(`Opened GitHub PR for ${result.exportedCount} approved documents`)}`));
+  redirect(buildGeneratedDocsSuccessRoute(`Opened GitHub PR for ${result.exportedCount} approved documents`));
 }
 
 export async function exportToAzureDevOpsFromDashboardAction(formData: FormData) {
   const result = await exportApprovedDocsToAzureDevOpsAction(formData);
 
   if (!result.ok) {
-    redirect(buildGeneratedDocsRoute(`error=${encodeURIComponent(result.error)}`));
+    redirect(buildGeneratedDocsErrorRoute(result.error));
   }
 
-  redirect(buildGeneratedDocsRoute(`success=${encodeURIComponent(`Opened Azure DevOps PR for ${result.exportedCount} approved documents`)}`));
+  redirect(buildGeneratedDocsSuccessRoute(`Opened Azure DevOps PR for ${result.exportedCount} approved documents`));
 }

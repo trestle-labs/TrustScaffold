@@ -1,8 +1,18 @@
 node_modules/
 .next/
+.env
 .env.local
 tsconfig.tsbuildinfo
+.code-scalpel/
+.scalpel_cache/
+.claude/
+.vscode/mcp.json
 
 # Supabase CLI / psql artifacts
 hable_*
 *.dump
+./docs/uat/
+
+# Internal benchmarking docs
+./docs/COMPETITIVE_COMPARISON_MATRIX.md
+docs/COMPETITIVE_COMPARISON_MATRIX.md

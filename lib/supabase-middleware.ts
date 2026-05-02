@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { isRecoverableSupabaseAuthErrorMessage } from '@/lib/auth/supabase-auth-errors';
 import { getSupabasePublicConfig } from '@/lib/supabase-public-env';
 
 export async function updateSession(request: NextRequest) {
@@ -32,8 +33,27 @@ export async function updateSession(request: NextRequest) {
   });
 
   const {
-    data: { user },
+    data: { user: authUser },
+    error: authError,
   } = await supabase.auth.getUser();
+
+  if (authError && isRecoverableSupabaseAuthErrorMessage(authError.message)) {
+    return { response, user: null };
+  }
+
+  let user = authUser;
+
+  if (user) {
+    const { error: membershipError } = await supabase
+      .from('organization_members')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .limit(1);
+
+    if (membershipError && isRecoverableSupabaseAuthErrorMessage(membershipError.message)) {
+      user = null;
+    }
+  }
 
   return { response, user };
 }

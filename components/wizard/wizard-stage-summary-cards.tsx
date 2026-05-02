@@ -4,7 +4,20 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { expandAcronymsInText } from '@/lib/acronyms';
-import { selectedTscLabels, type WizardData } from '@/lib/wizard/schema';
+import {
+  acknowledgementCadenceOptions,
+  businessModelOptions,
+  complianceMaturityOptions,
+  deliveryModelOptions,
+  hasSoxApplicability,
+  penTestFrequencyOptions,
+  phishingFrequencyOptions,
+  policyPublicationMethodOptions,
+  selectedTscLabels,
+  soxApplicabilityOptions,
+  trainingCadenceOptions,
+  type WizardData,
+} from '@/lib/wizard/schema';
 import { computeStepCompletions, type StepCompletion } from '@/lib/wizard/security-scoring';
 import { cn } from '@/lib/utils';
 
@@ -39,6 +52,25 @@ type SummaryCard = {
     href: Route;
   }>;
 };
+
+const VALUE_LABEL_MAP = new Map<string, string>([
+  ...businessModelOptions.map((option) => [option.value, option.label] as const),
+  ...complianceMaturityOptions.map((option) => [option.value, option.label] as const),
+  ...deliveryModelOptions.map((option) => [option.value, option.label] as const),
+  ...acknowledgementCadenceOptions.map((option) => [option.value, option.label] as const),
+  ...trainingCadenceOptions.map((option) => [option.value, option.label] as const),
+  ...soxApplicabilityOptions.map((option) => [option.value, option.label] as const),
+  ...phishingFrequencyOptions.map((option) => [option.value, option.label] as const),
+  ...penTestFrequencyOptions.map((option) => [option.value, option.label] as const),
+  ...policyPublicationMethodOptions.map((option) => [option.value, option.label] as const),
+  ['type1', 'SOC 2 Type I'],
+  ['type2', 'SOC 2 Type II'],
+  ['unsure', 'Unsure'],
+]);
+
+function displayLabel(value: string) {
+  return VALUE_LABEL_MAP.get(value) ?? value;
+}
 
 function combineStepStatuses(statuses: StepCompletion['status'][]): StepCompletion['status'] {
   if (statuses.every((status) => status === 'complete')) {
@@ -76,16 +108,18 @@ function completionLabel(status: StepCompletion['status']) {
 
 function SummaryRowItem({ label, value, required }: SummaryRow) {
   const isEmpty = !value?.trim();
+  const displayRowLabel = expandAcronymsInText(label);
+  const displayRowValue = value ? expandAcronymsInText(value) : value;
 
   return (
     <div className="flex items-baseline gap-2 text-sm">
-      <span className="w-36 shrink-0 text-xs text-muted-foreground">{expandAcronymsInText(label)}</span>
+      <span className="w-36 shrink-0 text-xs text-muted-foreground">{displayRowLabel}</span>
       {isEmpty ? (
         <span className={cn('text-xs italic', required ? 'font-medium text-amber-600' : 'text-muted-foreground/40')}>
           {required ? 'Required - missing' : '-'}
         </span>
       ) : (
-        <span className="min-w-0 break-words text-foreground">{expandAcronymsInText(value)}</span>
+        <span className="min-w-0 break-words text-foreground">{displayRowValue}</span>
       )}
     </div>
   );
@@ -119,32 +153,33 @@ function buildSummaryCards(data: WizardData, organizationName: string, highWater
       title: 'Company',
       completionStatus: welcomeStatus,
       rows: [
-        { label: 'Company name', value: data.company.name, required: true },
-        { label: 'Business model', value: data.company.businessModel },
-        { label: 'Delivery model', value: data.company.deliveryModel },
-        { label: 'Public website in scope', value: data.company.hasPublicWebsite ? 'Yes' : 'No' },
+        { label: 'Company Name', value: data.company.name, required: true },
+        { label: 'Business Model', value: displayLabel(data.company.businessModel) },
+        { label: 'Delivery Model', value: displayLabel(data.company.deliveryModel) },
+        { label: 'Public Website In Scope', value: data.company.hasPublicWebsite ? 'Yes' : 'No' },
         {
-          label: 'Org relationship',
+          label: 'Org Relationship',
           value: data.company.organizationRelationship === 'same-as-company'
             ? 'Workspace org is the company'
             : `Workspace org governs ${data.company.name}`,
         },
         ...(data.company.organizationRelationship === 'governing-company'
-          ? [{ label: 'Workspace org', value: organizationName }]
+          ? [{ label: 'Workspace Org', value: organizationName }]
           : []),
         { label: 'Website', value: data.company.hasPublicWebsite ? data.company.website : 'Not in scope' },
-        { label: 'Website collects personal data', value: data.company.hasPublicWebsite ? (data.company.websiteCollectsPersonalData ? 'Yes' : 'No') : 'N/A' },
-        { label: 'Cookies / analytics', value: data.company.hasPublicWebsite ? (data.company.websiteUsesCookiesAnalytics ? 'Yes' : 'No') : 'N/A' },
-        { label: 'EU/UK exposure', value: data.company.hasPublicWebsite ? (data.company.websiteTargetsEuOrUkResidents ? 'Yes' : 'No') : 'N/A' },
-        { label: 'California exposure', value: data.company.hasPublicWebsite ? (data.company.websiteTargetsCaliforniaResidents ? 'Yes' : 'No') : 'N/A' },
-        { label: 'Privacy notice', value: data.company.hasPublicWebsite ? (data.company.websiteHasPrivacyNotice ? 'Published' : 'Not documented') : 'N/A' },
-        { label: 'Cookie consent', value: data.company.hasPublicWebsite ? (data.company.websiteHasCookieBanner ? 'Available' : 'Not documented') : 'N/A' },
+        { label: 'Website Collects Personal Data', value: data.company.hasPublicWebsite ? (data.company.websiteCollectsPersonalData ? 'Yes' : 'No') : 'N/A' },
+        { label: 'Cookies / Analytics', value: data.company.hasPublicWebsite ? (data.company.websiteUsesCookiesAnalytics ? 'Yes' : 'No') : 'N/A' },
+        { label: 'EU/UK Exposure', value: data.company.hasPublicWebsite ? (data.company.websiteTargetsEuOrUkResidents ? 'Yes' : 'No') : 'N/A' },
+        { label: 'California Exposure', value: data.company.hasPublicWebsite ? (data.company.websiteTargetsCaliforniaResidents ? 'Yes' : 'No') : 'N/A' },
+        { label: 'Privacy Notice', value: data.company.hasPublicWebsite ? (data.company.websiteHasPrivacyNotice ? 'Published' : 'Not documented') : 'N/A' },
+        { label: 'Cookie Consent', value: data.company.hasPublicWebsite ? (data.company.websiteHasCookieBanner ? 'Available' : 'Not documented') : 'N/A' },
         { label: 'Data Subject Access Request (DSAR) channel', value: data.company.hasPublicWebsite ? (data.company.dsarRequestChannel || data.company.primaryContactEmail) : 'N/A' },
-        { label: 'Contact name', value: data.company.primaryContactName },
-        { label: 'Contact email', value: data.company.primaryContactEmail },
+        { label: 'Contact Name', value: data.company.primaryContactName },
+        { label: 'Contact Email', value: data.company.primaryContactEmail },
         { label: 'Industry', value: data.company.industry },
-        { label: 'Compliance maturity', value: data.company.complianceMaturity },
-        { label: 'Target audit', value: data.company.targetAuditType },
+        { label: 'Compliance Maturity', value: displayLabel(data.company.complianceMaturity).replace(/ program$/i, '') },
+        { label: 'SOX / ITGC Applicability', value: displayLabel(data.company.soxApplicability) },
+        { label: 'Target Audit', value: displayLabel(data.company.targetAuditType) },
       ],
       actions: [{ label: 'Open Welcome', href: '/wizard?step=0' }],
     },
@@ -152,13 +187,13 @@ function buildSummaryCards(data: WizardData, organizationName: string, highWater
       title: 'System scope',
       completionStatus: scopeStatus,
       rows: [
-        { label: 'System name', value: data.scope.systemName, required: true },
+        { label: 'System Name', value: data.scope.systemName, required: true },
         { label: 'Description', value: data.scope.systemDescription, required: true },
         { label: 'Protected Health Information (PHI) in scope', value: data.scope.containsPhi ? 'Yes' : 'No' },
         { label: 'Cardholder Data Environment (CDE) in scope', value: data.scope.hasCardholderDataEnvironment ? 'Yes' : 'No' },
         { label: 'Tenancy', value: data.scope.isMultiTenant ? 'Multi-tenant SaaS' : 'Single-tenant' },
       ],
-      badgeLabel: 'Data types',
+      badgeLabel: 'Data Types',
       badges: data.scope.dataTypesHandled,
       notes: [
         ...(data.scope.containsPhi
@@ -183,11 +218,11 @@ function buildSummaryCards(data: WizardData, organizationName: string, highWater
       completionStatus: combineStepStatuses([infrastructureStatus, tscStatus]),
       completionDetail: `Infrastructure ${completionLabel(infrastructureStatus).toLowerCase()} · TSC ${completionLabel(tscStatus).toLowerCase()}`,
       rows: [
-        { label: 'Cloud providers', value: data.infrastructure.cloudProviders.map(formatCloudProvider).join(', ') || data.infrastructure.type || '-' },
+        { label: 'Cloud Providers', value: data.infrastructure.cloudProviders.map(formatCloudProvider).join(', ') || data.infrastructure.type || '-' },
         { label: 'Identity Provider (IdP)', value: data.infrastructure.idpProvider },
-        { label: 'Availability zones', value: data.infrastructure.usesAvailabilityZones ? 'Yes' : 'No' },
+        { label: 'Availability Zones', value: data.infrastructure.usesAvailabilityZones ? 'Yes' : 'No' },
         { label: 'Virtual Private Network (VPN) logging', value: data.infrastructure.usesCloudVpn ? 'Enabled' : 'No' },
-        ...(data.infrastructure.hostsOwnHardware ? [{ label: 'On-premises hardware', value: 'Yes' }] : []),
+        ...(data.infrastructure.hostsOwnHardware ? [{ label: 'On-Premises Hardware', value: 'Yes' }] : []),
       ],
       badgeLabel: 'Trust Service Criteria',
       badges: selectedTscLabels(data),
@@ -200,10 +235,10 @@ function buildSummaryCards(data: WizardData, organizationName: string, highWater
       title: 'Governance & training',
       completionStatus: governanceStatus,
       rows: [
-        { label: 'Policy acknowledgement', value: data.governance.acknowledgementCadence },
-        { label: 'Training tool', value: data.training.securityAwarenessTrainingTool || undefined },
-        { label: 'Training cadence', value: data.training.trainingCadence },
-        ...(data.training.hasPhishingSimulation ? [{ label: 'Phishing sim', value: data.training.phishingSimulationFrequency }] : []),
+        { label: 'Policy Acknowledgement', value: displayLabel(data.governance.acknowledgementCadence) },
+        { label: 'Training Tool', value: data.training.securityAwarenessTrainingTool || undefined },
+        { label: 'Training Cadence', value: displayLabel(data.training.trainingCadence) },
+        ...(data.training.hasPhishingSimulation ? [{ label: 'Phishing Sim', value: displayLabel(data.training.phishingSimulationFrequency) }] : []),
       ],
       badges: [
         ...(data.governance.hasEmployeeHandbook ? ['Employee handbook'] : []),
@@ -217,12 +252,60 @@ function buildSummaryCards(data: WizardData, organizationName: string, highWater
       ],
       actions: [{ label: 'Open Governance', href: '/wizard?step=3' }],
     },
+    ...(hasSoxApplicability(data)
+      ? [{
+          title: 'SOX / ITGC readiness',
+          completionStatus: combineStepStatuses([governanceStatus, operationsStatus]),
+          completionDetail: `Governance ${completionLabel(governanceStatus).toLowerCase()} · Operations ${completionLabel(operationsStatus).toLowerCase()}`,
+          rows: [
+            { label: 'Applicability Driver', value: displayLabel(data.company.soxApplicability) },
+            { label: 'Internal Audit Program', value: data.governance.hasInternalAuditProgram ? 'Yes' : 'No' },
+            { label: 'Risk Register', value: data.operations.hasRiskRegister ? 'Yes' : 'No' },
+            { label: 'Multi-Factor Authentication (MFA) Required', value: data.operations.requiresMfa ? 'Yes' : 'No' },
+            { label: 'Peer Review Required', value: data.operations.requiresPeerReview ? 'Yes' : 'No' },
+            { label: 'Human Resources Information System (HRIS) Provider', value: data.operations.hrisProvider },
+            { label: 'Ticketing System', value: data.operations.ticketingSystem },
+            { label: 'Version Control System (VCS) / Branch-protection guide provider', value: data.operations.vcsProvider },
+          ],
+          badges: [
+            'SOX template set enabled',
+            ...(data.governance.hasInternalAuditProgram ? ['Internal audit cadence defined'] : []),
+            ...(data.operations.hasRiskRegister ? ['Risk register available'] : []),
+            ...(data.operations.requiresPeerReview ? ['Change approvals in workflow'] : []),
+            ...(data.operations.requiresMfa ? ['Access hardening enabled'] : []),
+          ],
+          notes: [
+            {
+              title: 'SOX focus areas',
+              body: [
+                !data.governance.hasInternalAuditProgram ? 'internal-audit ownership' : null,
+                !data.operations.hasRiskRegister ? 'risk-register discipline' : null,
+                !data.operations.requiresPeerReview ? 'change-approval evidence' : null,
+                !data.operations.requiresMfa ? 'strong access controls' : null,
+              ].filter(Boolean).length
+                ? `Before relying on the SOX documents, tighten ${[
+                    !data.governance.hasInternalAuditProgram ? 'internal-audit ownership' : null,
+                    !data.operations.hasRiskRegister ? 'risk-register discipline' : null,
+                    !data.operations.requiresPeerReview ? 'change-approval evidence' : null,
+                    !data.operations.requiresMfa ? 'strong access controls' : null,
+                  ].filter(Boolean).join(', ')}.`
+                : 'The current draft already covers the main governance and operations signals that the SOX template set expects.',
+              tone: data.governance.hasInternalAuditProgram && data.operations.hasRiskRegister && data.operations.requiresPeerReview && data.operations.requiresMfa ? 'emerald' : 'blue',
+            },
+          ],
+          actions: [
+            { label: 'Open Welcome', href: '/wizard?step=0' },
+            { label: 'Open Governance', href: '/wizard?step=3' },
+            { label: 'Open Operations', href: '/wizard?step=7' },
+          ],
+        } satisfies SummaryCard]
+      : []),
     {
       title: 'Security tooling',
       completionStatus: toolingStatus,
       rows: [
-        { label: 'Pen test frequency', value: data.securityTooling.penetrationTestFrequency },
-        { label: 'Log retention', value: `${data.securityTooling.logRetentionDays} days` },
+        { label: 'Pen Test Frequency', value: displayLabel(data.securityTooling.penetrationTestFrequency) },
+        { label: 'Log Retention', value: `${data.securityTooling.logRetentionDays} days` },
       ],
       badges: [
         ...(data.securityTooling.siemTool ? [`SIEM: ${data.securityTooling.siemTool}`] : []),
@@ -241,16 +324,16 @@ function buildSummaryCards(data: WizardData, organizationName: string, highWater
       title: 'Operations',
       completionStatus: operationsStatus,
       rows: [
-        { label: 'Source control tool name', value: data.operations.versionControlSystem },
+        { label: 'Source Control Tool Name', value: data.operations.versionControlSystem },
         { label: 'Version Control System (VCS) / Branch-protection guide provider', value: data.operations.vcsProvider },
         { label: 'Ticketing', value: data.operations.ticketingSystem },
-        { label: 'On-call tool', value: data.operations.onCallTool },
+        { label: 'On-Call Tool', value: data.operations.onCallTool },
         { label: 'Human Resources Information System (HRIS) provider', value: data.operations.hrisProvider },
         { label: 'Termination Service Level Agreement (SLA)', value: `${data.operations.terminationSlaHours} hours` },
         { label: 'Onboarding Service Level Agreement (SLA)', value: `${data.operations.onboardingSlaDays} business days` },
-        { label: 'Acceptable use scope', value: data.operations.acceptableUseScope },
-        { label: 'Security reporting', value: data.operations.securityReportChannel || data.company.primaryContactEmail },
-        ...(data.operations.requiresLostDeviceReporting ? [{ label: 'Lost device reporting', value: `${data.operations.lostDeviceReportSlaHours} hours` }] : []),
+        { label: 'Acceptable Use Scope', value: data.operations.acceptableUseScope },
+        { label: 'Security Reporting', value: data.operations.securityReportChannel || data.company.primaryContactEmail },
+        ...(data.operations.requiresLostDeviceReporting ? [{ label: 'Lost Device Reporting', value: `${data.operations.lostDeviceReportSlaHours} hours` }] : []),
       ],
       badges: [
         ...(data.operations.requiresMfa ? ['MFA required'] : []),

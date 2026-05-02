@@ -5,17 +5,29 @@
 [![License: AGPLv3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-3F46FF?logo=supabase)](https://supabase.com)
-[![Tests](https://img.shields.io/badge/E2E_Tests-51_passed-brightgreen)]()
-[![Red Team](https://img.shields.io/badge/Red_Team-33_passed-brightgreen)]()
+[![Tests](https://img.shields.io/badge/E2E-55_tests%20%2F%206_suites-brightgreen)]()
+[![Red Team](https://img.shields.io/badge/Red_Team-33_tests-brightgreen)]()
 
-TrustScaffold is a **self-hostable compliance platform** that guides teams through an intelligent 7-stage wizard to generate framework-mapped policy documents, enforce an immutable audit trail, and present provable compliance state to external auditors.
+TrustScaffold is a **self-hostable compliance platform** that guides teams through an intelligent 10-step wizard to generate framework-mapped policy documents, enforce an immutable audit trail, and present provable compliance state to external auditors.
 
 SOC 2 is the first supported framework — covering both **Type I** (control design at a point in time) and **Type II** (operating effectiveness over an audit period). The wizard and templates establish the control design; the evidence ingestion API, hash-chained audit log, and auditor portal prove ongoing effectiveness. The template-driven architecture is designed to support ISO 27001, HIPAA, PCI DSS, and NIST CSF via additional template packs.
 
 Choose your compliance framework and criteria, describe your infrastructure (public cloud, hybrid, or self-hosted), identify your sub-service organizations, and receive pre-filled, legal-review-ready documentation that lands directly in your Git repository as a pull request.
 
-> **No more blank Markdown files. No more manual copy-paste.** Get your compliance documentation foundation done in minutes.
+> **No more blank Markdown files. No more manual copy-paste.** Build your compliance foundation in minutes and understand exactly how each policy and control maps to the standards your business is targeting.
+---
 
+## Why I Built This
+
+Helping a startup stand up its compliance and IT security program was one of the most rewarding and defining moments of my career.
+
+Drafting the documentation, seeing it come together, and aligning business objectives with technical controls was incredibly fulfilling, but it was also a massive undertaking that took months of effort, late nights, and a steep learning curve.
+
+The hard part is that most teams are moving fast for customers, so compliance gets pushed to the back burner.
+
+I loved the ideas behind projects like StrongDM's Comply, but I wanted to build something that is practical, approachable, and usable by everyone in the company, not just compliance specialists or developers.
+
+TrustScaffold is my attempt to make compliance both approachable and defensible, with evidence and revision history built in from day one.
 ---
 
 ## Prerequisites
@@ -105,7 +117,7 @@ The included [`Dockerfile`](Dockerfile) produces a minimal 3-stage production im
 
 ## Features
 
-- **7-stage guided wizard** — Onboarding → Scope → Framework & criteria selection → Cloud profiling → Operations → Review → Output destination
+- **10-step guided wizard** — Welcome → Infrastructure → System Scope → Governance → TSC selection → Security assessment → Security tooling → Operations → Review → Generate
 - **Cloud-native intelligence** — Dynamic questions and pre-filled language for Azure, AWS, GCP, hybrid, and on-prem
 - **Framework-mapped templates** — 16 high-quality starters with conditional Handlebars logic (SOC 2 Type I & II included; extensible to other frameworks)
 - **Immutable audit trail** — Hash-chained, append-only audit log with SHA-256 checksums. Tamper-evident by design
@@ -119,13 +131,16 @@ The included [`Dockerfile`](Dockerfile) produces a minimal 3-stage production im
 
 ## How the Wizard Works
 
-1. **Welcome & Onboarding** — Company name, logo, industry
-2. **Company Profile & Scope** — Systems, data types, sub-service organizations
-3. **Criteria Selection** — Security (mandatory) + optional Availability, Processing Integrity, Confidentiality, Privacy
-4. **Infrastructure Profiling** — Smart branching questions adapting to your architecture
-5. **Operations** — Change management, incident response, risk register
-6. **Review & Generate** — Summary + instant template generation with environment-specific snippets
-7. **Output Destination** — Download ZIP or commit/PR directly to your VCS provider
+1. **Welcome** — Company profile, organization relationship, compliance maturity, and target audit type
+2. **Infrastructure** — Cloud profile, identity provider, and hosting model
+3. **System Scope** — In-scope system, data types, PHI/CDE flags, and tenant model
+4. **Governance** — Oversight, ownership, internal audit posture, and training baseline
+5. **TSC Selection** — Security (mandatory) plus optional Availability, Confidentiality, Processing Integrity, and Privacy
+6. **Security Assessment** — Readiness review across document, logging, ruleset, configuration, vulnerability, backup, and monitoring domains
+7. **Security Tooling** — SIEM, endpoint protection, vulnerability scanning, MDM, DAST, and log-retention choices
+8. **Operations** — Ticketing, VCS, HRIS, access lifecycle, change review, risk register, and publication method
+9. **Review** — Decision trace, score summary, and expected document preview before generation
+10. **Generate** — Server-side compilation of the selected document set with environment-specific guidance
 
 ---
 
@@ -175,7 +190,7 @@ Every template includes YAML frontmatter with precise criteria mappings, Handleb
 TrustScaffold ships with a comprehensive E2E test suite and a red team adversarial suite:
 
 ```bash
-# Load environment and run all E2E tests (51 tests across 5 suites)
+# Load environment and run all E2E tests (55 tests across 6 suites)
 set -a && source .env.local && set +a
 npx tsx tests/e2e/run-all.ts
 
@@ -183,14 +198,15 @@ npx tsx tests/e2e/run-all.ts
 npx tsx tests/e2e/red-team.ts
 ```
 
-| Suite | Tests | Coverage |
-|---|---|---|
-| Tenant Isolation & RBAC | 16 | Cross-tenant reads, privilege escalation, self-demotion |
-| Wizard & Compilation | 8 | Idempotency, TSC filtering, physical logic, DC 200 |
-| Control Graph (GitOps) | 7 | Webhook signatures, merge detection, audit snapshots |
-| Evidence & Cryptography | 13 | Schema validation, hash chains, JCS canonicalization |
-| Auditor Portal | 7 | Token lifecycle, read-only enforcement, cross-org isolation |
-| **Red Team** | **33** | Horizontal/vertical escalation, IDOR, SQLi, webhook forgery, audit tampering |
+| Suite | Coverage |
+|---|---|
+| Tenant Isolation & RBAC | Cross-tenant reads, privilege escalation, self-demotion |
+| Wizard & Compilation | Idempotency, TSC filtering, physical logic, DC 200 |
+| Control Graph (GitOps) | Webhook signatures, merge detection, audit snapshots |
+| Evidence & Cryptography | Schema validation, hash chains, JCS canonicalization |
+| Auditor Portal | Token lifecycle, read-only enforcement, cross-org isolation |
+| Regulated Scope Smoke | PHI, cardholder-data, and privacy/confidentiality branching |
+| **Red Team** | **Horizontal/vertical escalation, IDOR, SQLi, webhook forgery, audit tampering** |
 
 > **Full test plan:** [`docs/MASTER_TEST_PLAN.md`](docs/MASTER_TEST_PLAN.md)
 
@@ -230,7 +246,7 @@ AGPLv3. You are free to self-host, modify, and use TrustScaffold. If you run a m
 
 ### V1.0 (Current)
 
-- Full 7-stage compliance wizard with cloud profiling
+- Full 10-step compliance wizard with cloud profiling, governance, and security depth
 - 16 SOC 2 Type I & Type II templates with Handlebars conditional logic
 - Immutable document revision ledger with hash-chained audit logging
 - GitOps export to GitHub + two-way webhook sync
@@ -240,15 +256,35 @@ AGPLv3. You are free to self-host, modify, and use TrustScaffold. If you run a m
 
 ### V1.1
 
-- ISO 27001 template pack (community contribution welcome)
-- Collaborative Tiptap editor
-- PDF/DOCX export
+- Public demo instance with seeded sample org and auditor portal walkthrough
+- GitHub Actions CI for lint, typecheck, E2E, red team, and Docker image build
+- Front-and-center README badges and demo launch flow
+- PDF/DOCX export from the document view
+- Document publication to Microsoft 365 / SharePoint libraries for employee-facing policy distribution
+- Confluence publishing for teams that use the Atlassian stack as their internal knowledge base
+
+### V1.2
+
+- File-based template packs and loader/migration path off the SQL seed bottleneck
+- Evidence hardening for untrusted ingestion: content sanitization, depth/size guards, and anomaly logging
+- Generic webhook/schema-mapping adapter for external evidence sources
+- Native evidence connectors built on top of the adapter surface
+- Document metadata snapshots and auto-generated table of contents across preview and export surfaces
+- Competitive landscape audit with an internal comparison matrix for open-source and commercial peers
+- UAT bundle-based benchmark runs against comparable projects/repositories for apples-to-apples workflow comparisons
+
+### V1.3
+
+- Tiptap editing with revision diff and audit UX
+- ISO 27001 template pack with control crosswalk reuse
+- Documentation design editor (organization-level branding: typography, layout, and publication style profiles)
 
 ### Future
 
 - HIPAA, PCI DSS, NIST CSF template packs
 - AI-assisted policy refinement
-- Continuous compliance integrations (Azure Monitor, AWS Config, etc.)
+- Expanded continuous compliance integrations (Azure Monitor, AWS Config, etc.)
+- Jira workflow integrations for review, approval, and policy-change coordination
 - White-label / embeddable mode for compliance consultancies
 
 ---

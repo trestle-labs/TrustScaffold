@@ -15,6 +15,7 @@
   - Payment-boundary description used:
   - PHI field captured correctly:
   - CDE field captured correctly:
+  - PCI data elements selected: `Primary account number (PAN)`, `Cardholder name`, `Expiration date`, `Tokenized PAN or network token`
   - Vendors entered:
 
 - TSC Selection: pass | partial | fail
@@ -28,6 +29,7 @@
 - Review: pass | partial | fail
   - PHI in scope shown as `No`:
   - CDE in scope shown as `Yes`:
+  - PCI data-type detail shown in PCI drafts:
   - PCI segmentation preview shown:
   - Payment-boundary language preserved:
 

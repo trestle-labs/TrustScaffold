@@ -38,9 +38,12 @@ async function azureRequest<T>(url: string, token: string, init?: RequestInit) {
 
 export async function exportApprovedDocsToAzureDevOpsAction(formData: FormData): Promise<ExportResult> {
   try {
-    const { supabase, integration, token, docs } = await loadExportContext('azure_devops', formData);
+    const { context, supabase, integration, token, docs, bridgeLetterPrimaryAudienceOverride } = await loadExportContext('azure_devops', formData);
     const { organization, project } = parseAzureDevOpsOwner(integration.repo_owner);
-    const files = buildExportFiles(docs);
+    const files = buildExportFiles(docs, {
+      workspaceOrganizationName: context.organization?.name ?? null,
+      bridgeLetterPrimaryAudienceOverride,
+    });
     const branchName = `trustscaffold-soc2-update-${Date.now()}`;
     const apiVersion = '7.1';
     const repositoryBaseUrl = `https://dev.azure.com/${encodeURIComponent(organization)}/${encodeURIComponent(project)}/_apis/git/repositories/${encodeURIComponent(integration.repo_name)}`;

@@ -6,7 +6,12 @@ import { notFound } from 'next/navigation';
 import { MarkdownDocument } from '@/components/documents/markdown-document';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CodeChip } from '@/components/ui/code-chip';
+import { Progress } from '@/components/ui/progress';
+import { getEvidenceStatusBadgeVariant, getRevisionSourceBadgeVariant, getRevisionSourceLabel } from '@/lib/evidence/auditor-display';
 import { getCriteriaByCategory, TSC_CRITERIA, type TscCriterion } from '@/lib/tsc-criteria';
+import { metricPanelSurfaceClassName, mutedInsetSurfaceClassName, nestedPanelSurfaceClassName } from '@/lib/ui/card-surfaces';
+import { cn } from '@/lib/utils';
 import { createSupabaseServiceRoleClient } from '@/lib/supabase-service';
 
 type PageProps = {
@@ -52,38 +57,6 @@ async function validatePortalToken(rawToken: string) {
     .eq('id', portalToken.id);
 
   return portalToken;
-}
-
-function revisionSourceLabel(source: string) {
-  const labels: Record<string, string> = {
-    generated: 'Drafted by System',
-    reviewer_edited: 'Edited by Reviewer',
-    approved: 'Approved by Admin',
-    exported: 'Exported to Git',
-    merged: 'Merged in GitHub',
-  };
-  return labels[source] ?? source;
-}
-
-function revisionSourceColor(source: string) {
-  const colors: Record<string, string> = {
-    generated: 'bg-blue-100 text-blue-700',
-    reviewer_edited: 'bg-amber-100 text-amber-700',
-    approved: 'bg-emerald-100 text-emerald-700',
-    exported: 'bg-purple-100 text-purple-700',
-    merged: 'bg-indigo-100 text-indigo-700',
-  };
-  return colors[source] ?? 'bg-slate-100 text-slate-700';
-}
-
-function evidenceStatusColor(status: string) {
-  const colors: Record<string, string> = {
-    PASS: 'bg-emerald-100 text-emerald-700',
-    FAIL: 'bg-red-100 text-red-700',
-    ERROR: 'bg-amber-100 text-amber-700',
-    UNKNOWN: 'bg-slate-200 text-slate-700',
-  };
-  return colors[status] ?? 'bg-slate-200 text-slate-700';
 }
 
 export default async function AuditorPortalPage({ params, searchParams }: PageProps) {
@@ -281,14 +254,14 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
   const selectedEvidence = selectedCriterion ? (evidenceByControl.get(selectedCriterion) ?? []) : [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="border-b border-slate-200 bg-white px-6 py-4">
+      <header className="border-b border-border bg-background/95 px-6 py-4 backdrop-blur">
         <div className="mx-auto max-w-7xl">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-semibold text-slate-900">TrustScaffold Auditor Portal</h1>
-              <p className="text-sm text-slate-500">{portalToken.label}</p>
+              <h1 className="text-xl font-semibold text-foreground">TrustScaffold Auditor Portal</h1>
+              <p className="text-sm text-muted-foreground">{portalToken.label}</p>
             </div>
             <div className="flex items-center gap-3">
               <Badge
@@ -313,16 +286,16 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
           <CardContent>
             <div className="grid gap-4 text-sm sm:grid-cols-3">
               <div>
-                <p className="font-medium text-slate-700">Audit Period</p>
-                <p className="text-slate-500">{snapshot.audit_period_start} — {snapshot.audit_period_end}</p>
+                <p className="font-medium text-foreground">Audit Period</p>
+                <p className="text-muted-foreground">{snapshot.audit_period_start} — {snapshot.audit_period_end}</p>
               </div>
               <div>
-                <p className="font-medium text-slate-700">Snapshot Tag</p>
-                <p className="text-slate-500">{snapshot.tag_name}</p>
+                <p className="font-medium text-foreground">Snapshot Tag</p>
+                <p className="text-muted-foreground">{snapshot.tag_name}</p>
               </div>
               <div>
-                <p className="font-medium text-slate-700">Policies Frozen</p>
-                <p className="text-slate-500">{flatRevisions.length} document revision{flatRevisions.length === 1 ? '' : 's'}</p>
+                <p className="font-medium text-foreground">Policies Frozen</p>
+                <p className="text-muted-foreground">{flatRevisions.length} document revision{flatRevisions.length === 1 ? '' : 's'}</p>
               </div>
             </div>
           </CardContent>
@@ -344,21 +317,21 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-slate-200 text-left">
-                          <th className="pb-3 pr-4 font-semibold text-slate-700">Policy Document</th>
-                          <th className="pb-3 pr-4 font-semibold text-slate-700">Template</th>
-                          <th className="pb-3 pr-4 font-semibold text-slate-700">TSC Criteria</th>
-                          <th className="pb-3 font-semibold text-slate-700">Status</th>
+                        <tr className="border-b border-border text-left">
+                          <th className="pb-3 pr-4 font-semibold text-foreground">Policy Document</th>
+                          <th className="pb-3 pr-4 font-semibold text-foreground">Template</th>
+                          <th className="pb-3 pr-4 font-semibold text-foreground">TSC Criteria</th>
+                          <th className="pb-3 font-semibold text-foreground">Status</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-border/60">
                         {flatRevisions.map((rev) => (
                           <tr key={rev.id} className="align-top">
                             <td className="py-3 pr-4">
-                              <p className="font-medium text-slate-800">{rev.doc_title}</p>
-                              <p className="text-xs text-slate-400">{rev.doc_file_name}</p>
+                              <p className="font-medium text-foreground">{rev.doc_title}</p>
+                              <p className="text-xs text-muted-foreground">{rev.doc_file_name}</p>
                             </td>
-                            <td className="py-3 pr-4 text-slate-600">{rev.template_name}</td>
+                            <td className="py-3 pr-4 text-muted-foreground">{rev.template_name}</td>
                             <td className="py-3 pr-4">
                               <div className="flex flex-wrap gap-1">
                                 {rev.criteria_mapped.map((code) => (
@@ -367,8 +340,8 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
                               </div>
                             </td>
                             <td className="py-3">
-                              <Badge className={revisionSourceColor(rev.source)}>
-                                {revisionSourceLabel(rev.source)}
+                              <Badge variant={getRevisionSourceBadgeVariant(rev.source)}>
+                                {getRevisionSourceLabel(rev.source)}
                               </Badge>
                             </td>
                           </tr>
@@ -377,7 +350,7 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
                     </table>
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500">No policy documents are linked to this audit snapshot.</p>
+                  <p className="text-sm text-muted-foreground">No policy documents are linked to this audit snapshot.</p>
                 )}
               </CardContent>
             </Card>
@@ -399,15 +372,10 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
                   return (
                     <div key={category}>
                       <div className="mb-2 flex items-center justify-between">
-                        <p className="text-sm font-medium text-slate-700">{category}</p>
-                        <span className="text-xs text-slate-500">{covered}/{total} criteria ({pct}%)</span>
+                        <p className="text-sm font-medium text-foreground">{category}</p>
+                        <span className="text-xs text-muted-foreground">{covered}/{total} criteria ({pct}%)</span>
                       </div>
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                        <div
-                          className="h-full rounded-full bg-emerald-500 transition-all"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
+                      <Progress value={pct} variant="success" size="sm" aria-label={`${category} coverage ${pct}%`} />
                     </div>
                   );
                 })}
@@ -429,12 +397,12 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
                   const summary = lines.slice(0, 3).join(' ').slice(0, 300);
 
                   return (
-                    <div key={rev.id} className="rounded-xl border border-slate-200 p-4">
+                    <div key={rev.id} className={cn(metricPanelSurfaceClassName, 'rounded-xl')}>
                       <div className="mb-2 flex items-center gap-2">
                         <Badge variant="secondary">{rev.template_name}</Badge>
-                        <span className="text-xs text-slate-400">{rev.doc_file_name}</span>
+                        <span className="text-xs text-muted-foreground">{rev.doc_file_name}</span>
                       </div>
-                      <p className="text-sm text-slate-600">
+                      <p className="text-sm text-muted-foreground">
                         {summary}{summary.length >= 300 ? '…' : ''}
                       </p>
                       <div className="mt-2 flex flex-wrap gap-1">
@@ -445,7 +413,7 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
                     </div>
                   );
                 }) : (
-                  <p className="text-sm text-slate-500">No policy documents are linked to this audit snapshot.</p>
+                  <p className="text-sm text-muted-foreground">No policy documents are linked to this audit snapshot.</p>
                 )}
               </CardContent>
             </Card>
@@ -463,7 +431,7 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
             <CardContent className="space-y-4">
               {[...criteriaByCategory.entries()].map(([category, criteria]) => (
                 <div key={category}>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">{category}</p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{category}</p>
                   <ul className="space-y-1">
                     {criteria.map((c) => {
                       const hasPolicy = criteriaToRevisions.has(c.code);
@@ -477,7 +445,7 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
                             className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
                               isSelected
                                 ? 'bg-primary text-primary-foreground'
-                                : 'hover:bg-slate-100 text-slate-700'
+                                : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                             }`}
                           >
                             <span className="font-mono text-xs">{c.code}</span>
@@ -535,16 +503,16 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
                           <div key={rev.id} className="space-y-3">
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary">{rev.template_name}</Badge>
-                              <span className="text-xs text-slate-500">{rev.doc_file_name}</span>
+                              <span className="text-xs text-muted-foreground">{rev.doc_file_name}</span>
                             </div>
-                            <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                            <div className={cn(nestedPanelSurfaceClassName, 'rounded-xl p-6')}>
                               <MarkdownDocument markdown={rev.content_markdown} />
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-slate-500">No policy document is linked to this criterion in the current snapshot.</p>
+                      <p className="text-sm text-muted-foreground">No policy document is linked to this criterion in the current snapshot.</p>
                     )}
                   </CardContent>
                 </Card>
@@ -560,7 +528,7 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
                   </CardHeader>
                   <CardContent>
                     {provenanceRevisions.length ? (
-                      <ol className="relative border-l-2 border-slate-200 pl-6 space-y-4">
+                      <ol className="relative border-l-2 border-border pl-6 space-y-4">
                         {provenanceRevisions.map((rev) => {
                           // Find the matching audit log entry for hash-chain proof
                           const matchingLog = auditLogEntries.find(
@@ -571,18 +539,18 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
 
                           return (
                             <li key={rev.id} className="relative">
-                              <div className="absolute -left-[31px] top-1 h-4 w-4 rounded-full border-2 border-white bg-slate-300" />
+                              <div className="absolute -left-[31px] top-1 h-4 w-4 rounded-full border-2 border-background bg-border" />
                               <div className="flex flex-wrap items-center gap-2">
-                                <Badge className={revisionSourceColor(rev.source)}>
-                                  {revisionSourceLabel(rev.source)}
+                                <Badge variant={getRevisionSourceBadgeVariant(rev.source)}>
+                                  {getRevisionSourceLabel(rev.source)}
                                 </Badge>
-                                <span className="text-xs text-slate-500">
+                                <span className="text-xs text-muted-foreground">
                                   {new Date(rev.created_at).toLocaleString()}
                                 </span>
                               </div>
                               {rev.commit_sha ? (
-                                <p className="mt-1 text-xs text-slate-500">
-                                  Commit: <code className="rounded bg-slate-100 px-1 py-0.5 font-mono">{rev.commit_sha.slice(0, 8)}</code>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  Commit: <CodeChip>{rev.commit_sha.slice(0, 8)}</CodeChip>
                                 </p>
                               ) : null}
                               {rev.pr_url ? (
@@ -593,12 +561,12 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
                                 </p>
                               ) : null}
                               {matchingLog ? (
-                                <div className="mt-1 rounded border border-slate-100 bg-slate-50 px-2 py-1">
-                                  <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Hash-Chain Proof (anti-backdating)</p>
-                                  <p className="font-mono text-[11px] text-slate-500 break-all">
+                                <div className={cn(mutedInsetSurfaceClassName, 'mt-1 rounded border border-border px-2 py-1')}>
+                                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Hash-Chain Proof (anti-backdating)</p>
+                                  <p className="font-mono text-[11px] text-muted-foreground break-all">
                                     SHA-256: {matchingLog.event_checksum}
                                   </p>
-                                  <p className="text-[10px] text-slate-400">
+                                  <p className="text-[10px] text-muted-foreground">
                                     Ledger timestamp: {new Date(matchingLog.created_at).toISOString()}
                                   </p>
                                 </div>
@@ -608,7 +576,7 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
                         })}
                       </ol>
                     ) : (
-                      <p className="text-sm text-slate-500">No revision history is available for this criterion.</p>
+                      <p className="text-sm text-muted-foreground">No revision history is available for this criterion.</p>
                     )}
                   </CardContent>
                 </Card>
@@ -627,12 +595,12 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
                         {selectedEvidence.map((artifact) => (
                           <div
                             key={artifact.id}
-                            className="flex items-center gap-4 rounded-xl border border-slate-200 p-4"
+                            className={cn(metricPanelSurfaceClassName, 'flex items-center gap-4')}
                           >
-                            <Badge className={evidenceStatusColor(artifact.status)}>{artifact.status}</Badge>
+                            <Badge variant={getEvidenceStatusBadgeVariant(artifact.status)}>{artifact.status}</Badge>
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium text-slate-800">{artifact.artifact_name}</p>
-                              <p className="text-xs text-slate-500">
+                              <p className="text-sm font-medium text-foreground">{artifact.artifact_name}</p>
+                              <p className="text-xs text-muted-foreground">
                                 {artifact.collection_tool} · {artifact.source_system} · Collected {new Date(artifact.collected_at).toLocaleDateString()}
                               </p>
                             </div>
@@ -640,7 +608,7 @@ export default async function AuditorPortalPage({ params, searchParams }: PagePr
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-slate-500">No evidence artifacts are linked to this criterion for the audit period.</p>
+                      <p className="text-sm text-muted-foreground">No evidence artifacts are linked to this criterion for the audit period.</p>
                     )}
                   </CardContent>
                 </Card>

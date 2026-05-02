@@ -3,6 +3,7 @@
 import * as React from 'react';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 
+import { floatingSurfaceBaseClassName } from '@/lib/ui/floating-surface';
 import { cn } from '@/lib/utils';
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
@@ -14,7 +15,7 @@ const StyledDropdownMenuContent = ({ className, sideOffset = 8, ...props }: Reac
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuContent
       sideOffset={sideOffset}
-      className={cn('z-50 min-w-[12rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-border bg-white p-1 text-slate-900 shadow-panel dark:bg-card dark:text-card-foreground', className)}
+      className={cn(floatingSurfaceBaseClassName, 'min-w-[12rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl p-1', className)}
       {...props}
     />
   </DropdownMenuPrimitive.Portal>

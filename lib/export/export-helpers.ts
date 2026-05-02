@@ -1,10 +1,20 @@
 import 'server-only';
 
+import { stripMappingMetadata, renderTemplate } from '@/lib/documents/template-engine';
 import type { WizardData } from '@/lib/wizard/schema';
+import { buildTemplatePayload, type BridgeLetterPrimaryAudienceId } from '@/lib/wizard/template-payload';
 
 import type { IntegrationProvider } from '@/lib/types';
 
-type TemplateRelation = { slug: string; name: string } | { slug: string; name: string }[] | null;
+type TemplateRelationItem = {
+  slug: string;
+  name: string;
+  output_filename_pattern?: string | null;
+  markdown_template?: string | null;
+  default_variables?: Record<string, unknown> | null;
+};
+
+type TemplateRelation = TemplateRelationItem | TemplateRelationItem[] | null;
 
 export type ExportableDoc = {
   id: string;
@@ -23,6 +33,37 @@ export type ExportFile = {
 
 export function getTemplateRelation(template: TemplateRelation) {
   return Array.isArray(template) ? template[0] : template;
+}
+
+function buildExportableDoc(doc: ExportableDoc, options?: {
+  workspaceOrganizationName?: string | null;
+  bridgeLetterPrimaryAudienceOverride?: BridgeLetterPrimaryAudienceId | null;
+}) {
+  const template = getTemplateRelation(doc.templates);
+
+  if (
+    template?.slug !== 'bridge-letter-comfort-letter'
+    || !options?.bridgeLetterPrimaryAudienceOverride
+    || !template.markdown_template
+    || !template.output_filename_pattern
+  ) {
+    return doc;
+  }
+
+  const payload = {
+    ...buildTemplatePayload(doc.input_payload, {
+      workspaceOrganizationName: options.workspaceOrganizationName,
+      bridgeLetterPrimaryAudienceOverride: options.bridgeLetterPrimaryAudienceOverride,
+    }),
+    wizard_data: doc.input_payload,
+  };
+  const mergedVariables = { ...(template.default_variables ?? {}), ...payload };
+
+  return {
+    ...doc,
+    file_name: renderTemplate(template.output_filename_pattern, mergedVariables, template.name),
+    content_markdown: stripMappingMetadata(renderTemplate(template.markdown_template, mergedVariables, template.name)),
+  };
 }
 
 function folderForDoc(slug: string) {
@@ -88,16 +129,20 @@ function buildSubOrganizationRegister(data: WizardData) {
   ].join('\n');
 }
 
-export function buildExportFiles(docs: ExportableDoc[]) {
+export function buildExportFiles(docs: ExportableDoc[], options?: {
+  workspaceOrganizationName?: string | null;
+  bridgeLetterPrimaryAudienceOverride?: BridgeLetterPrimaryAudienceId | null;
+}) {
   if (!docs.length) {
     return [] as ExportFile[];
   }
 
+  const exportableDocs = docs.map((doc) => buildExportableDoc(doc, options));
   const sourceData = docs[0].input_payload;
   const files: ExportFile[] = [
     {
       path: 'README.md',
-      content: buildRootReadme(sourceData, docs),
+      content: buildRootReadme(sourceData, exportableDocs),
     },
   ];
 
@@ -110,7 +155,7 @@ export function buildExportFiles(docs: ExportableDoc[]) {
     });
   }
 
-  for (const doc of docs) {
+  for (const doc of exportableDocs) {
     const template = getTemplateRelation(doc.templates);
     const folder = folderForDoc(template?.slug ?? '');
 

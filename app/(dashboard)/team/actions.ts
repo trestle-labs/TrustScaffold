@@ -3,12 +3,11 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
+import { isValidOrganizationRole } from '@/lib/auth/roles';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { createSupabaseServiceRoleClient } from '@/lib/supabase-service';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import type { OrganizationRole } from '@/lib/types';
-
-const validRoles: OrganizationRole[] = ['admin', 'editor', 'viewer', 'approver'];
 
 function assertAdminContext(context: Awaited<ReturnType<typeof getDashboardContext>>) {
   if (!context?.organization) {
@@ -47,13 +46,14 @@ export async function createTeamMemberAction(formData: FormData) {
   const email = String(formData.get('email') ?? '').trim().toLowerCase();
   const password = String(formData.get('password') ?? '').trim();
   const fullName = String(formData.get('full_name') ?? '').trim();
+  const orgRoleTitle = String(formData.get('org_role_title') ?? '').trim();
   const role = String(formData.get('role') ?? 'viewer') as OrganizationRole;
 
   if (!email || !password) {
     redirect('/team?error=Email%20and%20temporary%20password%20are%20required');
   }
 
-  if (!validRoles.includes(role)) {
+  if (!isValidOrganizationRole(role)) {
     redirect('/team?error=Invalid%20role%20selection');
   }
 
@@ -64,6 +64,7 @@ export async function createTeamMemberAction(formData: FormData) {
     email_confirm: true,
     user_metadata: {
       full_name: fullName || null,
+      org_role_title: orgRoleTitle || null,
       suppress_org_bootstrap: true,
     },
   });
@@ -92,7 +93,7 @@ export async function updateTeamMemberRoleAction(formData: FormData) {
   const memberUserId = String(formData.get('member_user_id') ?? '').trim();
   const role = String(formData.get('role') ?? '').trim() as OrganizationRole;
 
-  if (!memberUserId || !validRoles.includes(role)) {
+  if (!memberUserId || !isValidOrganizationRole(role)) {
     redirect('/team?error=Invalid%20member%20update');
   }
 

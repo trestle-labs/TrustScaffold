@@ -1,9 +1,16 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CodeChip } from '@/components/ui/code-chip';
 import { Input } from '@/components/ui/input';
+import { canRejectOrRegenerateDocuments } from '@/lib/auth/roles';
+import { getOrganizationRoleDisplay } from '@/lib/auth/roles';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { emptyStateSurfaceClassName, metricPanelSurfaceClassName, mutedInsetSurfaceClassName, warningPanelSurfaceClassName } from '@/lib/ui/card-surfaces';
+import { selectFieldClassName } from '@/lib/ui/form-controls';
+import { cn } from '@/lib/utils';
+import { soxApplicabilityOptions } from '@/lib/wizard/schema';
 import type { IntegrationProvider } from '@/lib/types';
 
 import { updateOrgProfileAction } from '@/app/actions/org-profile';
@@ -80,7 +87,7 @@ export default async function SettingsPage({
                   id="wizard_autosave_interval_minutes"
                   name="wizard_autosave_interval_minutes"
                   defaultValue={String(context.organization.wizardAutosaveIntervalMinutes ?? 5)}
-                  className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className={selectFieldClassName}
                 >
                   <option value="0">Disabled</option>
                   <option value="1">Every 1 minute</option>
@@ -112,7 +119,7 @@ export default async function SettingsPage({
           {errorMessage ? <p className="rounded-2xl bg-destructive/10 px-4 py-3 text-destructive">{errorMessage}</p> : null}
           <div className="flex flex-wrap gap-2">
             <Badge>Organization: {context.organization.name}</Badge>
-            <Badge variant="secondary">Role: {context.organization.role}</Badge>
+            <Badge variant="secondary">Role: {getOrganizationRoleDisplay(context.organization.role)}</Badge>
             <Badge variant="outline">Wizard autosave: {context.organization.wizardAutosaveIntervalMinutes === 0 ? 'Disabled' : `${context.organization.wizardAutosaveIntervalMinutes} min`}</Badge>
           </div>
         </CardContent>
@@ -125,15 +132,15 @@ export default async function SettingsPage({
           <CardDescription>Understanding the data flow before configuring integrations.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 text-sm sm:grid-cols-3">
-          <div className="rounded-2xl bg-secondary/50 p-4 space-y-1">
+          <div className={cn(metricPanelSurfaceClassName, 'space-y-1')}>
             <p className="font-semibold text-foreground">① Evidence ingestion</p>
-            <p className="text-muted-foreground">CI/CD pipelines post scan results to <code className="rounded bg-secondary px-1 text-xs">/api/v1/evidence/ingest</code> using an Evidence API key. Results are stored in the database and Supabase Storage bucket — always local, no external dependency.</p>
+            <p className="text-muted-foreground">CI/CD pipelines post scan results to <CodeChip>/api/v1/evidence/ingest</CodeChip> using an Evidence API key. Results are stored in the database and Supabase Storage bucket — always local, no external dependency.</p>
           </div>
-          <div className="rounded-2xl bg-secondary/50 p-4 space-y-1">
+          <div className={cn(metricPanelSurfaceClassName, 'space-y-1')}>
             <p className="font-semibold text-foreground">② Policy generation</p>
-            <p className="text-muted-foreground">The wizard compiles Handlebars templates into Markdown drafts stored in <code className="rounded bg-secondary px-1 text-xs">generated_docs</code>. Drafts are local until an admin approves them.</p>
+            <p className="text-muted-foreground">The wizard compiles Handlebars templates into Markdown drafts stored in <CodeChip>generated_docs</CodeChip>. Drafts are local until an admin approves them.</p>
           </div>
-          <div className="rounded-2xl bg-secondary/50 p-4 space-y-1">
+          <div className={cn(metricPanelSurfaceClassName, 'space-y-1')}>
             <p className="font-semibold text-foreground">③ GitOps export (optional)</p>
             <p className="text-muted-foreground">Approved docs can be pushed to GitHub or Azure DevOps as a PR. Configure a PAT-based integration below. Webhooks enable merge detection and audit snapshots triggered by git tags.</p>
           </div>
@@ -151,21 +158,21 @@ export default async function SettingsPage({
               <p className="text-sm text-muted-foreground">No GitOps targets configured yet.</p>
             ) : (
               integrations.map((integration) => (
-                <div key={integration.id} className="rounded-2xl border border-border bg-white p-4">
+                <Card key={integration.id} variant="panel">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-base font-semibold text-foreground">{integration.provider}</p>
                     <Badge variant="secondary">{integration.repo_owner}/{integration.repo_name}</Badge>
                   </div>
                   <div className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
-                    <div className="rounded-xl bg-secondary/40 px-3 py-2">
+                    <div className={mutedInsetSurfaceClassName}>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Owner / project</p>
                       <p className="mt-1 font-medium text-foreground">{integration.repo_owner}</p>
                     </div>
-                    <div className="rounded-xl bg-secondary/40 px-3 py-2">
+                    <div className={mutedInsetSurfaceClassName}>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Repository</p>
                       <p className="mt-1 font-medium text-foreground">{integration.repo_name}</p>
                     </div>
-                    <div className="rounded-xl bg-secondary/40 px-3 py-2">
+                    <div className={mutedInsetSurfaceClassName}>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Default branch</p>
                       <p className="mt-1 font-medium text-foreground">{integration.default_branch}</p>
                     </div>
@@ -181,16 +188,16 @@ export default async function SettingsPage({
 
                   {/* Webhook setup instructions — shown once a secret is generated */}
                   {integration.provider === 'github' && integration.webhook_secret ? (
-                    <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-3 space-y-1.5 text-xs">
-                      <p className="font-semibold text-amber-800">Webhook not yet configured in GitHub</p>
-                      <p className="text-amber-700">Go to your GitHub repo → Settings → Webhooks → Add webhook:</p>
-                      <ul className="space-y-0.5 text-amber-700 pl-3 list-disc">
-                        <li>Payload URL: <code className="rounded bg-amber-100 px-1">https://your-domain/api/webhooks/github</code></li>
-                        <li>Content type: <code className="rounded bg-amber-100 px-1">application/json</code></li>
+                    <div className={cn(warningPanelSurfaceClassName, 'mt-3 rounded-xl p-3 space-y-1.5 text-xs')}>
+                      <p className="font-semibold">Webhook not yet configured in GitHub</p>
+                      <p className="text-current/90">Go to your GitHub repo → Settings → Webhooks → Add webhook:</p>
+                      <ul className="space-y-0.5 pl-3 list-disc text-current/90">
+                        <li>Payload URL: <CodeChip variant="warning">https://your-domain/api/webhooks/github</CodeChip></li>
+                        <li>Content type: <CodeChip variant="warning">application/json</CodeChip></li>
                         <li>Secret: use the value from &ldquo;Generate webhook secret&rdquo; above</li>
                         <li>Events: <strong>Pull requests</strong> + <strong>Create</strong> (for audit tags)</li>
                       </ul>
-                      <p className="text-amber-600">For local dev, use a tunnel: <code className="rounded bg-amber-100 px-1">npx ngrok http 3000</code></p>
+                      <p className="text-current/80">For local dev, use a tunnel: <CodeChip variant="warning">npx ngrok http 3000</CodeChip></p>
                     </div>
                   ) : null}
 
@@ -213,7 +220,7 @@ export default async function SettingsPage({
                             </Button>
                           </form>
                           {integration.webhook_secret ? (
-                            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                            <p className={cn(warningPanelSurfaceClassName, 'rounded-xl px-3 py-2 text-xs')}>
                               <strong>Before rotating:</strong> update the webhook secret in GitHub → repo Settings → Webhooks within 10 minutes or deliveries will fail with signature errors.
                             </p>
                           ) : null}
@@ -221,7 +228,7 @@ export default async function SettingsPage({
                       ) : null}
                     </div>
                   ) : null}
-                </div>
+                </Card>
               ))
             )}
           </CardContent>
@@ -289,7 +296,7 @@ function IntegrationFormCard({
           <form action={saveIntegrationAction} className="space-y-4">
             <input type="hidden" name="provider" value={provider} />
             {hasSavedTarget ? (
-              <div className="rounded-2xl border border-border bg-secondary/35 p-4 text-sm">
+              <div className={cn(metricPanelSurfaceClassName, 'text-sm')}>
                 <p className="font-semibold text-foreground">Current saved destination</p>
                 <p className="mt-1 text-muted-foreground">{integration?.repo_owner}/{integration?.repo_name} on branch {integration?.default_branch}</p>
                 <p className="mt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -297,7 +304,7 @@ function IntegrationFormCard({
                 </p>
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-border bg-secondary/20 p-4 text-sm text-muted-foreground">
+              <div className={emptyStateSurfaceClassName}>
                 No {providerLabel} repository target has been saved yet.
               </div>
             )}
@@ -339,9 +346,9 @@ function IntegrationFormCard({
                 type="password"
                 placeholder={hasSavedTarget ? 'Leave blank to keep the current encrypted token' : 'Paste a token to save this integration'}
               />
-              <div className="rounded-xl bg-secondary/60 p-3 space-y-2 text-xs text-muted-foreground">
+              <div className={cn(metricPanelSurfaceClassName, 'rounded-xl space-y-2 p-3 text-xs')}>
                 <p className="font-semibold text-foreground">How to create a token</p>
-                <p><strong>GitHub:</strong> Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token. Required scope: <code className="rounded bg-secondary px-1">repo</code> (or fine-grained: Contents read/write + Pull requests read/write).</p>
+                <p><strong>GitHub:</strong> Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token. Required scope: <CodeChip>repo</CodeChip> (or fine-grained: Contents read/write + Pull requests read/write).</p>
                 <p><strong>Azure DevOps:</strong> dev.azure.com → User Settings (top-right) → Personal access tokens → New token. Required scope: <strong>Code — Read &amp; Write</strong>. Set organization to your ADO org.</p>
                 <p>Tokens are encrypted with AES-256-GCM before storage and never returned to the browser.</p>
               </div>
@@ -367,7 +374,7 @@ async function OrgProfileSection({ organizationId, role }: { organizationId: str
     .eq('organization_id', organizationId)
     .maybeSingle();
 
-  const canEdit = ['admin', 'editor'].includes(role);
+  const canEdit = canRejectOrRegenerateDocuments(role);
 
   if (!draft?.payload) {
     return (
@@ -384,7 +391,7 @@ async function OrgProfileSection({ organizationId, role }: { organizationId: str
   }
 
   type Payload = {
-    company?: { primaryContactName?: string; primaryContactEmail?: string; complianceMaturity?: string; targetAuditType?: string };
+    company?: { primaryContactName?: string; primaryContactEmail?: string; complianceMaturity?: string; soxApplicability?: string; targetAuditType?: string };
     governance?: { securityOfficerTitle?: string };
     infrastructure?: { idpProvider?: string };
     securityTooling?: { siemTool?: string; endpointProtectionTool?: string; monitoringTool?: string; vulnerabilityScanningTool?: string };
@@ -475,7 +482,7 @@ async function OrgProfileSection({ organizationId, role }: { organizationId: str
                     id="complianceMaturity"
                     name="complianceMaturity"
                     defaultValue={p.company?.complianceMaturity ?? 'first-time'}
-                    className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className={selectFieldClassName}
                   >
                     <option value="first-time">First time — just getting started</option>
                     <option value="some-experience">Some experience — practices exist, not documented</option>
@@ -488,12 +495,26 @@ async function OrgProfileSection({ organizationId, role }: { organizationId: str
                     id="targetAuditType"
                     name="targetAuditType"
                     defaultValue={p.company?.targetAuditType ?? 'unsure'}
-                    className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className={selectFieldClassName}
                   >
                     <option value="type1">Type I — point-in-time design review</option>
                     <option value="type2">Type II — operating effectiveness over period</option>
                     <option value="unsure">Not sure yet</option>
                   </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground" htmlFor="soxApplicability">SOX / ITGC Applicability</label>
+                  <select
+                    id="soxApplicability"
+                    name="soxApplicability"
+                    defaultValue={p.company?.soxApplicability ?? 'none'}
+                    className={selectFieldClassName}
+                  >
+                    {soxApplicabilityOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground">Changing this marks generated documents as stale until you regenerate them, because the expected template set changes.</p>
                 </div>
               </div>
             </div>
@@ -548,7 +569,7 @@ async function ControlGraphSection({ organizationId, isAdmin }: { organizationId
               <p className="text-sm text-muted-foreground">No audit snapshots yet. Create one when ready for auditor review.</p>
             ) : (
               snapshots.map((snapshot) => (
-                <div key={snapshot.id} className="rounded-2xl border border-border bg-white p-4">
+                <Card key={snapshot.id} variant="panel">
                   <div className="flex items-center gap-2">
                     <Badge>{snapshot.tag_name}</Badge>
                     <span className="text-xs text-muted-foreground">
@@ -557,7 +578,7 @@ async function ControlGraphSection({ organizationId, isAdmin }: { organizationId
                   </div>
                   {snapshot.description ? <p className="mt-2 text-sm text-muted-foreground">{snapshot.description}</p> : null}
                   <p className="mt-1 text-xs text-muted-foreground">Created {new Date(snapshot.created_at).toLocaleString()}</p>
-                </div>
+                </Card>
               ))
             )}
           </CardContent>
@@ -606,7 +627,7 @@ async function ControlGraphSection({ organizationId, isAdmin }: { organizationId
           <CardHeader>
             <CardTitle>Auditor Portal Tokens</CardTitle>
             <CardDescription>
-              Time-boxed, read-only access tokens that let auditors view a snapshot via the public portal at <code className="rounded bg-secondary px-1 py-0.5 text-xs">/auditor/[token]</code>.
+              Time-boxed, read-only access tokens that let auditors view a snapshot via the public portal at <CodeChip>/auditor/[token]</CodeChip>.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -614,7 +635,7 @@ async function ControlGraphSection({ organizationId, isAdmin }: { organizationId
               <p className="text-sm text-muted-foreground">No portal tokens created yet.</p>
             ) : (
               portalTokens.map((pt) => (
-                <div key={pt.id} className="rounded-2xl border border-border bg-white p-4">
+                <Card key={pt.id} variant="panel">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-foreground">{pt.label}</p>
                     <Badge variant="secondary">
@@ -641,7 +662,7 @@ async function ControlGraphSection({ organizationId, isAdmin }: { organizationId
                       </form>
                     </div>
                   ) : null}
-                </div>
+                </Card>
               ))
             )}
           </CardContent>
@@ -660,7 +681,7 @@ async function ControlGraphSection({ organizationId, isAdmin }: { organizationId
                   <select
                     id="portal_snapshot_id"
                     name="snapshot_id"
-                    className="h-11 w-full rounded-2xl border border-input bg-white px-4 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className={selectFieldClassName}
                     required
                   >
                     {snapshots.map((s) => (
@@ -693,7 +714,7 @@ async function ControlGraphSection({ organizationId, isAdmin }: { organizationId
           <CardHeader>
             <CardTitle>Evidence API Keys</CardTitle>
             <CardDescription>
-              API keys for CI/CD pipelines to submit evidence via <code className="rounded bg-secondary px-1 py-0.5 text-xs">POST /api/v1/evidence/ingest</code>.
+              API keys for CI/CD pipelines to submit evidence via <CodeChip>POST /api/v1/evidence/ingest</CodeChip>.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -701,11 +722,11 @@ async function ControlGraphSection({ organizationId, isAdmin }: { organizationId
               <p className="text-sm text-muted-foreground">No API keys created yet.</p>
             ) : (
               apiKeys.map((key) => (
-                <div key={key.id} className="rounded-2xl border border-border bg-white p-4">
+                <Card key={key.id} variant="panel">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-foreground">{key.label}</p>
                     <Badge variant="secondary" className="font-mono text-xs">{key.key_prefix}...</Badge>
-                    {key.revoked_at ? <Badge className="bg-red-100 text-red-700">Revoked</Badge> : <Badge className="bg-emerald-100 text-emerald-700">Active</Badge>}
+                    {key.revoked_at ? <Badge variant="danger">Revoked</Badge> : <Badge variant="success">Active</Badge>}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Scopes: {(key.scopes as string[]).join(', ')} · Last used: {key.last_used_at ? new Date(key.last_used_at).toLocaleString() : 'Never'}
@@ -716,7 +737,7 @@ async function ControlGraphSection({ organizationId, isAdmin }: { organizationId
                       <Button type="submit" size="sm" variant="ghost">Revoke</Button>
                     </form>
                   ) : null}
-                </div>
+                </Card>
               ))
             )}
           </CardContent>

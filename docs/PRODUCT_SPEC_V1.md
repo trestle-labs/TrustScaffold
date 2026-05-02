@@ -122,6 +122,78 @@ The `system-description` template programmatically generates a 7-section System 
 
 ---
 
+## 8. Roadmap (Post-V1)
+
+The next phase of TrustScaffold should optimize for adoption first, then real-world document usability, then extensibility of the underlying compliance platform.
+
+### 8.1 Adoption Foundation
+
+#### Public Demo
+- Deploy a seeded demo organization with pre-generated documents, synthetic evidence, and a restricted auditor portal walkthrough.
+- Add a launch path from the repository so prospects can understand the product without cloning the repo.
+
+#### CI/CD Confidence
+- Add GitHub Actions for lint, typecheck, build, E2E, red team, and Docker build verification.
+- Surface status badges prominently so the repository signals production seriousness to evaluators and contributors.
+
+### 8.2 Artifact Export and Employee-Facing Distribution
+
+#### PDF/DOCX Export
+- Export approved documents directly from the document view.
+- Preserve TrustScaffold revision provenance in the output artifact, including revision metadata or an appendix.
+
+#### SharePoint Publication
+- Publish approved PDF/DOCX artifacts into Microsoft 365 / SharePoint libraries.
+- Treat SharePoint as the employee-facing distribution layer while TrustScaffold remains the system of record.
+- Capture remote item IDs, URLs, publication timestamps, and source revision references.
+
+#### Confluence Publication
+- Publish rendered policy pages or attached artifacts into Confluence spaces.
+- Support handbook and policy-center use cases where Confluence is the primary internal documentation surface.
+
+#### Later Jira Workflow Integration
+- Add Jira-linked tasks for policy review, acknowledgement, recertification, and change-management coordination.
+- Do not treat Jira as the canonical document repository.
+
+### 8.3 Template Platform Externalization
+
+- Move from SQL-seeded template content to file-based template packs.
+- Add a loader/migration path so baseline templates can be managed as versioned files.
+- Create the foundation for bring-your-own-template packs and cleaner community contribution.
+
+### 8.4 Evidence Pipeline Hardening
+
+- Add deeper untrusted-input protection beyond schema validation: payload sanitization, depth and size guards, anomaly logging, and safer storage boundaries.
+- Prepare the evidence ingress path for third-party webhook and scanner traffic at production scale.
+
+### 8.5 Integration Expansion
+
+#### Generic Evidence Adapter
+- Add a schema-mapping webhook adapter that can accept generic external evidence payloads and map them to internal control references.
+
+#### Native Connectors
+- Build first-party connectors on top of the generic adapter surface for high-value evidence sources.
+- Keep the adapter/provider split so new integrations do not fork the ingestion model.
+
+### 8.6 Editing and Review UX
+
+- Add Tiptap-based editing for post-generation refinement.
+- Pair edits with revision diffs, audit-safe history, and a clear distinction between compiled baseline content and approved user-edited revisions.
+
+### 8.7 Framework Expansion
+
+- Ship ISO 27001 after template packs are externalized so the second framework does not deepen the SQL seed bottleneck.
+- Reuse cross-framework control mappings where the same evidence can satisfy multiple frameworks.
+
+### 8.8 Longer-Term Expansion
+
+- Additional framework packs: HIPAA, PCI DSS, NIST CSF.
+- AI-assisted policy refinement with clear provenance boundaries.
+- Broader continuous-compliance integrations.
+- White-label / embeddable deployment options for consultancies and partners.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology | Version |
