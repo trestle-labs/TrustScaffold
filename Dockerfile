@@ -30,9 +30,9 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 # Copy only what the production server needs
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./app/.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./TrustScaffold/.next/static
-
-WORKDIR /app/TrustScaffold
 
 USER nextjs
 
@@ -40,4 +40,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "if [ -f /app/server.js ]; then cd /app && exec node server.js; elif [ -f /app/app/server.js ]; then cd /app/app && exec node server.js; elif [ -f /app/TrustScaffold/server.js ]; then cd /app/TrustScaffold && exec node server.js; else echo 'No Next standalone server.js found in /app, /app/app, or /app/TrustScaffold' >&2; find /app -maxdepth 2 -type f -name server.js >&2; exit 1; fi"]
