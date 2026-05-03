@@ -4,7 +4,7 @@ import { cache } from 'react';
 
 import { isRecoverableSupabaseAuthErrorMessage } from '@/lib/auth/supabase-auth-errors';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import type { DashboardContext, OrganizationSummary } from '@/lib/types';
+import type { DashboardContext, OrganizationSummary } from '@trestle-labs/core';
 
 export const getDashboardContext = cache(async (): Promise<DashboardContext | null> => {
   const supabase = await createSupabaseServerClient();

@@ -16,7 +16,7 @@ values
 		'HIPAA Business Associate Agreement baseline for vendors that create, receive, maintain, or transmit PHI.',
 		'HIPAA',
 		array['HIPAA'],
-		'19-business-associate-agreement-template.md',
+		'business-associate-agreement-template.md',
 		$$---
 title: Business Associate Agreement Template
 slug: business-associate-agreement-template
@@ -87,7 +87,7 @@ $$,
 		'HIPAA-focused inventory of PHI fields, systems, flows, recipients, safeguards, and retention.',
 		'HIPAA',
 		array['HIPAA'],
-		'20-phi-data-flow-inventory-map.md',
+		'phi-data-flow-inventory-map.md',
 		$$---
 title: PHI Data Flow and Inventory Map
 slug: phi-data-flow-inventory-map
@@ -147,7 +147,7 @@ $$,
 		'PCI-DSS high-water policy for cardholder data storage, masking, tokenization, and CDE boundary controls.',
 		'PCI-DSS',
 		array['PCI'],
-		'21-tokenization-cardholder-data-policy.md',
+		'tokenization-cardholder-data-policy.md',
 		$$---
 title: Tokenization and Cardholder Data Policy
 slug: tokenization-cardholder-data-policy
@@ -201,7 +201,7 @@ $$,
 		'PCI-DSS SOP for quarterly ASV scanning, internal scanning, remediation, rescans, and evidence retention.',
 		'PCI-DSS',
 		array['PCI'],
-		'22-quarterly-vulnerability-scanning-sop.md',
+		'quarterly-vulnerability-scanning-sop.md',
 		$$---
 title: Quarterly Vulnerability Scanning SOP
 slug: quarterly-vulnerability-scanning-sop
@@ -251,7 +251,7 @@ $$,
 		'ISO 27001 Annex A master index showing applicability, implementation status, rationale, owners, and linked evidence.',
 		'ISO 27001',
 		array['ISO27001'],
-		'23-iso27001-statement-of-applicability.md',
+		'iso27001-statement-of-applicability.md',
 		$$---
 title: ISO 27001 Statement of Applicability
 slug: iso27001-statement-of-applicability
@@ -303,7 +303,7 @@ $$,
 		'ISO 27001-oriented registry of legal, regulatory, statutory, contractual, and framework obligations.',
 		'ISO 27001',
 		array['ISO27001', 'GDPR', 'CCPA', 'HIPAA', 'PCI'],
-		'24-legal-regulatory-registry.md',
+		'legal-regulatory-registry.md',
 		$$---
 title: Legal and Regulatory Registry
 slug: legal-regulatory-registry
@@ -371,7 +371,7 @@ $$,
 		'GDPR/privacy DPIA template for high-risk personal-data processing activities.',
 		'GDPR / Privacy',
 		array['GDPR', 'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8'],
-		'25-data-protection-impact-assessment.md',
+		'data-protection-impact-assessment.md',
 		$$---
 title: Data Protection Impact Assessment
 slug: data-protection-impact-assessment
@@ -445,7 +445,7 @@ $$,
 		'Universal common-control inventory for assets, data stores, encryption mechanisms, keys, certificates, and owners.',
 		'Universal',
 		array['COMMON', 'CC6', 'CC7', 'C1', 'ISO27001', 'PCI'],
-		'26-asset-management-cryptographic-inventory.md',
+		'asset-management-cryptographic-inventory.md',
 		$$---
 title: Asset Management and Cryptographic Inventory
 slug: asset-management-cryptographic-inventory

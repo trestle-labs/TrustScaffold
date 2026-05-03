@@ -66,13 +66,13 @@ npx supabase@latest start
 bash scripts/setup.sh --yes
 ```
 
-`setup.sh` is the canonical unattended cold-fork bootstrap command. It verifies Node 22+, Docker, curl, installs dependencies deterministically, starts or reconciles the local Supabase stack, uses local-only mutation commands, scans ports 3000–3009 for the first free Next.js port, writes `.env.local`, creates the `evidence` bucket, verifies the template seed, and runs the production build when `--yes` is supplied.
+`setup.sh` is the canonical unattended cold-fork bootstrap command. It verifies Node 22+, Docker, curl, installs dependencies deterministically, starts or reconciles the local Supabase stack, uses local-only mutation commands, scans ports 3010–3019 for the first free Next.js port, writes `.env.local`, creates the `evidence` bucket, verifies the template seed, and runs the production build when `--yes` is supplied.
 
 **Expected:**
 - `.env.local` exists in project root with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `PORT` populated.
 - The `evidence` storage bucket exists locally.
 - Template seed verification reports `16` templates.
-- Script outputs the assigned dev URL, e.g. `http://localhost:3001/signup`.
+- Script outputs the assigned dev URL, e.g. `http://localhost:3010/signup`.
 - `--yes` completes without any interactive prompt.
 
 ### 0.4 Build Verification
@@ -96,8 +96,8 @@ Notes:
 
 **Steps:**
 ```bash
-# Read PORT from .env.local (default 3000 if unset)
-PORT=$(grep '^PORT=' .env.local 2>/dev/null | cut -d= -f2); PORT=${PORT:-3000}
+# Read PORT from .env.local (default 3010 if unset)
+PORT=$(grep '^PORT=' .env.local 2>/dev/null | cut -d= -f2); PORT=${PORT:-3010}
 npm run dev &
 sleep 10
 curl -s -o /dev/null -w '%{http_code}' "http://localhost:${PORT}/"
@@ -113,7 +113,7 @@ curl -s -o /dev/null -w '%{http_code}' "http://localhost:${PORT}/signup"
 ### 0.6 Signup Flow — New User Creates Organization
 
 **Steps:**
-1. Open the URL printed by `setup.sh` (e.g., `http://localhost:3001/signup`) in a browser.
+1. Open the URL printed by `setup.sh` (e.g., `http://localhost:3010/signup`) in a browser.
 2. Enter a fresh email (e.g., `coldstart@test.local`), password `TestPassword1!`, and organization name `Cold Start Corp`.
 3. Submit the form.
 
@@ -171,7 +171,7 @@ Use this when you want to compare current behavior vs expected behavior from the
 **Preflight:**
 ```bash
 bash scripts/setup.sh --yes
-PORT=$(grep '^PORT=' .env.local 2>/dev/null | cut -d= -f2); PORT=${PORT:-3000}
+PORT=$(grep '^PORT=' .env.local 2>/dev/null | cut -d= -f2); PORT=${PORT:-3010}
 npm run dev
 ```
 
@@ -690,14 +690,14 @@ docker build \
   --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=test \
   -t trustscaffold:test .
 
-docker run -d -p 3001:3000 \
+docker run -d -p 3010:3000 \
   -e NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 \
   -e NEXT_PUBLIC_SUPABASE_ANON_KEY=test \
   -e SUPABASE_SERVICE_ROLE_KEY=test \
   --name ts-test trustscaffold:test
 
 sleep 5
-curl -s -o /dev/null -w '%{http_code}' http://localhost:3001/
+curl -s -o /dev/null -w '%{http_code}' http://localhost:3010/
 
 docker rm -f ts-test
 ```

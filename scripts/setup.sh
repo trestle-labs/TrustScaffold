@@ -207,11 +207,11 @@ ok "Supabase connection details parsed"
 
 # ── 8. Detect free Next.js port ───────────────────────────────────────────────
 step "Detecting available port for Next.js dev server"
-NEXTJS_PORT=$(find_free_port 3000 10)
-if [[ "$NEXTJS_PORT" -ne 3000 ]]; then
-  warn "Port 3000 is occupied (Grafana or another service). Next.js will use port ${NEXTJS_PORT}."
+NEXTJS_PORT=$(find_free_port 3010 10)
+if [[ "$NEXTJS_PORT" -ne 3010 ]]; then
+  warn "Port 3010 is occupied. Next.js will use port ${NEXTJS_PORT}."
 else
-  ok "Port 3000 is free"
+  ok "Port 3010 is free"
 fi
 ok "Next.js will bind to port ${NEXTJS_PORT}"
 

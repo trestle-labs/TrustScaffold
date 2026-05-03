@@ -6,10 +6,10 @@
  * broken output. Run with: npx tsx scripts/test-templates.ts
  */
 
-import { renderTemplate } from '../lib/documents/template-engine';
-import { buildTemplatePayload } from '../lib/wizard/template-payload';
-import type { WizardData } from '../lib/wizard/schema';
-import { defaultWizardValues } from '../lib/wizard/schema';
+import { renderTemplate } from '@trestle-labs/core';
+import { buildTemplatePayload } from '@trestle-labs/core';
+import type { WizardData } from '@trestle-labs/core';
+import { defaultWizardValues } from '@trestle-labs/core';
 
 /* ── Template source extraction ───────────────────────────────────────────── */
 

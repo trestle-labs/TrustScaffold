@@ -2,8 +2,8 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 
 import { NextResponse, type NextRequest } from 'next/server';
 
-import { canonicalize } from '@/lib/evidence/canonicalize';
-import { normalizePayload } from '@/lib/evidence/scanner-normalizers';
+import { canonicalize } from '@trestle-labs/core';
+import { normalizePayload } from '@trestle-labs/core';
 import { applyRateLimit, evidenceLimiter } from '@/lib/rate-limit';
 import { createSupabaseServiceRoleClient } from '@/lib/supabase-service';
 

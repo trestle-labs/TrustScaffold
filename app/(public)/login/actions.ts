@@ -23,7 +23,7 @@ export async function loginAction(formData: FormData) {
 
 export async function loginWithGithubAction() {
   const supabase = await createSupabaseServerClient();
-  const origin = (await headers()).get('origin') ?? 'http://localhost:3000';
+  const origin = (await headers()).get('origin') ?? 'http://localhost:3010';
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'github',

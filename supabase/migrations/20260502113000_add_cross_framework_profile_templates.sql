@@ -16,7 +16,7 @@ values
     'NIST Cybersecurity Framework profile translating the current wizard posture into Govern, Identify, Protect, Detect, Respond, and Recover functions with evidence and priority actions.',
     'Universal',
     array['COMMON', 'CC1', 'CC3', 'CC6', 'CC7', 'CC8', 'CC9', 'A1', 'C1', 'PI1', 'ISO27001', 'HIPAA', 'PCI'],
-    '36-nist-csf-profile.md',
+    'nist-csf-profile.md',
     $$---
 title: NIST CSF Profile
 slug: nist-csf-profile
@@ -90,7 +90,7 @@ $$,
     'Matrix showing how each generated artifact supports SOC 2 and adjacent frameworks such as NIST CSF, ISO 27001, HIPAA, PCI-DSS, and SOX / ITGC.',
     'Universal',
     array['COMMON', 'CC1', 'CC2', 'CC3', 'CC4', 'CC5', 'CC6', 'CC7', 'CC8', 'CC9', 'A1', 'C1', 'PI1', 'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'ISO27001', 'HIPAA', 'PCI', 'SOX'],
-    '37-control-framework-crosswalk.md',
+    'control-framework-crosswalk.md',
     $$---
 title: Control-to-Framework Crosswalk
 slug: control-framework-crosswalk
@@ -166,7 +166,7 @@ $$,
     'Mermaid-based draft network and data-flow diagrams derived from the current wizard system boundary, infrastructure, vendor, and operational answers.',
     'Universal',
     array['COMMON', 'CC2', 'CC6', 'CC7', 'CC9', 'A1', 'C1', 'HIPAA', 'PCI'],
-    '38-network-and-data-flow-diagrams.md',
+    'network-and-data-flow-diagrams.md',
     $$---
 title: Network and Data Flow Diagrams
 slug: network-and-data-flow-diagrams

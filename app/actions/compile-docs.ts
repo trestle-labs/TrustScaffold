@@ -2,13 +2,13 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { renderTemplate, stripMappingMetadata } from '@/lib/documents/template-engine';
+import { renderTemplate, stripMappingMetadata } from '@trestle-labs/core';
 import { canRejectOrRegenerateDocuments } from '@/lib/auth/roles';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
-import { deriveDocumentArtifactStates } from '@/lib/documents/document-artifacts';
+import { deriveDocumentArtifactStates } from '@trestle-labs/core';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { buildTemplatePayload } from '@/lib/wizard/template-payload';
-import { selectedCriteriaCodes, wizardSchema, type WizardData } from '@/lib/wizard/schema';
+import { buildTemplatePayload } from '@trestle-labs/core';
+import { selectedCriteriaCodes, wizardSchema, type WizardData } from '@trestle-labs/core';
 
 type CompileDocsResult =
   | { ok: true; insertedCount: number }

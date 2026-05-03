@@ -15,7 +15,7 @@ values (
   'Processing completeness, accuracy, authorization, exception handling, and reconciliation expectations.',
   'Processing Integrity',
   array['PI1'],
-  '18-processing-integrity-policy.md',
+  'processing-integrity-policy.md',
   $tpl$---
 title: Processing Integrity Policy
 slug: processing-integrity-policy

@@ -5,7 +5,7 @@ import { ArrowRight, Clock, FileCheck, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { expandAcronymsInText } from '@/lib/acronyms';
 import { cn } from '@/lib/utils';
-import type { ComplianceMaturity, OrgAge, TargetAuditType } from '@/lib/wizard/schema';
+import type { ComplianceMaturity, OrgAge, TargetAuditType } from '@trestle-labs/core';
 
 // ── Recommendation logic ─────────────────────────────────────────────────────
 

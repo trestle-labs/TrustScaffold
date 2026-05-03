@@ -8,7 +8,7 @@ import { encryptIntegrationToken } from '@/lib/integrations/token-crypto';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
-import type { IntegrationProvider } from '@/lib/types';
+import type { IntegrationProvider } from '@trestle-labs/core';
 
 const validProviders: IntegrationProvider[] = ['github', 'azure_devops'];
 

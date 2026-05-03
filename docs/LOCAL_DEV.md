@@ -83,10 +83,10 @@ Development mode:
 npm run dev
 ```
 
-Read the port from `.env.local` if you are not on 3000:
+Read the port from `.env.local` if you are not on the default local port:
 
 ```bash
-PORT=$(grep '^PORT=' .env.local 2>/dev/null | cut -d= -f2); PORT=${PORT:-3000}
+PORT=$(grep '^PORT=' .env.local 2>/dev/null | cut -d= -f2); PORT=${PORT:-3010}
 echo "Open http://localhost:${PORT}/signup"
 ```
 
@@ -94,7 +94,7 @@ Production-like validation:
 
 ```bash
 npm run build
-npm run start -- --hostname 127.0.0.1 -p 3000
+npm run start -- --hostname 127.0.0.1 -p 3010
 ```
 
 ## Local Validation Flow
@@ -176,7 +176,7 @@ GITHUB_CLIENT_SECRET=<your-client-secret>
 4. For webhook testing, expose the local server with a tunnel that matches your app port and configure the webhook URL as `https://<tunnel-host>/api/webhooks/github`.
 
 ```bash
-PORT=$(grep '^PORT=' .env.local 2>/dev/null | cut -d= -f2); PORT=${PORT:-3000}
+PORT=$(grep '^PORT=' .env.local 2>/dev/null | cut -d= -f2); PORT=${PORT:-3010}
 ngrok http "$PORT"
 ```
 
@@ -187,7 +187,7 @@ ngrok http "$PORT"
 With Supabase running, create an API key for your organization and test the ingestion endpoint:
 
 ```bash
-PORT=$(grep '^PORT=' .env.local 2>/dev/null | cut -d= -f2); PORT=${PORT:-3000}
+PORT=$(grep '^PORT=' .env.local 2>/dev/null | cut -d= -f2); PORT=${PORT:-3010}
 
 curl -X POST "http://127.0.0.1:${PORT}/api/v1/evidence/ingest" \
   -H 'Authorization: Bearer <your-api-key>' \

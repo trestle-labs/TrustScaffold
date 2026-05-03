@@ -7,18 +7,18 @@ import { redirect } from 'next/navigation';
 import { exportApprovedDocsToAzureDevOpsAction } from '@/app/actions/export-to-azure-devops';
 import { exportApprovedDocsToGithubAction } from '@/app/actions/export-to-github';
 import { canApproveDocuments, canRejectOrRegenerateDocuments, isAdminRole } from '@/lib/auth/roles';
-import { deriveDocumentArtifactStates } from '@/lib/documents/document-artifacts';
+import { deriveDocumentArtifactStates } from '@trestle-labs/core';
 import {
   buildGeneratedDocErrorRoute,
   buildGeneratedDocsErrorRoute,
   buildGeneratedDocsSuccessRoute,
   buildGeneratedDocSuccessRoute,
 } from '@/lib/documents/generated-doc-navigation';
-import { renderTemplate, stripMappingMetadata } from '@/lib/documents/template-engine';
+import { renderTemplate, stripMappingMetadata } from '@trestle-labs/core';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { buildQueuedSharePointPdfMetadata } from '@/lib/publications/sharepoint';
-import { buildTemplatePayload, isBridgeLetterPrimaryAudienceId, type BridgeLetterPrimaryAudienceId } from '@/lib/wizard/template-payload';
-import { wizardSchema } from '@/lib/wizard/schema';
+import { buildTemplatePayload, isBridgeLetterPrimaryAudienceId, type BridgeLetterPrimaryAudienceId } from '@trestle-labs/core';
+import { wizardSchema } from '@trestle-labs/core';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 function parseBridgeLetterPrimaryAudienceOverride(

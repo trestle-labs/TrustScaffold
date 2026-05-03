@@ -19,7 +19,7 @@ import {
 } from '@/lib/ui/card-surfaces';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { cn, formatDisplayLabel } from '@/lib/utils';
-import { soxApplicabilityOptions, wizardSchema, wizardStepTitles } from '@/lib/wizard/schema';
+import { soxApplicabilityOptions, wizardSchema, wizardStepTitles } from '@trestle-labs/core';
 
 export default async function DashboardPage() {
   const context = await getDashboardContext();

@@ -16,7 +16,7 @@ values
     'Defines the internal audit program, controls monitoring cadence, and deficiency remediation process.',
     'Security',
     array['CC2', 'CC4'],
-    '16-internal-audit-monitoring-policy.md',
+    'internal-audit-monitoring-policy.md',
     $$---
 title: Internal Audit and Monitoring Policy
 slug: internal-audit-monitoring-policy
@@ -144,7 +144,7 @@ $$,
     'Defines data retention schedules, disposal procedures, and evidence requirements for secure data destruction.',
     'Confidentiality',
     array['CC6', 'CC9'],
-    '17-data-retention-disposal-policy.md',
+    'data-retention-disposal-policy.md',
     $$---
 title: Data Retention and Disposal Policy
 slug: data-retention-disposal-policy

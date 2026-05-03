@@ -1,5 +1,5 @@
-import { defaultWizardValues, type WizardData } from '@/lib/wizard/schema';
-import { deriveDocumentArtifactStates, readPersistedDocumentArtifactStates } from '@/lib/documents/document-artifacts';
+import { defaultWizardValues, type WizardData } from '@trestle-labs/core';
+import { deriveDocumentArtifactStates, readPersistedDocumentArtifactStates } from '@trestle-labs/core';
 
 type WizardDataOverrides = {
   [K in keyof WizardData]?: WizardData[K] extends unknown[] ? WizardData[K] : Partial<WizardData[K]>;

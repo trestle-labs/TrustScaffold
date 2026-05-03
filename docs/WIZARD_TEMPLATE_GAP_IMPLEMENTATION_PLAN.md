@@ -156,7 +156,7 @@ Suggested warning intent:
 
 #### Primary templates affected
 
-- [docs/reviewer-pack/templates/security/05-risk-management-policy.md](../docs/reviewer-pack/templates/security/05-risk-management-policy.md)
+- [docs/reviewer-pack/templates/security/risk-management-policy.md](../docs/reviewer-pack/templates/security/risk-management-policy.md)
 
 ### 2. Operations Incident Response
 
@@ -204,7 +204,7 @@ Add warnings when:
 
 #### Primary templates affected
 
-- [docs/reviewer-pack/templates/security/03-incident-response-plan.md](../docs/reviewer-pack/templates/security/03-incident-response-plan.md)
+- [docs/reviewer-pack/templates/security/incident-response-plan.md](../docs/reviewer-pack/templates/security/incident-response-plan.md)
 
 ### 3. Scope HIPAA Detail
 
@@ -248,8 +248,8 @@ Add warnings when PHI is in scope but:
 
 #### Primary templates affected
 
-- [docs/reviewer-pack/templates/hipaa/19-business-associate-agreement-template.md](../docs/reviewer-pack/templates/hipaa/19-business-associate-agreement-template.md)
-- [docs/reviewer-pack/templates/hipaa/20-phi-data-flow-inventory-map.md](../docs/reviewer-pack/templates/hipaa/20-phi-data-flow-inventory-map.md)
+- [docs/reviewer-pack/templates/hipaa/business-associate-agreement-template.md](../docs/reviewer-pack/templates/hipaa/business-associate-agreement-template.md)
+- [docs/reviewer-pack/templates/hipaa/phi-data-flow-inventory-map.md](../docs/reviewer-pack/templates/hipaa/phi-data-flow-inventory-map.md)
 
 ### 4. Scope PCI Detail
 
@@ -292,8 +292,8 @@ Add warnings when CDE is in scope but:
 
 #### Primary templates affected
 
-- [docs/reviewer-pack/templates/pci-dss/21-tokenization-cardholder-data-policy.md](../docs/reviewer-pack/templates/pci-dss/21-tokenization-cardholder-data-policy.md)
-- [docs/reviewer-pack/templates/pci-dss/22-quarterly-vulnerability-scanning-sop.md](../docs/reviewer-pack/templates/pci-dss/22-quarterly-vulnerability-scanning-sop.md)
+- [docs/reviewer-pack/templates/pci-dss/tokenization-cardholder-data-policy.md](../docs/reviewer-pack/templates/pci-dss/tokenization-cardholder-data-policy.md)
+- [docs/reviewer-pack/templates/pci-dss/quarterly-vulnerability-scanning-sop.md](../docs/reviewer-pack/templates/pci-dss/quarterly-vulnerability-scanning-sop.md)
 
 ### 5. Governance SOX Scope
 
@@ -339,10 +339,10 @@ Add warnings when SOX is enabled but:
 
 #### Primary templates affected
 
-- [docs/reviewer-pack/templates/sox/27-sox-itgc-control-matrix.md](../docs/reviewer-pack/templates/sox/27-sox-itgc-control-matrix.md)
-- [docs/reviewer-pack/templates/sox/28-sox-evidence-request-list.md](../docs/reviewer-pack/templates/sox/28-sox-evidence-request-list.md)
-- [docs/reviewer-pack/templates/sox/29-sox-key-report-inventory.md](../docs/reviewer-pack/templates/sox/29-sox-key-report-inventory.md)
-- [docs/reviewer-pack/templates/sox/30-sox-interface-control-register.md](../docs/reviewer-pack/templates/sox/30-sox-interface-control-register.md)
+- [docs/reviewer-pack/templates/sox/sox-itgc-control-matrix.md](../docs/reviewer-pack/templates/sox/sox-itgc-control-matrix.md)
+- [docs/reviewer-pack/templates/sox/sox-evidence-request-list.md](../docs/reviewer-pack/templates/sox/sox-evidence-request-list.md)
+- [docs/reviewer-pack/templates/sox/sox-key-report-inventory.md](../docs/reviewer-pack/templates/sox/sox-key-report-inventory.md)
+- [docs/reviewer-pack/templates/sox/sox-interface-control-register.md](../docs/reviewer-pack/templates/sox/sox-interface-control-register.md)
 
 ## Wave 2 Detailed Plan
 
@@ -391,7 +391,7 @@ Add a recommendation or warning when:
 
 #### Primary templates affected
 
-- [docs/reviewer-pack/templates/security/12-secure-sdlc-policy.md](../docs/reviewer-pack/templates/security/12-secure-sdlc-policy.md)
+- [docs/reviewer-pack/templates/security/secure-sdlc-policy.md](../docs/reviewer-pack/templates/security/secure-sdlc-policy.md)
 
 ### 7. Governance ISO 27001 Targeting
 
@@ -419,8 +419,8 @@ Examples of derivation candidates:
 
 #### Primary templates affected
 
-- [docs/reviewer-pack/templates/iso27001/23-iso27001-statement-of-applicability.md](../docs/reviewer-pack/templates/iso27001/23-iso27001-statement-of-applicability.md)
-- [docs/reviewer-pack/templates/iso27001/24-legal-regulatory-registry.md](../docs/reviewer-pack/templates/iso27001/24-legal-regulatory-registry.md)
+- [docs/reviewer-pack/templates/iso27001/iso27001-statement-of-applicability.md](../docs/reviewer-pack/templates/iso27001/iso27001-statement-of-applicability.md)
+- [docs/reviewer-pack/templates/iso27001/legal-regulatory-registry.md](../docs/reviewer-pack/templates/iso27001/legal-regulatory-registry.md)
 
 ## Wave 3 Detailed Plan
 

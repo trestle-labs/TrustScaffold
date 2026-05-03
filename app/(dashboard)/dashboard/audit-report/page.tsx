@@ -15,10 +15,10 @@ import {
 } from '@/lib/ui/card-surfaces';
 import { selectFieldClassName } from '@/lib/ui/form-controls';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
-import { buildAuditReportModel, type Severity } from '@/lib/wizard/audit-report';
-import { mergeWizardData } from '@/lib/wizard/merge-data';
+import { buildAuditReportModel, type Severity } from '@trestle-labs/core';
+import { mergeWizardData } from '@trestle-labs/core';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { wizardSchema } from '@/lib/wizard/schema';
+import { wizardSchema } from '@trestle-labs/core';
 import { cn } from '@/lib/utils';
 
 function severityVariant(severity: Severity) {

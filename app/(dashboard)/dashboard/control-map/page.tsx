@@ -5,10 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
-import { buildControlMapGraph } from '@/lib/wizard/control-map';
-import { mergeWizardData } from '@/lib/wizard/merge-data';
+import { buildControlMapGraph } from '@trestle-labs/core';
+import { mergeWizardData } from '@trestle-labs/core';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { wizardSchema } from '@/lib/wizard/schema';
+import { wizardSchema } from '@trestle-labs/core';
 
 export default async function ControlMapPage() {
   const context = await getDashboardContext();

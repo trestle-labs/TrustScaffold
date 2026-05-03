@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from 'react';
 
-import type { DashboardContext } from '@/lib/types';
+import type { DashboardContext } from '@trestle-labs/core';
 
 const OrgContext = createContext<DashboardContext | null>(null);
 

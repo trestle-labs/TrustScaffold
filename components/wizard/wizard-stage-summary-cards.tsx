@@ -17,8 +17,8 @@ import {
   soxApplicabilityOptions,
   trainingCadenceOptions,
   type WizardData,
-} from '@/lib/wizard/schema';
-import { computeStepCompletions, type StepCompletion } from '@/lib/wizard/security-scoring';
+} from '@trestle-labs/core';
+import { computeStepCompletions, type StepCompletion } from '@trestle-labs/core';
 import { cn } from '@/lib/utils';
 
 type SummaryRow = {

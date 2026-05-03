@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { createClient } from '@supabase/supabase-js';
 
-import { TSC_CRITERIA, expandCriteriaCodes } from '../lib/tsc-criteria';
+import { TSC_CRITERIA, expandCriteriaCodes } from '@trestle-labs/core';
 
 type TemplateRow = {
   slug: string;

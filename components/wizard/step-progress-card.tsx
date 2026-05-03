@@ -5,7 +5,7 @@ import { ArrowRight, Check, Circle, CircleDashed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import type { StepCompletion } from '@/lib/wizard/security-scoring';
+import type { StepCompletion } from '@trestle-labs/core';
 
 interface StepProgressCardProps {
   completions: StepCompletion[];

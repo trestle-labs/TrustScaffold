@@ -3,8 +3,8 @@ import 'server-only';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { decryptIntegrationToken } from '@/lib/integrations/token-crypto';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import type { IntegrationProvider } from '@/lib/types';
-import { isBridgeLetterPrimaryAudienceId, type BridgeLetterPrimaryAudienceId } from '@/lib/wizard/template-payload';
+import type { IntegrationProvider } from '@trestle-labs/core';
+import { isBridgeLetterPrimaryAudienceId, type BridgeLetterPrimaryAudienceId } from '@trestle-labs/core';
 
 import type { ExportableDoc } from './export-helpers';
 

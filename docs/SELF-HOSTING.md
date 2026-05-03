@@ -58,7 +58,7 @@ docker compose up -d --build
 
 # 4. Verify the container is healthy
 docker compose ps
-curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/
+curl -s -o /dev/null -w '%{http_code}' http://localhost:3010/
 # Expected: 200 or 307 (redirect to login)
 ```
 
@@ -71,7 +71,7 @@ docker build \
   -t trustscaffold:latest .
 
 docker run -d \
-  -p 3000:3000 \
+  -p 3010:3000 \
   -e NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co \
   -e NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key \
   -e SUPABASE_SERVICE_ROLE_KEY=your-service-role-key \
@@ -89,7 +89,7 @@ The included `docker-compose.yml` configures:
 - Runtime environment variables for server-side secrets
 - Health check via `wget --spider` on port 3000
 - `restart: unless-stopped` for automatic recovery
-- Configurable port via `APP_PORT` (default: 3000)
+- Configurable host port via `APP_PORT` (default: 3010, mapped to container port 3000)
 
 ### Option 2: Managed Supabase + Vercel / Coolify / Railway
 

@@ -7,7 +7,7 @@ import { BookOpen, Check, Circle, CircleDashed, ClipboardList, FileText, LayoutD
 
 import { cn } from '@/lib/utils';
 import { useWizardStore } from '@/lib/wizard/store';
-import { wizardStepTitles } from '@/lib/wizard/schema';
+import { wizardStepTitles } from '@trestle-labs/core';
 
 export const dashboardNavigation = [
   { href: '/dashboard' as Route, label: 'Dashboard', icon: LayoutDashboard },

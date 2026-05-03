@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { canRejectOrRegenerateDocuments } from '@/lib/auth/roles';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { wizardSchema, type WizardData } from '@/lib/wizard/schema';
+import { wizardSchema, type WizardData } from '@trestle-labs/core';
 
 const SCHEMA_VERSION = 8;
 

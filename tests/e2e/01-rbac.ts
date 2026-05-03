@@ -227,7 +227,7 @@ suite('3.8 API Key Scope Isolation');
 test('Acme API key cannot ingest evidence for Beta', async () => {
   // The ingest endpoint derives org from the key, not from payload.
   // This test verifies the key routes to Acme regardless of payload.
-  const res = await fetch(`${process.env.APP_URL ?? 'http://127.0.0.1:3000'}/api/v1/evidence/ingest`, {
+  const res = await fetch(`${process.env.APP_URL ?? 'http://127.0.0.1:3010'}/api/v1/evidence/ingest`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -7,7 +7,7 @@ import { isValidOrganizationRole } from '@/lib/auth/roles';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { createSupabaseServiceRoleClient } from '@/lib/supabase-service';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import type { OrganizationRole } from '@/lib/types';
+import type { OrganizationRole } from '@trestle-labs/core';
 
 function assertAdminContext(context: Awaited<ReturnType<typeof getDashboardContext>>) {
   if (!context?.organization) {

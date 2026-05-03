@@ -1,10 +1,10 @@
 import 'server-only';
 
-import { stripMappingMetadata, renderTemplate } from '@/lib/documents/template-engine';
-import type { WizardData } from '@/lib/wizard/schema';
-import { buildTemplatePayload, type BridgeLetterPrimaryAudienceId } from '@/lib/wizard/template-payload';
+import { stripMappingMetadata, renderTemplate } from '@trestle-labs/core';
+import type { WizardData } from '@trestle-labs/core';
+import { buildTemplatePayload, type BridgeLetterPrimaryAudienceId } from '@trestle-labs/core';
 
-import type { IntegrationProvider } from '@/lib/types';
+import type { IntegrationProvider } from '@trestle-labs/core';
 
 type TemplateRelationItem = {
   slug: string;

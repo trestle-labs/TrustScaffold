@@ -1,8 +1,8 @@
 import { loadEnvConfig } from '@next/env';
 import { chromium } from 'playwright';
 
-import { renderTemplate, stripMappingMetadata } from '@/lib/documents/template-engine';
-import { buildTemplatePayload } from '@/lib/wizard/template-payload';
+import { renderTemplate, stripMappingMetadata } from '@trestle-labs/core';
+import { buildTemplatePayload } from '@trestle-labs/core';
 
 import { authClient, serviceClient, USER } from './helpers';
 
@@ -21,10 +21,10 @@ function assert(condition: boolean, message: string): asserts condition {
 async function detectAppUrl() {
   const candidates = [
     process.env.APP_URL,
-    'http://127.0.0.1:3000',
-    'http://localhost:3000',
     'http://127.0.0.1:3010',
     'http://localhost:3010',
+    'http://127.0.0.1:3000',
+    'http://localhost:3000',
   ].filter(Boolean) as string[];
 
   for (const candidate of candidates) {
@@ -38,7 +38,7 @@ async function detectAppUrl() {
     }
   }
 
-  throw new Error('Could not detect a running TrustScaffold app URL on ports 3000 or 3010');
+  throw new Error('Could not detect a running TrustScaffold app URL on ports 3010 or 3000');
 }
 
 async function refreshDiagramDocument() {

@@ -10,8 +10,8 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { emptyStateSurfaceClassName, metricPanelSurfaceClassName, mutedInsetSurfaceClassName, warningPanelSurfaceClassName } from '@/lib/ui/card-surfaces';
 import { selectFieldClassName } from '@/lib/ui/form-controls';
 import { cn } from '@/lib/utils';
-import { soxApplicabilityOptions } from '@/lib/wizard/schema';
-import type { IntegrationProvider } from '@/lib/types';
+import { soxApplicabilityOptions } from '@trestle-labs/core';
+import type { IntegrationProvider } from '@trestle-labs/core';
 
 import { updateOrgProfileAction } from '@/app/actions/org-profile';
 import { deleteIntegrationAction, deleteIntegrationTokenAction, saveIntegrationAction, saveWizardAutosaveSettingsAction } from './actions';
@@ -197,7 +197,7 @@ export default async function SettingsPage({
                         <li>Secret: use the value from &ldquo;Generate webhook secret&rdquo; above</li>
                         <li>Events: <strong>Pull requests</strong> + <strong>Create</strong> (for audit tags)</li>
                       </ul>
-                      <p className="text-current/80">For local dev, use a tunnel: <CodeChip variant="warning">npx ngrok http 3000</CodeChip></p>
+                      <p className="text-current/80">For local dev, use a tunnel: <CodeChip variant="warning">npx ngrok http 3010</CodeChip></p>
                     </div>
                   ) : null}
 

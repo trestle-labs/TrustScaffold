@@ -3,9 +3,9 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { defaultWizardValues, type WizardData } from '@/lib/wizard/schema';
-export { mergeWizardData } from '@/lib/wizard/merge-data';
-import { mergeWizardData } from '@/lib/wizard/merge-data';
+import { defaultWizardValues, type WizardData } from '@trestle-labs/core';
+export { mergeWizardData } from '@trestle-labs/core';
+import { mergeWizardData } from '@trestle-labs/core';
 
 type WizardStore = {
   organizationId: string | null;

@@ -20,8 +20,8 @@ import {
   getArtifactDisplayBadgeVariant,
   getArtifactDisplayLabel,
   readPersistedDocumentArtifactStates,
-} from '@/lib/documents/document-artifacts';
-import { GENERATED_DOC_SECTIONS, getGeneratedDocStatusDisplay, getGeneratedDocStatusLabel } from '@/lib/documents/generated-doc-status';
+} from '@trestle-labs/core';
+import { GENERATED_DOC_SECTIONS, getGeneratedDocStatusDisplay, getGeneratedDocStatusLabel } from '@trestle-labs/core';
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
 import { infoPanelSurfaceClassName, interactiveListRowSurfaceClassName, metricPanelSurfaceClassName, nestedPanelSurfaceClassName, warningPanelSurfaceClassName } from '@/lib/ui/card-surfaces';
 import { selectFieldClassName } from '@/lib/ui/form-controls';

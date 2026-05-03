@@ -27,7 +27,7 @@ values
     'SOX-oriented IT general controls matrix for entity-level governance, access, change management, and system operations.',
     'SOX / ITGC',
     array['COMMON', 'SOX'],
-    '27-sox-itgc-control-matrix.md',
+    'sox-itgc-control-matrix.md',
     $$---
 title: SOX IT General Controls Matrix
 slug: sox-itgc-control-matrix
@@ -94,7 +94,7 @@ $$,
     'SOX-oriented evidence request list for access management, change management, privileged access, and key-report controls.',
     'SOX / ITGC',
     array['COMMON', 'SOX'],
-    '28-sox-evidence-request-list.md',
+    'sox-evidence-request-list.md',
     $$---
 title: SOX Access and Change Evidence Request List
 slug: sox-evidence-request-list
@@ -165,7 +165,7 @@ $$,
     'SOX-oriented inventory of key reports, spreadsheet dependencies, management reviews, and evidence owners.',
     'SOX / ITGC',
     array['COMMON', 'SOX'],
-    '29-sox-key-report-inventory.md',
+    'sox-key-report-inventory.md',
     $$---
 title: SOX Key Report Inventory
 slug: sox-key-report-inventory
@@ -218,7 +218,7 @@ $$,
     'SOX-oriented register for inbound and outbound interfaces, reconciliations, exception handling, and change ownership.',
     'SOX / ITGC',
     array['COMMON', 'SOX'],
-    '30-sox-interface-control-register.md',
+    'sox-interface-control-register.md',
     $$---
 title: SOX Interface Control Register
 slug: sox-interface-control-register

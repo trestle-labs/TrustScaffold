@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import type { ControlMapEdge, ControlMapGraph, ControlMapNode } from '@/lib/wizard/control-map';
+import type { ControlMapEdge, ControlMapGraph, ControlMapNode } from '@trestle-labs/core';
 import { cn } from '@/lib/utils';
 
 type Props = {

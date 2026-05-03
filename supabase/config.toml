@@ -151,7 +151,7 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "http://localhost:3000"
+site_url = "http://localhost:3010"
 # Wildcard patterns — GoTrue glob-matches these, so any local port works without
 # hardcoding. setup.sh detects the first free port and writes PORT= to .env.local.
 additional_redirect_urls = [
@@ -189,7 +189,7 @@ password_requirements = ""
 # [auth.webauthn]
 # rp_display_name = "Supabase"
 # rp_id = "localhost"
-# rp_origins = ["http://127.0.0.1:3000"]
+# rp_origins = ["http://127.0.0.1:3010"]
 
 [auth.rate_limit]
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.

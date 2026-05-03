@@ -1,4 +1,4 @@
-import type { OrganizationRole } from '@/lib/types';
+import type { OrganizationRole } from '@trestle-labs/core';
 import { formatDisplayLabel } from '@/lib/utils';
 
 export const ORG_ROLE_OPTIONS: OrganizationRole[] = ['admin', 'editor', 'approver', 'viewer'];

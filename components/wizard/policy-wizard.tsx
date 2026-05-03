@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 import { compileDocsAction } from '@/app/actions/compile-docs';
 import { saveWizardDraftAction, loadWizardDraftAction } from '@/app/actions/wizard-draft';
-import { getExpectedTemplates } from '@/lib/wizard/template-manifest';
+import { getExpectedTemplates } from '@trestle-labs/core';
 import { useOrg } from '@/components/providers/org-provider';
 import { AuditorLensCallout } from '@/components/wizard/auditor-lens-callout';
 import { AuditTypeGuidance, recommendAuditType } from '@/components/wizard/audit-type-guidance';
@@ -84,7 +84,7 @@ import {
   wizardStepTitles,
   type WizardData,
   type TargetAuditType,
-} from '@/lib/wizard/schema';
+} from '@trestle-labs/core';
 import {
   getActiveWizardRules,
   getActiveWizardRulesForField,
@@ -94,9 +94,9 @@ import {
   type WizardDeepDiveRule,
   type WizardRecommendationRule,
   type WizardWarningRule,
-} from '@/lib/wizard/rule-matrix';
+} from '@trestle-labs/core';
 import { mergeWizardData, useWizardStore } from '@/lib/wizard/store';
-import { computeAssessmentSummary, computeStepCompletions, domainBoolFields } from '@/lib/wizard/security-scoring';
+import { computeAssessmentSummary, computeStepCompletions, domainBoolFields } from '@trestle-labs/core';
 
 const customSubserviceVendorValue = '__other__';
 const customSubserviceRoleValue = '__other_role__';

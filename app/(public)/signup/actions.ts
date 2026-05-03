@@ -11,7 +11,7 @@ export async function signupAction(formData: FormData) {
   const organizationName = String(formData.get('organization_name') ?? '');
 
   const supabase = await createSupabaseServerClient();
-  const origin = (await headers()).get('origin') ?? 'http://localhost:3000';
+  const origin = (await headers()).get('origin') ?? 'http://localhost:3010';
 
   const { error } = await supabase.auth.signUp({
     email,

@@ -19,11 +19,11 @@ import {
   getArtifactDisplayLabel,
   getArtifactRendererLabel,
   readPersistedDocumentArtifactStates,
-} from '@/lib/documents/document-artifacts';
-import { getGeneratedDocStatusDisplay, getGeneratedDocStatusLabel } from '@/lib/documents/generated-doc-status';
-import { describeExternalControlMapping } from '@/lib/documents/control-mapping-catalog';
-import { parseDocumentFrontmatter } from '@/lib/documents/frontmatter';
-import { diffMarkdownSections } from '@/lib/documents/section-diff';
+} from '@trestle-labs/core';
+import { getGeneratedDocStatusDisplay, getGeneratedDocStatusLabel } from '@trestle-labs/core';
+import { describeExternalControlMapping } from '@trestle-labs/core';
+import { parseDocumentFrontmatter } from '@trestle-labs/core';
+import { diffMarkdownSections } from '@trestle-labs/core';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import {
   dangerPanelSurfaceClassName,
@@ -36,8 +36,8 @@ import {
 } from '@/lib/ui/card-surfaces';
 import { selectFieldClassName } from '@/lib/ui/form-controls';
 import { cn } from '@/lib/utils';
-import { expandCriteriaCodes, getCriterionByCode } from '@/lib/tsc-criteria';
-import { wizardSchema } from '@/lib/wizard/schema';
+import { expandCriteriaCodes, getCriterionByCode } from '@trestle-labs/core';
+import { wizardSchema } from '@trestle-labs/core';
 
 export default async function GeneratedDocDetailPage({
   params,

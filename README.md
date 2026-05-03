@@ -80,7 +80,7 @@ cp .env.example .env
 docker compose up -d --build
 
 # 4. Verify
-curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/
+curl -s -o /dev/null -w '%{http_code}' http://localhost:3010/
 # Expected: 200 or 307 (redirect to login)
 ```
 

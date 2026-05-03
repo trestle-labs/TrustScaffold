@@ -13,10 +13,10 @@ import {
   assert, assertEqual, assertIncludes,
   ORG, USER,
 } from './helpers';
-import { renderTemplate } from '@/lib/documents/template-engine';
-import { buildTemplatePayload } from '@/lib/wizard/template-payload';
-import { defaultWizardValues, type WizardData } from '@/lib/wizard/schema';
-import { getActiveWizardRules } from '@/lib/wizard/rule-matrix';
+import { renderTemplate } from '@trestle-labs/core';
+import { buildTemplatePayload } from '@trestle-labs/core';
+import { defaultWizardValues, type WizardData } from '@trestle-labs/core';
+import { getActiveWizardRules } from '@trestle-labs/core';
 
 type WizardDataOverrides = {
   [K in keyof WizardData]?: WizardData[K] extends unknown[] ? WizardData[K] : Partial<WizardData[K]>;

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 
 import { getDashboardContext } from '@/lib/auth/get-dashboard-context';
-import { buildAuditReportMarkdown, buildAuditReportModel } from '@/lib/wizard/audit-report';
-import { mergeWizardData } from '@/lib/wizard/merge-data';
+import { buildAuditReportMarkdown, buildAuditReportModel } from '@trestle-labs/core';
+import { mergeWizardData } from '@trestle-labs/core';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { wizardSchema } from '@/lib/wizard/schema';
+import { wizardSchema } from '@trestle-labs/core';
 
 export async function GET() {
   const context = await getDashboardContext();

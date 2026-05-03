@@ -156,7 +156,7 @@ Run this before any UAT session:
 
 ```bash
 bash scripts/setup.sh --yes
-PORT=$(grep '^PORT=' .env.local 2>/dev/null | cut -d= -f2); PORT=${PORT:-3000}
+PORT=$(grep '^PORT=' .env.local 2>/dev/null | cut -d= -f2); PORT=${PORT:-3010}
 npm run dev
 ```
 
