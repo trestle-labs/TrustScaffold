@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { glossaryEntries } from '@trestle-labs/core';
+import { glossaryEntries } from '@trestle-labs/core/client';
 import { getGlossarySourceTypeLabel, GLOSSARY_STAGE_ORDER } from '@/lib/glossary-display';
 
 export default function GlossaryPage() {

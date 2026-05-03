@@ -52,7 +52,6 @@ export async function updateOrgProfileAction(formData: FormData): Promise<void> 
     },
     infrastructure: {
       ...current.infrastructure,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       idpProvider: str(formData, 'idpProvider', current.infrastructure.idpProvider ?? '') as any,
     },
     securityTooling: {
@@ -65,7 +64,6 @@ export async function updateOrgProfileAction(formData: FormData): Promise<void> 
     operations: {
       ...current.operations,
       ticketingSystem: str(formData, 'ticketingSystem', current.operations.ticketingSystem ?? ''),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       hrisProvider: str(formData, 'hrisProvider', current.operations.hrisProvider ?? '') as any,
       onCallTool: str(formData, 'onCallTool', current.operations.onCallTool ?? ''),
       versionControlSystem: str(formData, 'versionControlSystem', current.operations.versionControlSystem ?? ''),

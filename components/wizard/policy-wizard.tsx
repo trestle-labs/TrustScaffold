@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 import { compileDocsAction } from '@/app/actions/compile-docs';
 import { saveWizardDraftAction, loadWizardDraftAction } from '@/app/actions/wizard-draft';
-import { getExpectedTemplates } from '@trestle-labs/core';
+import { getExpectedTemplates } from '@trestle-labs/core/client';
 import { useOrg } from '@/components/providers/org-provider';
 import { AuditorLensCallout } from '@/components/wizard/auditor-lens-callout';
 import { AuditTypeGuidance, recommendAuditType } from '@/components/wizard/audit-type-guidance';
@@ -84,7 +84,7 @@ import {
   wizardStepTitles,
   type WizardData,
   type TargetAuditType,
-} from '@trestle-labs/core';
+} from '@trestle-labs/core/client';
 import {
   getActiveWizardRules,
   getActiveWizardRulesForField,
@@ -94,9 +94,9 @@ import {
   type WizardDeepDiveRule,
   type WizardRecommendationRule,
   type WizardWarningRule,
-} from '@trestle-labs/core';
+} from '@trestle-labs/core/client';
 import { mergeWizardData, useWizardStore } from '@/lib/wizard/store';
-import { computeAssessmentSummary, computeStepCompletions, domainBoolFields } from '@trestle-labs/core';
+import { computeAssessmentSummary, computeStepCompletions, domainBoolFields } from '@trestle-labs/core/client';
 
 const customSubserviceVendorValue = '__other__';
 const customSubserviceRoleValue = '__other_role__';
@@ -301,7 +301,6 @@ function MiniStepCard({
 
 // ── Security Assessment helper components ─────────────────────────────────────
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 function ControlRow({ control, name, label, gap, recommendation }: {
   control: any; name: any; label: string; gap: string; recommendation: string;
 }) {
@@ -383,7 +382,6 @@ function InlineHelpPopover({ label, description }: { label: string; description:
     </Popover>
   );
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 function FirstTimerTip({ tip }: { tip: string }) {
   return (
@@ -422,7 +420,6 @@ function RuleWarningCard({ rule }: { rule: WizardWarningRule }) {
   );
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 function DeepDiveSelectCard({ control, rule }: { control: any; rule: WizardDeepDiveRule }) {
   return (
     <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
@@ -465,7 +462,6 @@ function DeepDiveSelectCard({ control, rule }: { control: any; rule: WizardDeepD
     </div>
   );
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 function DomainHeader({ label, criteria, score, answered, total, readiness, expanded, onToggle }: {
   label: string; criteria: string; score: number; answered: number; total: number;

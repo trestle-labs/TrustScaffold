@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 
-import { glossaryEntries, type GlossaryEntry } from '@trestle-labs/core';
+import { glossaryEntries, type GlossaryEntry } from '@trestle-labs/core/client';
 
 type HoveredGlossary = {
   entry: GlossaryEntry;
