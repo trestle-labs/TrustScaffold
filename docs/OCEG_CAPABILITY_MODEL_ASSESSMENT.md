@@ -16,20 +16,20 @@ The model is cyclical rather than hierarchical: Learn informs Align, Align drive
 
 ## Executive Summary
 
-TrustScaffold is already strongest in `Perform` and `Review`.
+TrustScaffold is already strongest in `Perform`, with `Review` now moving from basic traceability toward an actual management baseline.
 
-The product helps organizations turn fragmented compliance work into structured execution: scoped intake, mapped policy generation, immutable document lifecycle, evidence ingestion, auditor-facing output, and role-gated review flows. That is meaningful value for early and mid-maturity teams that know they need compliance discipline but do not yet have a mature operating model.
+The product helps organizations turn fragmented compliance work into structured execution: scoped intake, mapped policy generation, immutable document lifecycle, evidence ingestion, auditor-facing output, role-gated review flows, and a persistent capability baseline with ownership guidance. That is meaningful value for early and mid-maturity teams that know they need compliance discipline but do not yet have a mature operating model.
 
-The current major gap is that TrustScaffold still acts more like a compliance execution and evidence platform than a full GRC capability system. It helps teams do the work once the target posture is chosen, but it is lighter on continuous organizational learning, decision alignment, risk appetite translation, and management operating cadence.
+The current major gap is that TrustScaffold still acts more like a compliance execution and evidence platform with an emerging management layer than a full GRC capability system. It now helps teams see a current operating baseline and suggested ownership structure, but it is still lighter on continuous organizational learning, explicit business-risk alignment, risk appetite translation, and management cadence orchestration.
 
 ## Capability Heatmap
 
 | OCEG Area | Current Strength | Why |
 |---|---:|---|
-| Learn | 2.5 / 5 | Good guided intake and educational prompts, but limited continuous enablement, benchmarking, and maturity coaching |
-| Align | 3 / 5 | Strong control mapping and framework selection, but weaker business-risk alignment and executive decision framing |
+| Learn | 3 / 5 | Good guided intake, educational prompts, and a current-state capability baseline, but still limited continuous enablement, benchmarking, and maturity coaching |
+| Align | 3.5 / 5 | Strong control mapping, framework selection, and owner-assignment guidance, but weaker business-risk alignment and executive decision framing |
 | Perform | 4.5 / 5 | Core strength: workflow capture, template generation, evidence ingestion, GitOps, and operational compliance execution |
-| Review | 3 / 5 | Strong audit trail, approvals, auditor portal, and change visibility, but still limited management analytics, review operations, and outcome measurement |
+| Review | 3.5 / 5 | Strong audit trail, approvals, auditor portal, change visibility, and baseline snapshot history, but still limited management analytics, review operations, and outcome measurement |
 
 ## 1. Learn
 
@@ -44,7 +44,7 @@ The current major gap is that TrustScaffold still acts more like a compliance ex
 
 ### Current Gaps
 
-- No maturity baseline that tells a team where they stand relative to a target framework or audit goal.
+- The current capability baseline is useful, but it is still a product-native operating view rather than a benchmarked maturity model tied to peer cohorts, target states, or staged readiness levels.
 - No role-specific learning tracks for founders, engineering managers, IT, security, HR, or finance stakeholders.
 - No benchmarking or peer comparison layer to contextualize whether a team is ahead, behind, or under-scoped.
 - No built-in “why this matters” narrative tied to risk, customer expectations, or audit outcomes.
@@ -52,7 +52,7 @@ The current major gap is that TrustScaffold still acts more like a compliance ex
 
 ### Best Next Moves
 
-- Add a capability baseline report at the end of the wizard: current state, target state, and top readiness gaps by domain.
+- Extend the capability baseline from a current-state management view into a fuller readiness model: target state, confidence bands, and top readiness gaps by domain.
 - Introduce persona-specific guidance panels for founders, admins, reviewers, and auditors.
 - Add “why this question exists” and “what auditors infer from this answer” throughout review surfaces, not just intake.
 - Use `trustscaffold-edu` content as a reusable learning layer inside the production app.
@@ -73,13 +73,13 @@ The current major gap is that TrustScaffold still acts more like a compliance ex
 - Weak explicit tie between control choices and business objectives such as customer trust, sales enablement, operational resilience, or regulated growth.
 - No first-class risk appetite model that drives policy posture, evidence expectations, or approval thresholds.
 - No executive-facing view that translates compliance state into business impact and funding priorities.
-- No formal ownership model for control objectives, remediation items, or cross-functional decision records.
+- The baseline now proposes recommended owners and assignment authority for top priorities, but those suggestions are not yet first-class assignments for control objectives, remediation items, or cross-functional decision records.
 - The generation layer already reuses one answer set across multiple frameworks, but there is no strong management view that makes that reuse visible as a first-class “control once, satisfy many” capability.
 
 ### Best Next Moves
 
 - Add an executive alignment dashboard: audit goal, business drivers, regulated data footprint, and top program risks.
-- Add control owner, reviewer, and business owner assignments for major domains and generated artifacts.
+- Turn owner guidance into operational assignment objects for major domains, generated artifacts, and remediation items.
 - Build a reusable cross-framework control coverage view that shows reuse across SOC 2, HIPAA, PCI DSS, ISO 27001, and internal requirements.
 - Add decision records for major scoping choices such as carve-outs, sub-service treatment, and assurance reliance.
 
@@ -126,7 +126,7 @@ The current major gap is that TrustScaffold still acts more like a compliance ex
 
 ### Current Gaps
 
-- Limited management review metrics: no program scorecards for overdue actions, evidence freshness, review cadence adherence, or control health trends.
+- Capability baseline snapshots now provide a lightweight trend line, but there is still no full program scorecard for overdue actions, evidence freshness, review cadence adherence, or control health trends.
 - Limited feedback loop from reviews back into program learning and prioritization.
 - No built-in internal audit workflow or sampled control testing management.
 - No structured “review outcome” taxonomy such as accepted, remediated, deferred, exception-approved, or needs executive escalation.
@@ -134,7 +134,7 @@ The current major gap is that TrustScaffold still acts more like a compliance ex
 
 ### Best Next Moves
 
-- Add a compliance operations scorecard with evidence freshness, unresolved findings, stale docs, and overdue review cycles.
+- Build from baseline snapshots into a true compliance operations scorecard with evidence freshness, unresolved findings, stale docs, overdue review cycles, and change trends.
 - Add internal review campaigns for quarterly access review, vendor review, risk register review, and tabletop readiness.
 - Add management review summaries that roll up changes, findings, exceptions, and upcoming deadlines.
 - Add review outcome classification and trend tracking so the system shows whether the program is improving, stalled, or accumulating debt.
@@ -162,7 +162,7 @@ The current major gap is that TrustScaffold still acts more like a compliance ex
 1. `Alignment layer`: stronger executive, business-risk, and ownership modeling.
 2. `Remediation workflow`: issue closure, due dates, task orchestration, and exception handling.
 3. `Management review system`: scorecards, cadence tracking, and trend reporting.
-4. `Continuous learning system`: maturity baselines, persona coaching, and embedded enablement.
+4. `Continuous learning system`: benchmarked maturity baselines, persona coaching, and embedded enablement.
 5. `Artifact completeness`: diagram generation, dependency-aware artifacts, and richer reviewer packs.
 
 ## Recommended Roadmap Through the OCEG Lens
@@ -178,7 +178,7 @@ This roadmap intentionally follows an execution-first order rather than the conc
 ### Phase 2: Build the Alignment Layer
 
 - Add business-driver and audit-goal framing at onboarding.
-- Add owner assignments, decision records, and risk appetite inputs.
+- Turn the new owner-guidance model into persisted assignments, decision records, and risk appetite inputs.
 - Add multi-framework reuse and control overlap views.
 
 ### Phase 3: Build the Learning Layer
@@ -195,6 +195,6 @@ This roadmap intentionally follows an execution-first order rather than the conc
 
 ## Bottom Line
 
-TrustScaffold already offers meaningful capability in the OCEG `Perform` and `Review` layers, which makes it genuinely useful for organizations trying to stand up a defensible compliance operating model without starting from blank files and ad hoc evidence collection.
+TrustScaffold already offers meaningful capability in the OCEG `Perform` layer and now has a more credible `Review` and `Align` management baseline, which makes it genuinely useful for organizations trying to stand up a defensible compliance operating model without starting from blank files and ad hoc evidence collection.
 
-The biggest opportunity is to grow from a strong compliance execution platform into a broader GRC capability system by investing in the weaker `Learn` and `Align` layers. If the next product cycles focus on maturity baselines, ownership and risk alignment, remediation workflows, and management review reporting, TrustScaffold can move from “excellent compliance scaffolding” to “credible operating system for compliance program management.”
+The biggest opportunity is to grow from a strong compliance execution platform with an emerging management layer into a broader GRC capability system by investing in the weaker `Learn` and `Align` layers and deepening the new review baseline into real operating scorecards. If the next product cycles focus on benchmarked maturity baselines, persisted ownership and risk alignment, remediation workflows, and management review reporting, TrustScaffold can move from “excellent compliance scaffolding” to “credible operating system for compliance program management.”

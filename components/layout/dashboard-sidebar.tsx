@@ -3,7 +3,7 @@
 import type { Route } from 'next';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Check, Circle, CircleDashed, ClipboardList, FileText, LayoutDashboard, Network, Settings, ShieldCheck, Users } from 'lucide-react';
+import { BarChart3, BookOpen, Check, Circle, CircleDashed, ClipboardList, FileText, LayoutDashboard, Network, Settings, ShieldCheck, Users } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { useWizardStore } from '@/lib/wizard/store';
@@ -14,6 +14,7 @@ export const dashboardNavigation = [
   { href: '/wizard' as Route, label: 'Policy Wizard', icon: ShieldCheck },
   { href: '/generated-docs' as Route, label: 'Generated Docs', icon: FileText },
   { href: '/dashboard/audit-report' as Route, label: 'Audit Report', icon: ClipboardList },
+  { href: '/dashboard/capability-baseline' as Route, label: 'Capability Baseline', icon: BarChart3 },
   { href: '/dashboard/control-map' as Route, label: 'Control Map', icon: Network },
   { href: '/dashboard/glossary' as Route, label: 'Glossary', icon: BookOpen },
   { href: '/team' as Route, label: 'Team', icon: Users },

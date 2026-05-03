@@ -1,6 +1,6 @@
 import type { Route } from 'next';
 import Link from 'next/link';
-import { ClipboardList, FileText, Network, Settings, ShieldCheck, Users } from 'lucide-react';
+import { BarChart3, ClipboardList, FileText, Network, Settings, ShieldCheck, Users } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,9 +18,10 @@ import {
   successPanelSurfaceClassName,
   warningPanelSurfaceClassName,
 } from '@/lib/ui/card-surfaces';
+import { ensureCapabilityBaselineSnapshots } from '@/lib/dashboard/capability-baseline';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { cn, formatDisplayLabel } from '@/lib/utils';
-import { buildCapabilityBaselineModel, soxApplicabilityOptions, wizardSchema, wizardStepTitles } from '@trestle-labs/core';
+import { soxApplicabilityOptions, wizardSchema, wizardStepTitles } from '@trestle-labs/core';
 
 export default async function DashboardPage() {
   const context = await getDashboardContext();
@@ -107,6 +108,12 @@ export default async function DashboardPage() {
       icon: ClipboardList,
     },
     {
+      href: '/dashboard/capability-baseline' as Route,
+      label: 'Capability baseline',
+      description: 'Review Learn / Align / Perform / Review scoring, owner assignments, and baseline history.',
+      icon: BarChart3,
+    },
+    {
       href: '/dashboard/control-map' as Route,
       label: 'Open control map',
       description: 'Visualize how wizard answers map to controls, frameworks, sub-service organizations, and generated docs.',
@@ -119,9 +126,18 @@ export default async function DashboardPage() {
       icon: Settings,
     },
   ];
-  const capabilityBaseline = savedWizardData
-    ? buildCapabilityBaselineModel(savedWizardData, { docs: docs ?? [], staleDocCount: staleDocs.length })
+  const capabilityBaselineState = savedWizardData
+    ? await ensureCapabilityBaselineSnapshots({
+        supabase,
+        organizationId: context.organization.id,
+        wizardData: savedWizardData,
+        draftUpdatedAt,
+        docs: docs ?? [],
+        staleDocCount: staleDocs.length,
+      })
     : null;
+  const capabilityBaseline = capabilityBaselineState?.model ?? null;
+  const latestCapabilitySnapshot = capabilityBaselineState?.snapshots[0] ?? null;
 
   return (
     <div className="space-y-6">
@@ -246,7 +262,7 @@ export default async function DashboardPage() {
             <Badge variant="secondary">Learn / Align / Perform / Review</Badge>
           </div>
           <CardDescription>
-            Organization-specific baseline generated from current wizard answers and artifact state. This is execution-first: it shows where the current program is strongest today and what should be tightened next.
+            Organization-specific operating baseline generated from current wizard answers and artifact state. It is meant to show where the program is currently strongest, where it is thin, and who should own the next lift. It is not a certification score.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -256,7 +272,7 @@ export default async function DashboardPage() {
                 <div className={metricPanelSurfaceClassName}>
                   <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Overall baseline</p>
                   <p className="mt-2 text-2xl font-semibold text-foreground">{capabilityBaseline.overallScore}%</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{capabilityBaseline.overallBand} operating baseline</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{capabilityBaseline.overallBand} current operating baseline</p>
                 </div>
                 <div className={metricPanelSurfaceClassName}>
                   <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Frameworks in view</p>
@@ -309,13 +325,23 @@ export default async function DashboardPage() {
 
               <div className={warningPanelSurfaceClassName}>
                 <p className="text-sm font-semibold">Top next moves</p>
+                <p className="mt-1 text-xs text-current/85">These recommendations are governance-level next moves with suggested owners, not automatically assigned tasks.</p>
                 <div className="mt-3 space-y-2">
                   {capabilityBaseline.priorities.map((priority) => (
                     <div key={priority.title} className={cn(mutedInsetSurfaceClassName, 'border border-current/15 bg-white/60 dark:bg-background/20')}>
                       <p className="text-sm font-semibold text-current">{priority.title}</p>
                       <p className="mt-1 text-xs text-current/90">{priority.detail}</p>
+                      <p className="mt-2 text-[11px] font-medium text-current/80">Owner: {priority.recommendedOwnerRole}</p>
                     </div>
                   ))}
+                </div>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs text-current/80">
+                    Latest snapshot: {latestCapabilitySnapshot ? new Date(latestCapabilitySnapshot.createdAt).toLocaleString() : 'Just captured'}
+                  </p>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={'/dashboard/capability-baseline' as Route}>Open full baseline</Link>
+                  </Button>
                 </div>
               </div>
             </>
